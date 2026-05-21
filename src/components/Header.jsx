@@ -68,10 +68,12 @@ export function Header({
             <span>{activeUserName}</span>
           </div>
 
-          <button type="button" className="primary-action" onClick={onPrimaryAction}>
-            <PlusIcon />
-            <span>{primaryActionLabel}</span>
-          </button>
+          {primaryActionLabel ? (
+            <button type="button" className="primary-action" onClick={onPrimaryAction}>
+              <PlusIcon />
+              <span>{primaryActionLabel}</span>
+            </button>
+          ) : null}
         </div>
       </div>
     </header>

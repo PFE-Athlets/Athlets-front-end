@@ -1,4 +1,3 @@
-import { /* useState removed */ } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import './App.css'
 import { AppShell } from './components/AppShell.jsx'
@@ -43,10 +42,12 @@ const pages = [
 ]
 
 function App() {
+
+  // hardcoded user info for demo purposes
   const shellProps = {
     activeUserName: 'Camille Tremblay',
-    activeUserRole: 'Admin',
-    notificationsCount: 3,
+    activeUserRole: 'Coach',
+    notificationsCount: 2,
   }
 
   return (
@@ -61,7 +62,7 @@ function App() {
             <AppShell
               pageTitle={page.title}
               pageSubtitle={page.subtitle}
-              primaryActionLabel={page.path === '/athletes' ? 'Créer un athlète' : 'Nouvelle action'}
+              primaryActionLabel={page.path === '/athletes' ? 'Créer un athlète' : undefined}
               {...shellProps}
             >
               <PageView />
