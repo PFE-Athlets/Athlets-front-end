@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import './App.css'
 import { AppShell } from './components/AppShell.jsx'
 import { PageView } from './pages/PageView.jsx'
+import LoginPage from './pages/LoginPage.jsx'
 
 const pages = [
   {
@@ -52,7 +53,8 @@ function App() {
 
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/tableau-de-bord" replace />} />
+      <Route path="/" element={<Navigate to="/connexion" replace />} />
+      <Route path="/connexion" element={<LoginPage />} />
 
       {pages.map((page) => (
         <Route
@@ -71,10 +73,7 @@ function App() {
         />
       ))}
 
-      <Route
-        path="*"
-        element={<Navigate to="/athletes" replace />}
-      />
+      <Route path="*" element={<Navigate to="/connexion" replace />} />
     </Routes>
   )
 }
