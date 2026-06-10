@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import '../styles/login.css'
 import athleteImage from '../assets/283808481.png'
+import { authService } from '../api/authService'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -9,12 +10,32 @@ export default function LoginPage() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
+    setError('')
+    setLoading(true)
 
-    // Fake login pour le mockup
-    navigate('/tableau-de-bord')
+    try {
+      const result = await authService.login(username, password)
+
+      if (result.success) {
+        // Login réussi
+        console.log('Login réussi:', result.data)
+        navigate('/tableau-de-bord')
+      } else {
+        // Erreur de login
+        setError(result.error)
+        console.error('Erreur login:', result.error)
+      }
+    } catch (err) {
+      setError('Une erreur inattendue s\'est produite')
+      console.error('Erreur:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -62,12 +83,16 @@ export default function LoginPage() {
             </p>
 
             <form onSubmit={handleSubmit}>
-              <label>Nom d’utilisateur ou courriel</label>
+              {error && <div className="error-message">{error}</div>}
+
+              <label>Nom d'utilisateur ou courriel</label>
               <input
                 type="text"
                 placeholder="Entrez votre nom d'utilisateur ou courriel"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                required
+                disabled={loading}
               />
 
               <label>Mot de passe</label>
@@ -77,11 +102,14 @@ export default function LoginPage() {
                   placeholder="Entrez votre mot de passe"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={loading}
                 />
 
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
+                  disabled={loading}
                 >
                   👁
                 </button>
@@ -91,8 +119,8 @@ export default function LoginPage() {
                 Mot de passe oublié ?
               </a>
 
-              <button type="submit" className="login-button">
-                Se connecter
+              <button type="submit" className="login-button" disabled={loading}>
+                {loading ? 'Connexion en cours...' : 'Se connecter'}
               </button>
             </form>
           </div>

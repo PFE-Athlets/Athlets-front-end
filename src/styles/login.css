@@ -179,6 +179,12 @@
   border-color: #0b64ff;
 }
 
+.login-card input:disabled {
+  background-color: #f0f3f8 !important;
+  cursor: not-allowed;
+  color: #9aa8c7 !important;
+}
+
 .password-field {
   position: relative;
   width: 100%;
@@ -224,10 +230,27 @@
   box-shadow: 0 12px 24px rgba(0, 92, 255, 0.25);
 }
 
-.login-button:hover {
+.login-button:hover:not(:disabled) {
   background: #0051df;
 }
 
+.login-button:disabled {
+  background: #b0d4ff;
+  cursor: not-allowed;
+  box-shadow: 0 12px 24px rgba(0, 92, 255, 0.15);
+}
+
+
+.error-message {
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+  color: #856404;
+  padding: 14px 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  font-weight: 500;
+}
 footer {
   text-align: center;
   margin-top: 20px;
