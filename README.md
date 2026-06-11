@@ -1,16 +1,33 @@
-# React + Vite
+# Athlets Front End
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Application front-end développée avec React et Vite.
 
-Currently, two official plugins are available:
+## Prérequis
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Node.js installé sur votre machine
+- npm disponible dans le terminal
 
-## React Compiler
+## Lancer le projet
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. Ouvrez un terminal dans le dossier du projet.
+2. Allez à la racine du projet, là où se trouve le fichier `package.json`.
+3. Installez les dépendances :
 
-## Expanding the ESLint configuration
+```bash
+npm install
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+4. Démarrez le serveur de développement :
+
+```bash
+npm run dev
+```
+
+5. Ouvrez l’adresse affichée dans le terminal, généralement `http://localhost:5173`.
+
+## Scripts disponibles
+
+- `npm run dev` : lance l’application en mode développement
+- `npm run build` : génère la version de production
+- `npm run preview` : prévisualise la version buildée
+- `npm run lint` : vérifie le code avec ESLint
