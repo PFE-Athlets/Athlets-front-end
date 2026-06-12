@@ -113,12 +113,10 @@ export function Sidebar() {
           <SettingsIcon />
           <span>Paramètres</span>
         </NavLink>
-        <a href="#" className="sidebar-nav__item sidebar-nav__item--muted">
+        <a href="/connexion" className="sidebar-nav__item sidebar-nav__item--muted">
           <LogoutIcon />
           <span>Déconnexion</span>
         </a>
-
-        
       </div>
     </aside>
   )
