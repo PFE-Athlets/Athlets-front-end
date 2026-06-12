@@ -1,5 +1,34 @@
 import '../styles/create-athlete.css'
 
+const TEST_CATEGORIES = [
+  { value: 'FORCE', label: 'Force' },
+  { value: 'ENDURANCE', label: 'Endurance' },
+  { value: 'VITESSE', label: 'Vitesse' },
+  { value: 'AGILITE', label: 'Agilité' },
+  { value: 'SOUPLESSE', label: 'Souplesse' },
+]
+
+const MEASUREMENT_UNITS = [
+  { value: 'SECONDES', label: 'Secondes' },
+  { value: 'KILOGRAMMES', label: 'Kilogrammes' },
+  { value: 'METRES', label: 'Mètres' },
+  { value: 'REPETITIONS', label: 'Répétitions / Séries' },
+]
+
+const SPORTS = [
+  'Rugby',
+  'Athlétisme',
+  'Soccer',
+  'Basketball',
+  'Volleyball',
+  'Cross-country',
+]
+
+const BOOLEAN_OPTIONS = [
+  { value: 'non', label: 'Non' },
+  { value: 'oui', label: 'Oui' },
+]
+
 export default function CreatePhysicalTestPage() {
   return (
     <div className="create-athlete-page">
@@ -18,31 +47,41 @@ export default function CreatePhysicalTestPage() {
             <div className="form-field">
               <label>Catégorie *</label>
               <select defaultValue="">
-                <option value="" disabled>Sélectionner</option>
-                <option value="FORCE">Force</option>
-                <option value="ENDURANCE">Endurance</option>
-                <option value="VITESSE">Vitesse</option>
-                <option value="AGILITE">Agilité</option>
-                <option value="SOUPLESSE">Souplesse</option>
+                <option value="" disabled>
+                  Sélectionner
+                </option>
+
+                {TEST_CATEGORIES.map((category) => (
+                  <option key={category.value} value={category.value}>
+                    {category.label}
+                  </option>
+                ))}
               </select>
             </div>
 
             <div className="form-field">
               <label>Unité de mesure *</label>
               <select defaultValue="">
-                <option value="" disabled>Sélectionner</option>
-                <option value="SECONDES">Secondes</option>
-                <option value="KILOGRAMMES">Kilogrammes</option>
-                <option value="METRES">Mètres</option>
-                <option value="REPETITIONS">Répétitions / Séries</option>
+                <option value="" disabled>
+                  Sélectionner
+                </option>
+
+                {MEASUREMENT_UNITS.map((unit) => (
+                  <option key={unit.value} value={unit.value}>
+                    {unit.label}
+                  </option>
+                ))}
               </select>
             </div>
 
             <div className="form-field">
               <label>Preuve vidéo requise</label>
               <select defaultValue="non">
-                <option value="non">Non</option>
-                <option value="oui">Oui</option>
+                {BOOLEAN_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -51,37 +90,17 @@ export default function CreatePhysicalTestPage() {
         <section className="form-section">
           <h2>Sports ciblés</h2>
 
-          <div className="checkbox-grid">
-            <label className="checkbox-field">
-              <input type="checkbox" />
-              <span>Rugby</span>
-            </label>
+          <select defaultValue="">
+            <option value="" disabled>
+              Sélectionner
+            </option>
 
-            <label className="checkbox-field">
-              <input type="checkbox" />
-              <span>Athlétisme</span>
-            </label>
-
-            <label className="checkbox-field">
-              <input type="checkbox" />
-              <span>Soccer</span>
-            </label>
-
-            <label className="checkbox-field">
-              <input type="checkbox" />
-              <span>Basketball</span>
-            </label>
-
-            <label className="checkbox-field">
-              <input type="checkbox" />
-              <span>Volleyball</span>
-            </label>
-
-            <label className="checkbox-field">
-              <input type="checkbox" />
-              <span>Cross-country</span>
-            </label>
-          </div>
+            {TEST_CATEGORIES.map((category) => (
+              <option key={category.value} value={category.value}>
+                {category.label}
+              </option>
+            ))}
+          </select>
         </section>
 
         <section className="form-section form-section--notes">

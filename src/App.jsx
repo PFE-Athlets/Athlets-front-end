@@ -16,6 +16,8 @@ const pages = [
     path: '/athletes',
     title: 'Athlètes',
     subtitle: 'Gestion de la liste des athlètes',
+    primaryActionLabel: 'Créer un athlète',
+    primaryActionPath: '/athletes/creer',
   },
   {
     path: '/athletes/creer',
@@ -26,6 +28,8 @@ const pages = [
     path: '/tests-physiques',
     title: 'Tests physiques',
     subtitle: 'Suivi des évaluations physiques',
+    primaryActionLabel: 'Créer un test physique',
+    primaryActionPath: '/tests-physiques/creer',
   },
   {
     path: '/tests-physiques/creer',
@@ -64,26 +68,10 @@ function App() {
     notificationsCount: 2,
   }
 
-  const getPrimaryActionLabel = (path) => {
-    if (path === '/athletes') return 'Créer un athlète'
-    if (path === '/tests-physiques') return 'Créer un test physique'
-    return undefined
-  }
-
-  const handlePrimaryAction = (path) => {
-    if (path === '/athletes') {
-      navigate('/athletes/creer')
-    }
-
-    if (path === '/tests-physiques') {
-      navigate('/tests-physiques/creer')
-    }
-  }
-
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/connexion" replace />} />
-      <Route path="/connexion" element={<LoginPage />} />
+      <Route path="/" element={<Navigate to="/connection" replace />} />
+      <Route path="/connection" element={<LoginPage />} />
 
       {pages.map((page) => (
         <Route
@@ -93,8 +81,12 @@ function App() {
             <AppShell
               pageTitle={page.title}
               pageSubtitle={page.subtitle}
-              primaryActionLabel={getPrimaryActionLabel(page.path)}
-              onPrimaryAction={() => handlePrimaryAction(page.path)}
+              primaryActionLabel={page.primaryActionLabel}
+              onPrimaryAction={
+                page.primaryActionPath
+                  ? () => navigate(page.primaryActionPath)
+                  : undefined
+              }
               {...shellProps}
             >
               {page.path === '/athletes/creer' ? (
@@ -109,7 +101,7 @@ function App() {
         />
       ))}
 
-      <Route path="*" element={<Navigate to="/connexion" replace />} />
+      <Route path="*" element={<Navigate to="/connection" replace />} />
     </Routes>
   )
 }

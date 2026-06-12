@@ -29,7 +29,6 @@ export default function CreateAthletePage() {
                 <option value="" disabled>Sélectionner</option>
                 <option>Femme</option>
                 <option>Homme</option>
-                <option>Autre</option>
               </select>
             </div>
 
