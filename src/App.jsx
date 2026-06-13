@@ -3,8 +3,10 @@ import './App.css'
 import { AppShell } from './components/AppShell.jsx'
 import { PageView } from './pages/PageView.jsx'
 import LoginPage from './pages/LoginPage.jsx'
-import CreateAthletePage from './pages/CreateAthletePage.jsx'
-import CreatePhysicalTestPage from './pages/CreatePhysicalTestPage.jsx'
+import AthletePageView from './pages/athletes/AthletePageView.jsx'
+import PhysicalTestPageView from './pages/physical-test/PhysicalTestPageView.jsx'
+import CreateAthletePage from './pages/athletes/CreateAthletePage.jsx'
+import CreatePhysicalTestPage from './pages/physical-test/CreatePhysicalTestPage.jsx'
 
 const pages = [
   {
@@ -16,8 +18,6 @@ const pages = [
     path: '/athletes',
     title: 'Athlètes',
     subtitle: 'Gestion de la liste des athlètes',
-    primaryActionLabel: 'Créer un athlète',
-    primaryActionPath: '/athletes/creer',
   },
   {
     path: '/athletes/creer',
@@ -28,8 +28,6 @@ const pages = [
     path: '/tests-physiques',
     title: 'Tests physiques',
     subtitle: 'Suivi des évaluations physiques',
-    primaryActionLabel: 'Créer un test physique',
-    primaryActionPath: '/tests-physiques/creer',
   },
   {
     path: '/tests-physiques/creer',
@@ -81,15 +79,13 @@ function App() {
             <AppShell
               pageTitle={page.title}
               pageSubtitle={page.subtitle}
-              primaryActionLabel={page.primaryActionLabel}
-              onPrimaryAction={
-                page.primaryActionPath
-                  ? () => navigate(page.primaryActionPath)
-                  : undefined
-              }
               {...shellProps}
             >
-              {page.path === '/athletes/creer' ? (
+              {page.path === '/athletes' ? (
+                <AthletePageView />
+              ) : page.path === '/tests-physiques' ? (
+                <PhysicalTestPageView />
+              ) : page.path === '/athletes/creer' ? (
                 <CreateAthletePage />
               ) : page.path === '/tests-physiques/creer' ? (
                 <CreatePhysicalTestPage />

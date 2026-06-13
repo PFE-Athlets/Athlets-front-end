@@ -1,0 +1,232 @@
+.athlete-page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.athlete-page__top {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 22px;
+  align-items: center;
+}
+
+.athlete-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(190px, 1fr));
+  gap: 20px;
+}
+
+.athlete-stat-card {
+  min-height: 108px;
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.athlete-stat-card__title {
+  margin: 0 0 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-h);
+}
+
+.athlete-stat-card__value {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 700;
+  color: var(--text-h);
+}
+
+.athlete-stat-card__trend {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.athlete-stat-card__trend span {
+  color: #22c55e;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.athlete-stat-card__trend small {
+  color: #94a3b8;
+  font-size: 0.8rem;
+}
+
+.athlete-stat-card__icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.athlete-stat-card__icon--blue {
+  background: #e6edff;
+}
+
+.athlete-stat-card__icon--green {
+  background: #e7f7ea;
+}
+
+.athlete-stat-card__icon--gray {
+  background: #f1f5f9;
+}
+
+.athlete-create-button {
+  min-height: 46px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.24);
+  white-space: nowrap;
+}
+
+.athlete-create-button svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.athlete-create-button span {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.athlete-filters {
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
+  display: grid;
+  grid-template-columns: minmax(220px, 1.2fr) 160px minmax(220px, 1fr) 150px auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.athlete-search,
+.athlete-filter,
+.athlete-reset-button {
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--text-h);
+  font-size: 0.9rem;
+}
+
+.athlete-search {
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.athlete-search input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: inherit;
+  color: var(--text-h);
+}
+
+.athlete-search svg,
+.athlete-reset-button svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+  flex: none;
+}
+
+.athlete-filter {
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.athlete-filter span {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.athlete-filter select {
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text-h);
+  font: inherit;
+  cursor: pointer;
+}
+
+.athlete-reset-button {
+  padding: 0 16px;
+  font: inherit;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+@media (max-width: 1200px) {
+  .athlete-page__top {
+    grid-template-columns: 1fr;
+  }
+
+  .athlete-create-button {
+    width: fit-content;
+  }
+
+  .athlete-filters {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .athlete-search,
+  .athlete-filter--wide,
+  .athlete-reset-button {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 900px) {
+  .athlete-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .athlete-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .athlete-search,
+  .athlete-filter--wide,
+  .athlete-reset-button {
+    grid-column: auto;
+  }
+}

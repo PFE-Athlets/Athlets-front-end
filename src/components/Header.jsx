@@ -29,29 +29,16 @@ export function Header({
   activeUserName,
   activeUserRole,
   notificationsCount = 0,
-  primaryActionLabel,
-  onPrimaryAction,
 }) {
   return (
     <header className="app-header">
 
       <div className="app-header__title-block">
         <div>
-          <p className="page-kicker">{activeUserRole}</p>
           <h1>{pageTitle}</h1>
-          <p className="page-subtitle">{pageSubtitle}</p>
         </div>
 
         <div className="header-controls">
-          <button type="button" className="date-filter" aria-label="Changer la période">
-            1 - 31 mai 2024
-          </button>
-
-          <label className="search-field" aria-label="Rechercher">
-            <SearchIcon />
-            <input type="search" placeholder="Rechercher..." />
-          </label>
-
           <button type="button" className="icon-button" aria-label={`Notifications ${notificationsCount}`}>
             <BellIcon />
             {notificationsCount > 0 ? <span className="badge">{notificationsCount}</span> : null}
@@ -67,13 +54,6 @@ export function Header({
             </div>
             <span>{activeUserName}</span>
           </div>
-
-          {primaryActionLabel ? (
-            <button type="button" className="primary-action" onClick={onPrimaryAction}>
-              <PlusIcon />
-              <span>{primaryActionLabel}</span>
-            </button>
-          ) : null}
         </div>
       </div>
     </header>

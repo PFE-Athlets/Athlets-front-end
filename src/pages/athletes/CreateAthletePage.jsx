@@ -1,4 +1,4 @@
-import '../styles/create-athlete.css'
+import './styles/create-athlete.css'
 
 export default function CreateAthletePage() {
   return (
