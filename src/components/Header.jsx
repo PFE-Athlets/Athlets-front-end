@@ -1,4 +1,4 @@
-import { BellIcon } from './Icons'
+import { BellIcon, MenuIcon } from './Icons'
 
 export function Header({
   pageTitle,
@@ -6,12 +6,20 @@ export function Header({
   activeUserName,
   activeUserRole,
   notificationsCount = 0,
+  onMenuClick,
 }) {
   return (
     <header className="app-header">
-
       <div className="app-header__title-block">
-        <div>
+        <div className="header-title-row">
+          <button
+            type="button"
+            className="hamburger-btn"
+            onClick={onMenuClick}
+            aria-label="Ouvrir le menu"
+          >
+            <MenuIcon />
+          </button>
           <h1>{pageTitle}</h1>
         </div>
 
@@ -29,7 +37,7 @@ export function Header({
                 .map((part) => part[0])
                 .join('')}
             </div>
-            <span>{activeUserName}</span>
+            <span className="profile-chip__name">{activeUserName}</span>
           </div>
         </div>
       </div>

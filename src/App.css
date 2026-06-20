@@ -318,6 +318,8 @@
 .avatar {
   width: 34px;
   height: 34px;
+  min-width: 34px;
+  min-height: 34px;
   border-radius: 50%;
   background: linear-gradient(135deg, #38bdf8, #1d4ed8);
   color: #fff;
@@ -325,6 +327,8 @@
   place-items: center;
   font-size: 0.8rem;
   font-weight: 700;
+  flex-shrink: 0;
+  line-height: 1;
 }
 
 .primary-action {
@@ -380,42 +384,112 @@
   }
 }
 
+/* ── Overlay mobile ── */
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+}
+
+/* ── Bouton fermeture sidebar (mobile seulement) ── */
+.sidebar-close-btn {
+  display: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 8px;
+  color: var(--text);
+  margin-left: auto;
+}
+
+.sidebar-close-btn svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+/* ── Bouton hamburger (caché sur desktop) ── */
+.hamburger-btn {
+  display: none;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--text-h);
+  cursor: pointer;
+  padding: 0;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+  flex-shrink: 0;
+}
+
+.hamburger-btn svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+  display: block;
+}
+
+.header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 @media (max-width: 1024px) {
   .app-shell {
     grid-template-columns: 1fr;
   }
 
+  /* Sidebar devient un drawer fixe */
   .app-sidebar {
-    position: relative;
-    height: auto;
-    border-right: 0;
-    border-bottom: 1px solid var(--border);
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 50;
+    height: 100svh;
+    border-right: 1px solid var(--border);
+    transform: translateX(-100%);
+    transition: transform 0.28s ease;
+  }
+
+  .app-sidebar.is-open {
+    transform: translateX(0);
+  }
+
+  .sidebar-close-btn {
+    display: grid;
+  }
+
+  .hamburger-btn {
+    display: grid;
   }
 
   .app-header {
-    padding-inline: 18px;
-  }
-
-  .app-header__title-block,
-  .dashboard-placeholder {
-    flex-direction: column;
-    align-items: flex-start;
+    padding-inline: 16px;
   }
 
   .app-header h1 {
-    font-size: 30px;
-  }
-
-  .search-field {
-    min-width: 100%;
-    box-sizing: border-box;
+    font-size: 26px;
   }
 
   .app-shell__content {
-    padding-inline: 18px;
+    padding-inline: 16px;
   }
 
-  .dashboard-placeholder {
-    padding: 22px;
+  /* Sur mobile : effacer le pill, montrer seulement l'avatar circulaire */
+  .profile-chip {
+    background: transparent;
+    border: none;
+    padding: 0;
+    gap: 0;
+  }
+
+  .profile-chip__name {
+    display: none;
   }
 }

@@ -13,7 +13,7 @@
 
 .stat-cards {
   display: grid;
-  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 24px;
 }
 
@@ -183,28 +183,33 @@
   white-space: nowrap;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 640px) {
   .list-page__top {
     grid-template-columns: 1fr;
   }
 
   .create-btn {
-    width: fit-content;
+    justify-self: stretch;
+    justify-content: center;
   }
-}
 
-@media (max-width: 900px) {
   .stat-cards {
     grid-template-columns: 1fr;
   }
 
-  .list-search {
+  .list-search,
+  .list-filter,
+  .list-reset-btn {
     width: 100%;
   }
 
   .list-search input {
     flex: 1;
     field-sizing: auto;
+  }
+
+  .list-filter select {
+    flex: 1;
   }
 }
 

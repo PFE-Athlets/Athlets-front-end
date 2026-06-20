@@ -9,6 +9,7 @@ import {
   FileIcon,
   SettingsIcon,
   LogoutIcon,
+  XIcon,
 } from './Icons'
 
 const navigationItems = [
@@ -20,9 +21,9 @@ const navigationItems = [
   { label: 'Rapports', icon: FileIcon, to: '/rapports' },
 ]
 
-export function Sidebar() {
+export function Sidebar({ isOpen, onClose }) {
   return (
-    <aside className="app-sidebar">
+    <aside className={`app-sidebar${isOpen ? ' is-open' : ''}`}>
       <div>
         <div className="app-sidebar__brand">
           <div className="sidebar-logo" aria-hidden="true">
@@ -32,6 +33,14 @@ export function Sidebar() {
             <p className="sidebar-title">Athlets</p>
             <p className="sidebar-subtitle">Gestion sportive</p>
           </div>
+          <button
+            type="button"
+            className="sidebar-close-btn"
+            onClick={onClose}
+            aria-label="Fermer le menu"
+          >
+            <XIcon />
+          </button>
         </div>
 
         <nav className="sidebar-nav" aria-label="Navigation principale">
@@ -42,6 +51,7 @@ export function Sidebar() {
               <NavLink
                 key={item.label}
                 to={item.to}
+                onClick={onClose}
                 className={({ isActive }) =>
                   `sidebar-nav__item${isActive ? ' is-active' : ''}`
                 }
@@ -55,7 +65,11 @@ export function Sidebar() {
       </div>
 
       <div className="sidebar-footer">
-        <NavLink to="/parametres" className="sidebar-nav__item sidebar-nav__item--muted">
+        <NavLink
+          to="/parametres"
+          onClick={onClose}
+          className="sidebar-nav__item sidebar-nav__item--muted"
+        >
           <SettingsIcon />
           <span>Paramètres</span>
         </NavLink>
