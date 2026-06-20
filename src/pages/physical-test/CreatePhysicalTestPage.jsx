@@ -16,12 +16,12 @@ const MEASUREMENT_UNITS = [
 ]
 
 const SPORTS = [
-  'Rugby',
-  'Athlétisme',
-  'Soccer',
-  'Basketball',
-  'Volleyball',
-  'Cross-country',
+  { value: 'Rugby', label: 'Rugby' },
+  { value: 'Athlétisme', label: 'Athlétisme' },
+  { value: 'Soccer', label: 'Soccer' },
+  { value: 'Basketball', label: 'Basketball' },
+  { value: 'Volleyball', label: 'Volleyball' },
+  { value: 'Cross-country', label: 'Cross-country' },
 ]
 
 const BOOLEAN_OPTIONS = [
@@ -88,17 +88,17 @@ export default function CreatePhysicalTestPage() {
         <section className="form-section">
           <h2>Sports ciblés</h2>
 
-          <select defaultValue="">
-            <option value="" disabled>
-              Sélectionner
-            </option>
-
-            {TEST_CATEGORIES.map((category) => (
-              <option key={category.value} value={category.value}>
-                {category.label}
-              </option>
-            ))}
-          </select>
+          <div className="form-grid">
+            <div className="form-field">
+              <label>Sport *</label>
+              <select defaultValue="">
+                <option value="" disabled>Sélectionner</option>
+                {SPORTS.map((sport) => (
+                  <option key={sport.value} value={sport.value}>{sport.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
         </section>
 
         <section className="form-section form-section--notes">

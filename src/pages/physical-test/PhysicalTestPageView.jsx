@@ -21,7 +21,7 @@ const physicalTestStats = [
     variant: 'green',
   },
   {
-    title: 'Tests physiques non actifs',
+    title: 'Tests physiques inactifs',
     value: 15,
     trend: '7,1%',
     comparison: 'vs avr. 2024',
