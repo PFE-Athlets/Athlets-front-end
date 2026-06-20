@@ -1,4 +1,4 @@
-import './styles/create-physical-test.css'
+import '../../styles/page-form.css'
 
 const TEST_CATEGORIES = [
   { value: 'FORCE', label: 'Force' },
@@ -31,8 +31,8 @@ const BOOLEAN_OPTIONS = [
 
 export default function CreatePhysicalTestPage() {
   return (
-    <div className="create-athlete-page">
-      <form className="athlete-form">
+    <div className="create-page">
+      <form className="entity-form">
         <section className="form-section">
           <h2>Informations générales</h2>
 

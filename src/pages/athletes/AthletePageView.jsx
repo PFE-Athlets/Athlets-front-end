@@ -1,30 +1,7 @@
-import './styles/athlete-page-view.css'
+import { useState } from 'react'
+import '../../styles/page-view.css'
 import { Link } from 'react-router-dom'
-
-function PlusIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="M11 5h2v14h-2z" />
-      <path d="M5 11h14v2H5z" />
-    </svg>
-  )
-}
-
-function SearchIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="M10.5 4a6.5 6.5 0 1 0 4.13 11.53l4.42 4.42 1.41-1.41-4.42-4.42A6.5 6.5 0 0 0 10.5 4Zm0 2a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9Z" />
-    </svg>
-  )
-}
-
-function ResetIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="M12 5a7 7 0 1 1-6.32 4H3l3.5-3.5L10 9H7.8A5 5 0 1 0 12 7V5Z" />
-    </svg>
-  )
-}
+import { PlusIcon, SearchIcon, ResetIcon } from '../../components/Icons'
 
 const athleteStats = [
   {
@@ -53,90 +30,125 @@ const athleteStats = [
   },
 ]
 
+const SPORT_OPTIONS = [
+  { value: 'all', label: 'Tous' },
+  { value: 'athletisme', label: 'Athlétisme' },
+  { value: 'rugby', label: 'Rugby' },
+  { value: 'volley', label: 'Volley' },
+  { value: 'badminton', label: 'Badminton' },
+]
+
+const POSITION_OPTIONS = [
+  { value: 'all', label: 'Toutes' },
+  { value: 'sprint', label: 'Sprint 100 m' },
+  { value: 'longue-distance', label: 'Longue distance' },
+  { value: 'demi-melee', label: 'Demi de mêlée' },
+]
+
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'Tous' },
+  { value: 'active', label: 'Actif' },
+  { value: 'inactive', label: 'Non actif' },
+]
+
+const INITIAL_FILTERS = { search: '', sport: 'all', position: 'all', status: 'all' }
+
 export default function AthletePageView() {
+  // TODO: remplacer par un appel API (ex: useEffect + athleteService.getAll())
+  const [athletes, setAthletes] = useState([])
+  const [filters, setFilters] = useState(INITIAL_FILTERS)
+
+  const updateFilter = (key, value) => setFilters((prev) => ({ ...prev, [key]: value }))
+  const resetFilters = () => setFilters(INITIAL_FILTERS)
+
+  const filteredAthletes = athletes.filter((athlete) => {
+    const fullName = `${athlete.prenom} ${athlete.nom}`.toLowerCase()
+    const matchesSearch =
+      filters.search === '' || fullName.includes(filters.search.toLowerCase())
+    const matchesSport =
+      filters.sport === 'all' || athlete.sport === filters.sport
+    const matchesPosition =
+      filters.position === 'all' || athlete.position === filters.position
+    const matchesStatus =
+      filters.status === 'all' || athlete.statut === filters.status
+    return matchesSearch && matchesSport && matchesPosition && matchesStatus
+  })
+
   return (
-    <section className="athlete-page">
+    <section className="list-page">
 
-      {/** Zone des cartes et création d'un athlète*/}
-      <div className="athlete-page__top">
-        <div className="athlete-stats">
+      {/** Zone des cartes et création d'un athlète */}
+      <div className="list-page__top">
+        <div className="stat-cards">
           {athleteStats.map((stat) => (
-            <article
-              key={stat.title}
-              className="athlete-stat-card"
-            >
+            <article key={stat.title} className="stat-card">
               <div>
-                <p className="athlete-stat-card__title">
-                  {stat.title}
-                </p>
-
-                <strong className="athlete-stat-card__value">
-                  {stat.value}
-                </strong>
-
-                <div className="athlete-stat-card__trend">
+                <p className="stat-card__title">{stat.title}</p>
+                <strong className="stat-card__value">{stat.value}</strong>
+                <div className="stat-card__trend">
                   <span>▲ {stat.trend}</span>
                   <small>{stat.comparison}</small>
                 </div>
               </div>
-
-              <div
-                className={`athlete-stat-card__icon athlete-stat-card__icon--${stat.variant}`}
-              >
+              <div className={`stat-card__icon stat-card__icon--${stat.variant}`}>
                 {stat.icon}
               </div>
             </article>
           ))}
         </div>
 
-        <Link to="/athletes/creer" className="athlete-create-button">
+        <Link to="/athletes/creer" className="create-btn">
           <PlusIcon />
           <span>Créer un athlète</span>
         </Link>
       </div>
 
       {/** Zone de filtre */}
-      <div className="athlete-filters">
-        <label className="athlete-search">
-          <input type="search" placeholder="Rechercher un athlète..." />
+      <div className="list-filters">
+        <label className="list-search">
+          <input
+            type="search"
+            placeholder="Rechercher un athlète..."
+            value={filters.search}
+            onChange={(e) => updateFilter('search', e.target.value)}
+          />
           <SearchIcon />
         </label>
 
-        <label className="athlete-filter">
+        <div className="list-filter">
           <span>Sport</span>
-          <select defaultValue="all">
-            <option value="all">Tous</option>
-            <option value="athletisme">Athlétisme</option>
-            <option value="rugby">Rugby</option>
-            <option value="volley">Volley</option>
-            <option value="badminton">Badminton</option>
+          <select value={filters.sport} onChange={(e) => updateFilter('sport', e.target.value)}>
+            {SPORT_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
           </select>
-        </label>
+        </div>
 
-        <label className="athlete-filter athlete-filter--wide">
-          <span>Position / spécialisation</span>
-          <select defaultValue="all">
-            <option value="all">Toutes</option>
-            <option value="sprint">Sprint 100 m</option>
-            <option value="longue-distance">Longue distance</option>
-            <option value="demi-melee">Demi de mêlée</option>
+        <div className="list-filter list-filter--wide">
+          <span>Spécialisation</span>
+          <select value={filters.position} onChange={(e) => updateFilter('position', e.target.value)}>
+            {POSITION_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
           </select>
-        </label>
+        </div>
 
-        <label className="athlete-filter">
+        <div className="list-filter">
           <span>Statut</span>
-          <select defaultValue="all">
-            <option value="all">Tous</option>
-            <option value="active">Actif</option>
-            <option value="inactive">Non actif</option>
+          <select value={filters.status} onChange={(e) => updateFilter('status', e.target.value)}>
+            {STATUS_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
           </select>
-        </label>
+        </div>
 
-        <button type="button" className="athlete-reset-button">
+        <button type="button" className="list-reset-btn" onClick={resetFilters}>
           <ResetIcon />
           <span>Réinitialiser</span>
         </button>
       </div>
+
+      {/** TODO: afficher filteredAthletes dans un tableau */}
     </section>
   )
 }

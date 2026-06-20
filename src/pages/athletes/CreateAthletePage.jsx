@@ -1,9 +1,9 @@
-import './styles/create-athlete.css'
+import '../../styles/page-form.css'
 
 export default function CreateAthletePage() {
   return (
-    <div className="create-athlete-page">
-      <form className="athlete-form">
+    <div className="create-page">
+      <form className="entity-form">
         <section className="form-section">
           <h2>Informations personnelles</h2>
 

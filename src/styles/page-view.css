@@ -1,92 +1,84 @@
-.athlete-page {
+.list-page {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 24px;
 }
 
-.athlete-page__top {
+.list-page__top {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 22px;
+  gap: 24px;
   align-items: center;
 }
 
-.athlete-stats {
+.stat-cards {
   display: grid;
-  grid-template-columns: repeat(3, minmax(190px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  gap: 24px;
 }
 
-.athlete-stat-card {
-  min-height: 108px;
-  padding: 18px 20px;
-  border: 1px solid var(--border);
-  border-radius: 16px;
+.stat-card {
   background: #fff;
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 20px 22px;
+  min-height: 108px;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
 }
 
-.athlete-stat-card__title {
+.stat-card__title {
   margin: 0 0 10px;
   font-size: 0.9rem;
   font-weight: 700;
   color: var(--text-h);
 }
 
-.athlete-stat-card__value {
+.stat-card__value {
   display: block;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   font-size: 30px;
   line-height: 1;
   font-weight: 700;
   color: var(--text-h);
 }
 
-.athlete-stat-card__trend {
+.stat-card__trend {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.athlete-stat-card__trend span {
+.stat-card__trend span {
   color: #22c55e;
   font-size: 0.8rem;
   font-weight: 700;
 }
 
-.athlete-stat-card__trend small {
+.stat-card__trend small {
   color: #94a3b8;
   font-size: 0.8rem;
 }
 
-.athlete-stat-card__icon {
-  width: 46px;
-  height: 46px;
+.stat-card__icon {
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  font-size: 0.95rem;
+  font-size: 1rem;
   flex-shrink: 0;
 }
 
-.athlete-stat-card__icon--blue {
-  background: #e6edff;
-}
+.stat-card__icon--blue  { background: #e6edff; }
+.stat-card__icon--green { background: #e7f7ea; }
+.stat-card__icon--gray  { background: #f1f5f9; }
 
-.athlete-stat-card__icon--green {
-  background: #e7f7ea;
-}
-
-.athlete-stat-card__icon--gray {
-  background: #f1f5f9;
-}
-
-.athlete-create-button {
-  min-height: 46px;
-  padding: 0 22px;
+.create-btn {
+  min-height: 48px;
+  padding: 0 24px;
   border: 0;
   border-radius: 14px;
   background: linear-gradient(135deg, #3b82f6, #2563eb);
@@ -97,36 +89,36 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.24);
+  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.25);
   white-space: nowrap;
 }
 
-.athlete-create-button svg {
-  width: 18px;
-  height: 18px;
+.create-btn svg {
+  width: 20px;
+  height: 20px;
   fill: currentColor;
 }
 
-.athlete-create-button span {
+.create-btn span {
   font-size: 0.95rem;
   line-height: 1;
 }
 
-.athlete-filters {
-  padding: 16px 18px;
+.list-filters {
+  padding: 12px 16px;
   border: 1px solid var(--border);
   border-radius: 18px;
   background: #fff;
   box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
-  display: grid;
-  grid-template-columns: minmax(220px, 1.2fr) 160px minmax(220px, 1fr) 150px auto;
-  gap: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
   align-items: center;
 }
 
-.athlete-search,
-.athlete-filter,
-.athlete-reset-button {
+.list-search,
+.list-filter,
+.list-reset-btn {
   min-height: 44px;
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -135,45 +127,43 @@
   font-size: 0.9rem;
 }
 
-.athlete-search {
+.list-search {
   padding: 0 14px;
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.athlete-search input {
-  width: 100%;
+.list-search input {
   border: 0;
   outline: 0;
   background: transparent;
   font: inherit;
   color: var(--text-h);
+  field-sizing: content;
 }
 
-.athlete-search svg,
-.athlete-reset-button svg {
+.list-search svg,
+.list-reset-btn svg {
   width: 18px;
   height: 18px;
   fill: currentColor;
   flex: none;
 }
 
-.athlete-filter {
+.list-filter {
   padding: 0 12px;
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.athlete-filter span {
+.list-filter span {
   font-weight: 700;
   white-space: nowrap;
 }
 
-.athlete-filter select {
-  min-width: 0;
-  width: 100%;
+.list-filter select {
   border: 0;
   outline: 0;
   background: transparent;
@@ -182,7 +172,7 @@
   cursor: pointer;
 }
 
-.athlete-reset-button {
+.list-reset-btn {
   padding: 0 16px;
   font: inherit;
   font-weight: 700;
@@ -194,39 +184,27 @@
 }
 
 @media (max-width: 1200px) {
-  .athlete-page__top {
+  .list-page__top {
     grid-template-columns: 1fr;
   }
 
-  .athlete-create-button {
+  .create-btn {
     width: fit-content;
-  }
-
-  .athlete-filters {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .athlete-search,
-  .athlete-filter--wide,
-  .athlete-reset-button {
-    grid-column: span 2;
   }
 }
 
 @media (max-width: 900px) {
-  .athlete-stats {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 700px) {
-  .athlete-filters {
+  .stat-cards {
     grid-template-columns: 1fr;
   }
 
-  .athlete-search,
-  .athlete-filter--wide,
-  .athlete-reset-button {
-    grid-column: auto;
+  .list-search {
+    width: 100%;
+  }
+
+  .list-search input {
+    flex: 1;
+    field-sizing: auto;
   }
 }
+

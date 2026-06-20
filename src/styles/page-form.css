@@ -1,14 +1,8 @@
-.create-athlete-page {
+.create-page {
   color-scheme: light;
 }
 
-.create-athlete-page h1 {
-  margin-bottom: 24px;
-  color: #071c52;
-  font-size: 28px;
-}
-
-.athlete-form {
+.entity-form {
   background: #ffffff;
   border: 1px solid #e2e8f5;
   border-radius: 18px;
@@ -43,6 +37,10 @@
   gap: 22px 32px;
 }
 
+.form-grid--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .form-field {
   display: flex;
   flex-direction: column;
@@ -69,54 +67,13 @@
 
 .form-field textarea {
   min-height: 100px;
+  height: auto;
   padding: 14px;
   resize: vertical;
 }
 
 .full-width {
   grid-column: 1 / -1;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 16px;
-  padding-top: 24px;
-}
-
-.btn-secondary,
-.btn-primary {
-  height: 44px;
-  min-width: 140px;
-  border-radius: 8px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.btn-secondary {
-  background: white;
-  color: #005cff;
-  border: 1px solid #005cff;
-}
-
-.btn-primary {
-  background: #005cff;
-  color: white;
-  border: none;
-}
-
-@media (max-width: 900px) {
-  .form-section {
-    grid-template-columns: 1fr;
-  }
-
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.form-grid--three {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .form-section--notes {
@@ -162,7 +119,43 @@
   margin: 0 0 8px;
 }
 
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  padding-top: 24px;
+}
+
+.btn-secondary,
+.btn-primary {
+  height: 44px;
+  min-width: 140px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  background: white;
+  color: #005cff;
+  border: 1px solid #005cff;
+}
+
+.btn-primary {
+  background: #005cff;
+  color: white;
+  border: none;
+}
+
 @media (max-width: 900px) {
+  .form-section {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
   .checkbox-grid {
     grid-template-columns: 1fr;
   }
