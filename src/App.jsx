@@ -66,6 +66,22 @@ function App() {
     notificationsCount: 2,
   }
 
+  const getPrimaryActionLabel = (path) => {
+    if (path === '/athletes') return 'Créer un athlète'
+    if (path === '/tests-physiques') return 'Créer un test physique'
+    return undefined
+  }
+
+  const handlePrimaryAction = (path) => {
+    if (path === '/athletes') {
+      navigate('/athletes/creer')
+    }
+
+    if (path === '/tests-physiques') {
+      navigate('/tests-physiques/creer')
+    }
+  }
+
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/connection" replace />} />
