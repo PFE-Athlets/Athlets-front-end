@@ -18,6 +18,13 @@ const pages = [
     path: '/athletes',
     title: 'Athlètes',
     subtitle: 'Gestion de la liste des athlètes',
+    primaryActionLabel: 'Créer un athlète',
+    primaryActionPath: '/athletes/creer',
+  },
+  {
+    path: '/athletes/creer',
+    title: 'Créer un athlète',
+    subtitle: 'Ajout d’un nouvel athlète',
   },
   {
     path: '/athletes/creer',
@@ -28,6 +35,13 @@ const pages = [
     path: '/tests-physiques',
     title: 'Tests physiques',
     subtitle: 'Suivi des évaluations physiques',
+    primaryActionLabel: 'Créer un test physique',
+    primaryActionPath: '/tests-physiques/creer',
+  },
+  {
+    path: '/tests-physiques/creer',
+    title: 'Créer un test physique',
+    subtitle: 'Ajout d’un nouveau test physique',
   },
   {
     path: '/tests-physiques/creer',
