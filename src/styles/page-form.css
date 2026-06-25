@@ -1,0 +1,162 @@
+.create-page {
+  color-scheme: light;
+}
+
+.entity-form {
+  background: #ffffff;
+  border: 1px solid #e2e8f5;
+  border-radius: 18px;
+  padding: 28px;
+  box-shadow: 0 16px 40px rgba(8, 34, 78, 0.06);
+}
+
+.form-section {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 32px;
+  padding: 24px 0;
+  border-bottom: 1px solid #e2e8f5;
+}
+
+.form-section:first-child {
+  padding-top: 0;
+}
+
+.form-section:last-of-type {
+  border-bottom: none;
+}
+
+.form-section h2 {
+  color: #071c52;
+  font-size: 18px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px 32px;
+}
+
+.form-grid--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-field label {
+  margin-bottom: 8px;
+  color: #24396f;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+  height: 44px;
+  border: 1px solid #d9e2f2;
+  border-radius: 8px;
+  padding: 0 14px;
+  background: #ffffff;
+  color: #071c52;
+  font-size: 14px;
+}
+
+.form-field textarea {
+  min-height: 100px;
+  height: auto;
+  padding: 14px;
+  resize: vertical;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-section--notes {
+  align-items: start;
+}
+
+.form-section--notes .form-field {
+  width: 100%;
+}
+
+.form-section--notes textarea {
+  width: 100%;
+  min-height: 86px;
+  box-sizing: border-box;
+}
+
+.checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px 24px;
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #24396f;
+  font-weight: 600;
+}
+
+.checkbox-field input {
+  width: 16px;
+  height: 16px;
+}
+
+.readonly-info {
+  color: #53699f;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.readonly-info p {
+  margin: 0 0 8px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  padding-top: 24px;
+}
+
+.btn-secondary,
+.btn-primary {
+  height: 44px;
+  min-width: 140px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  background: white;
+  color: #005cff;
+  border: 1px solid #005cff;
+}
+
+.btn-primary {
+  background: #005cff;
+  color: white;
+  border: none;
+}
+
+@media (max-width: 900px) {
+  .form-section {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .checkbox-grid {
+    grid-template-columns: 1fr;
+  }
+}

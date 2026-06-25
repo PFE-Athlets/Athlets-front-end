@@ -3,8 +3,10 @@ import './App.css'
 import { AppShell } from './components/AppShell.jsx'
 import { PageView } from './pages/PageView.jsx'
 import LoginPage from './pages/LoginPage.jsx'
-import CreateAthletePage from './pages/CreateAthletePage.jsx'
-import CreatePhysicalTestPage from './pages/CreatePhysicalTestPage.jsx'
+import AthletePageView from './pages/athletes/AthletePageView.jsx'
+import PhysicalTestPageView from './pages/physical-test/PhysicalTestPageView.jsx'
+import CreateAthletePage from './pages/athletes/CreateAthletePage.jsx'
+import CreatePhysicalTestPage from './pages/physical-test/CreatePhysicalTestPage.jsx'
 
 const pages = [
   {
@@ -82,8 +84,8 @@ function App() {
 
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/connexion" replace />} />
-      <Route path="/connexion" element={<LoginPage />} />
+      <Route path="/" element={<Navigate to="/connection" replace />} />
+      <Route path="/connection" element={<LoginPage />} />
 
       {pages.map((page) => (
         <Route
@@ -93,11 +95,13 @@ function App() {
             <AppShell
               pageTitle={page.title}
               pageSubtitle={page.subtitle}
-              primaryActionLabel={getPrimaryActionLabel(page.path)}
-              onPrimaryAction={() => handlePrimaryAction(page.path)}
               {...shellProps}
             >
-              {page.path === '/athletes/creer' ? (
+              {page.path === '/athletes' ? (
+                <AthletePageView />
+              ) : page.path === '/tests-physiques' ? (
+                <PhysicalTestPageView />
+              ) : page.path === '/athletes/creer' ? (
                 <CreateAthletePage />
               ) : page.path === '/tests-physiques/creer' ? (
                 <CreatePhysicalTestPage />
@@ -109,7 +113,7 @@ function App() {
         />
       ))}
 
-      <Route path="*" element={<Navigate to="/connexion" replace />} />
+      <Route path="*" element={<Navigate to="/connection" replace />} />
     </Routes>
   )
 }
