@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react'
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import './App.css'
 import { AppShell } from './components/AppShell.jsx'
@@ -70,13 +71,32 @@ const pages = [
   },
 ]
 
+const ROLES = ['Coach', 'Kinésiologue', 'Athlète', 'Administrateur']
+
+const HOME_BY_ROLE = {
+  'Administrateur': '/tableau-de-bord',
+  'Coach': '/athletes',
+  'Kinésiologue': '/resultats',
+  'Athlète': '/resultats',
+}
+
 function App() {
   const navigate = useNavigate()
+  const [activeUserRole, setActiveUserRole] = useState('Coach')
+  const isFirstRender = useRef(true)
 
-  // hardcoded user info for demo purposes
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
+    navigate(HOME_BY_ROLE[activeUserRole] ?? '/tableau-de-bord')
+  }, [activeUserRole])
+
   const shellProps = {
     activeUserName: 'Camille Tremblay',
-    activeUserRole: 'Coach',
+    activeUserRole,
+    onRoleChange: setActiveUserRole,
     notificationsCount: 2,
   }
 

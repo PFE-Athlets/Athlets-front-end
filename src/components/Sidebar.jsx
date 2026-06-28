@@ -12,16 +12,17 @@ import {
   XIcon,
 } from './Icons'
 
-const navigationItems = [
-  { label: 'Tableau de bord', icon: HomeIcon, to: '/tableau-de-bord' },
-  { label: 'Athlètes', icon: UsersIcon, to: '/athletes' },
-  { label: 'Tests physiques', icon: PulseIcon, to: '/tests-physiques' },
-  { label: 'Résultats', icon: ChartIcon, to: '/resultats' },
-  { label: 'Séances', icon: CalendarIcon, to: '/seances' },
-  { label: 'Rapports', icon: FileIcon, to: '/rapports' },
+const ALL_NAV_ITEMS = [
+  { label: 'Tableau de bord', icon: HomeIcon, to: '/tableau-de-bord', roles: ['Coach', 'Kinésiologue', 'Administrateur'] },
+  { label: 'Athlètes', icon: UsersIcon, to: '/athletes', roles: ['Coach', 'Kinésiologue', 'Administrateur'] },
+  { label: 'Tests physiques', icon: PulseIcon, to: '/tests-physiques', roles: ['Coach', 'Kinésiologue', 'Administrateur'] },
+  { label: 'Résultats', icon: ChartIcon, to: '/resultats', roles: ['Coach', 'Kinésiologue', 'Administrateur', 'Athlète'] },
+  { label: 'Séances', icon: CalendarIcon, to: '/seances', roles: ['Coach', 'Kinésiologue', 'Administrateur', 'Athlète'] },
+  { label: 'Rapports', icon: FileIcon, to: '/rapports', roles: ['Coach', 'Kinésiologue', 'Administrateur', 'Athlète'] },
 ]
 
-export function Sidebar({ isOpen, onClose }) {
+export function Sidebar({ isOpen, onClose, activeUserRole }) {
+  const navigationItems = ALL_NAV_ITEMS.filter((item) => item.roles.includes(activeUserRole))
   return (
     <aside className={`app-sidebar${isOpen ? ' is-open' : ''}`}>
       <div>

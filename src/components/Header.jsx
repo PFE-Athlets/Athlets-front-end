@@ -1,10 +1,13 @@
 import { BellIcon, MenuIcon } from './Icons'
 
+const ROLES = ['Coach', 'Kinésiologue', 'Athlète', 'Administrateur']
+
 export function Header({
   pageTitle,
   pageSubtitle,
   activeUserName,
   activeUserRole,
+  onRoleChange,
   notificationsCount = 0,
   onMenuClick,
 }) {
@@ -24,6 +27,15 @@ export function Header({
         </div>
 
         <div className="header-controls">
+          <label className="dev-role-toggle" title="Toggle de développement — simuler un rôle">
+            <span>DEV</span>
+            <select value={activeUserRole} onChange={(e) => onRoleChange(e.target.value)}>
+              {ROLES.map((role) => (
+                <option key={role} value={role}>{role}</option>
+              ))}
+            </select>
+          </label>
+
           <button type="button" className="icon-button" aria-label={`Notifications ${notificationsCount}`}>
             <BellIcon />
             {notificationsCount > 0 ? <span className="badge">{notificationsCount}</span> : null}
