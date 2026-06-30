@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { useAuthStore } from '../stores/authStore'
 import logo from '../assets/283808481.png'
 import {
   HomeIcon,
@@ -12,17 +13,29 @@ import {
   XIcon,
 } from './Icons'
 
+// Admin (1), Coach/Kin (2), Athlete (3)
 const ALL_NAV_ITEMS = [
-  { label: 'Tableau de bord', icon: HomeIcon, to: '/tableau-de-bord', roles: ['Coach', 'Kinésiologue', 'Administrateur'] },
-  { label: 'Athlètes', icon: UsersIcon, to: '/athletes', roles: ['Coach', 'Kinésiologue', 'Administrateur'] },
-  { label: 'Tests physiques', icon: PulseIcon, to: '/tests-physiques', roles: ['Coach', 'Kinésiologue', 'Administrateur'] },
-  { label: 'Résultats', icon: ChartIcon, to: '/resultats', roles: ['Coach', 'Kinésiologue', 'Administrateur', 'Athlète'] },
-  { label: 'Séances', icon: CalendarIcon, to: '/seances', roles: ['Coach', 'Kinésiologue', 'Administrateur', 'Athlète'] },
-  { label: 'Rapports', icon: FileIcon, to: '/rapports', roles: ['Coach', 'Kinésiologue', 'Administrateur', 'Athlète'] },
+  { label: 'Tableau de bord', icon: HomeIcon, to: '/tableau-de-bord', allowedLevels: [1, 2] },
+  { label: 'Athlètes', icon: UsersIcon, to: '/athletes', allowedLevels: [1, 2] },
+  { label: 'Tests physiques', icon: PulseIcon, to: '/tests-physiques', allowedLevels: [1, 2] },
+  { label: 'Résultats', icon: ChartIcon, to: '/resultats', allowedLevels: [1, 2, 3] },
+  { label: 'Séances', icon: CalendarIcon, to: '/seances', allowedLevels: [1, 2, 3] },
+  { label: 'Rapports', icon: FileIcon, to: '/rapports', allowedLevels: [1, 2, 3] },
 ]
 
-export function Sidebar({ isOpen, onClose, activeUserRole }) {
-  const navigationItems = ALL_NAV_ITEMS.filter((item) => item.roles.includes(activeUserRole))
+export function Sidebar({ isOpen, onClose }) {
+  const user = useAuthStore((state) => state.user)
+  const logout = useAuthStore((state) => state.logout)
+
+  const navigationItems = ALL_NAV_ITEMS.filter((item) => 
+    user && item.allowedLevels.includes(user.accessLevel)
+  )
+
+  const handleLogout = async (e) => {
+    e.preventDefault()
+    await logout()
+  }
+
   return (
     <aside className={`app-sidebar${isOpen ? ' is-open' : ''}`}>
       <div>
@@ -33,6 +46,11 @@ export function Sidebar({ isOpen, onClose, activeUserRole }) {
           <div>
             <p className="sidebar-title">Athlets</p>
             <p className="sidebar-subtitle">Gestion sportive</p>
+            {user && (
+              <p className="text-xs text-gray-400 mt-1">
+                {user.firstName} {user.lastName}
+              </p>
+            )}
           </div>
           <button
             type="button"
@@ -74,10 +92,24 @@ export function Sidebar({ isOpen, onClose, activeUserRole }) {
           <SettingsIcon />
           <span>Paramètres</span>
         </NavLink>
-        <a href="/connection" className="sidebar-nav__item sidebar-nav__item--muted">
-          <LogoutIcon />
-          <span>Déconnexion</span>
-        </a>
+        <button 
+          onClick={handleLogout} 
+          className="sidebar-nav__item sidebar-nav__item--muted"
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            font: 'inherit',
+            cursor: 'pointer',
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            textAlign: 'left'
+          }}
+        >
+        <LogoutIcon />
+        <span>Déconnexion</span>
+      </button>
       </div>
     </aside>
   )
