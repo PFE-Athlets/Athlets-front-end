@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import './App.css'
 import { AppShell } from './components/AppShell.jsx'
@@ -71,32 +71,53 @@ const pages = [
   },
 ]
 
-const ROLES = ['Coach', 'Kinésiologue', 'Athlète', 'Administrateur']
+function ProtectedRoute({ currentUser, children }) {
+  if (!currentUser) {
+    return <Navigate to="/connection" replace />
+  }
+  return children
+}
 
 const HOME_BY_ROLE = {
   'Administrateur': '/tableau-de-bord',
   'Coach': '/athletes',
-  'Kinésiologue': '/resultats',
   'Athlète': '/resultats',
+}
+
+const ROLE_BY_ACCESS_LEVEL = {
+  1: 'Administrateur',
+  2: 'Coach',
+  3: 'Athlète',
 }
 
 function App() {
   const navigate = useNavigate()
-  const [activeUserRole, setActiveUserRole] = useState('Coach')
-  const isFirstRender = useRef(true)
+  const [currentUser, setCurrentUser] = useState(() => {
+    const stored = sessionStorage.getItem('currentUser')
+    return stored ? JSON.parse(stored) : null
+  })
 
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false
-      return
-    }
-    navigate(HOME_BY_ROLE[activeUserRole] ?? '/tableau-de-bord')
-  }, [activeUserRole])
+  const activeUserRole = currentUser
+    ? (ROLE_BY_ACCESS_LEVEL[currentUser.accessLevel] ?? 'Coach')
+    : 'Coach'
+
+  const handleLoginSuccess = (user) => {
+    sessionStorage.setItem('currentUser', JSON.stringify(user))
+    setCurrentUser(user)
+    const role = ROLE_BY_ACCESS_LEVEL[user.accessLevel] ?? 'Coach'
+    navigate(HOME_BY_ROLE[role] ?? '/tableau-de-bord')
+  }
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('currentUser')
+    setCurrentUser(null)
+    navigate('/connection')
+  }
 
   const shellProps = {
-    activeUserName: 'Camille Tremblay',
+    activeUserName: currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : '—',
     activeUserRole,
-    onRoleChange: setActiveUserRole,
+    onLogout: handleLogout,
     notificationsCount: 2,
   }
 
@@ -119,13 +140,14 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/connection" replace />} />
-      <Route path="/connection" element={<LoginPage />} />
+      <Route path="/connection" element={<LoginPage onLoginSuccess={handleLoginSuccess} />} />
 
       {pages.map((page) => (
         <Route
           key={page.path}
           path={page.path}
           element={
+            <ProtectedRoute currentUser={currentUser}>
             <AppShell
               pageTitle={page.title}
               pageSubtitle={page.subtitle}
@@ -143,6 +165,7 @@ function App() {
                 <PageView />
               )}
             </AppShell>
+            </ProtectedRoute>
           }
         />
       ))}

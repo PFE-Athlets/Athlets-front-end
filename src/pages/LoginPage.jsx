@@ -1,11 +1,9 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import '../styles/login.css'
 import athleteImage from '../assets/283808481.png'
 import { authService } from '../api/authService'
 
-export default function LoginPage() {
-  const navigate = useNavigate()
+export default function LoginPage({ onLoginSuccess }) {
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -22,9 +20,7 @@ export default function LoginPage() {
       const result = await authService.login(username, password)
 
       if (result.success) {
-        // Login réussi
-        console.log('Login réussi:', result.data)
-        navigate('/tableau-de-bord')
+        onLoginSuccess(result.data)
       } else {
         // Erreur de login
         setError(result.error)

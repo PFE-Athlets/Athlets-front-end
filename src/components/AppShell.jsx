@@ -8,7 +8,7 @@ export function AppShell({
   pageSubtitle,
   activeUserName,
   activeUserRole,
-  onRoleChange,
+  onLogout,
   notificationsCount = 0,
   primaryActionLabel,
   onPrimaryAction,
@@ -25,7 +25,7 @@ export function AppShell({
         />
       )}
 
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} activeUserRole={activeUserRole} />
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} activeUserRole={activeUserRole} onLogout={onLogout} />
 
       <div className="app-shell__main">
         <Header
@@ -33,7 +33,6 @@ export function AppShell({
           pageSubtitle={pageSubtitle}
           activeUserName={activeUserName}
           activeUserRole={activeUserRole}
-          onRoleChange={onRoleChange}
           notificationsCount={notificationsCount}
           primaryActionLabel={primaryActionLabel}
           onPrimaryAction={onPrimaryAction}
