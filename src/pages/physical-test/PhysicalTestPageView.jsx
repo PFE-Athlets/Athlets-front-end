@@ -1,112 +1,60 @@
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import '../../styles/page-view.css'
 import { Link } from 'react-router-dom'
 import { PlusIcon, SearchIcon, ResetIcon } from '../../components/Icons'
+import { physicalTestService } from '../../api/physicalTestService'
 
-const physicalTestStats = [
-  {
-    title: 'Tests physiques actifs',
-    value: 3,
-    trend: '12,4%',
-    comparison: 'vs avr. 2024',
-    icon: '🏃',
-    variant: 'blue',
-  },
-  {
-    title: 'Nouveaux tests physiques',
-    value: 8,
-    trend: '33,3%',
-    comparison: 'vs avr. 2024',
-    icon: '➕',
-    variant: 'green',
-  },
-  {
-    title: 'Tests physiques inactifs',
-    value: 15,
-    trend: '7,1%',
-    comparison: 'vs avr. 2024',
-    icon: '⊘',
-    variant: 'gray',
-  },
-]
+const UNIT_LABELS = { s: 'Secondes', kg: 'Kilogrammes', m: 'Mètres', reps: 'Répétitions' }
 
-const CATEGORY_OPTIONS = [
-  { value: 'all', label: 'Toutes' },
-  { value: 'FORCE', label: 'Force' },
-  { value: 'ENDURANCE', label: 'Endurance' },
-  { value: 'VITESSE', label: 'Vitesse' },
-  { value: 'AGILITE', label: 'Agilité' },
-  { value: 'SOUPLESSE', label: 'Souplesse' },
-]
-
-const SPORT_OPTIONS = [
-  { value: 'all', label: 'Tous' },
-  { value: 'Rugby', label: 'Rugby' },
-  { value: 'Athlétisme', label: 'Athlétisme' },
-  { value: 'Soccer', label: 'Soccer' },
-  { value: 'Basketball', label: 'Basketball' },
-  { value: 'Volleyball', label: 'Volleyball' },
-  { value: 'Cross-country', label: 'Cross-country' },
-]
-
-const STATUS_OPTIONS = [
-  { value: 'all', label: 'Tous' },
-  { value: 'ACTIF', label: 'Actif' },
-  { value: 'INACTIF', label: 'Non actif' },
-]
-
-const INITIAL_FILTERS = { search: '', categorie: 'all', sport: 'all', statut: 'all' }
+const INITIAL_FILTERS = { search: '', sport: 'all' }
 
 export default function PhysicalTestPageView() {
-  // TODO: remplacer par un appel API (ex: useEffect + physicalTestService.getAll())
   const [physicalTests, setPhysicalTests] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [filters, setFilters] = useState(INITIAL_FILTERS)
+
+  useEffect(() => {
+    physicalTestService.getAll().then((result) => {
+      if (result.success) {
+        setPhysicalTests(result.data)
+      } else {
+        setError(result.error)
+      }
+      setLoading(false)
+    })
+  }, [])
+
+  const sportOptions = useMemo(() => {
+    const names = physicalTests.flatMap((t) => t.sports.map((s) => s.name))
+    const unique = [...new Set(names)].sort()
+    return [{ value: 'all', label: 'Tous' }, ...unique.map((s) => ({ value: s, label: s }))]
+  }, [physicalTests])
 
   const updateFilter = (key, value) => setFilters((prev) => ({ ...prev, [key]: value }))
   const resetFilters = () => setFilters(INITIAL_FILTERS)
 
   const filteredTests = physicalTests.filter((test) => {
     const matchesSearch =
-      filters.search === '' || test.nom.toLowerCase().includes(filters.search.toLowerCase())
-    const matchesCategorie =
-      filters.categorie === 'all' || test.categorie === filters.categorie
+      filters.search === '' || test.name.toLowerCase().includes(filters.search.toLowerCase())
     const matchesSport =
-      filters.sport === 'all' || test.sport === filters.sport
-    const matchesStatut =
-      filters.statut === 'all' || test.statut === filters.statut
-    return matchesSearch && matchesCategorie && matchesSport && matchesStatut
+      filters.sport === 'all' || test.sports.some((s) => s.name === filters.sport)
+    return matchesSearch && matchesSport
   })
 
   return (
     <section className="list-page">
 
-      {/** Zone des cartes et création d'un test physique */}
       <div className="list-page__top">
-        <div className="stat-cards">
-          {physicalTestStats.map((stat) => (
-            <article key={stat.title} className="stat-card">
-              <div>
-                <p className="stat-card__title">{stat.title}</p>
-                <strong className="stat-card__value">{stat.value}</strong>
-                <div className="stat-card__trend">
-                  <span>▲ {stat.trend}</span>
-                  <small>{stat.comparison}</small>
-                </div>
-              </div>
-              <div className={`stat-card__icon stat-card__icon--${stat.variant}`}>
-                {stat.icon}
-              </div>
-            </article>
-          ))}
-        </div>
-
+        <p className="tests-count">
+          {loading ? '…' : `${physicalTests.length} test(s) physique(s)`}
+        </p>
         <Link to="/tests-physiques/creer" className="create-btn">
           <PlusIcon />
           <span>Créer un test physique</span>
         </Link>
       </div>
 
-      {/** Zone de filtre */}
       <div className="list-filters">
         <label className="list-search">
           <input
@@ -118,28 +66,10 @@ export default function PhysicalTestPageView() {
           <SearchIcon />
         </label>
 
-        <div className="list-filter">
-          <span>Catégorie</span>
-          <select value={filters.categorie} onChange={(e) => updateFilter('categorie', e.target.value)}>
-            {CATEGORY_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
-
         <div className="list-filter list-filter--wide">
           <span>Sport ciblé</span>
           <select value={filters.sport} onChange={(e) => updateFilter('sport', e.target.value)}>
-            {SPORT_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="list-filter">
-          <span>Statut</span>
-          <select value={filters.statut} onChange={(e) => updateFilter('statut', e.target.value)}>
-            {STATUS_OPTIONS.map((opt) => (
+            {sportOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
           </select>
@@ -151,7 +81,47 @@ export default function PhysicalTestPageView() {
         </button>
       </div>
 
-      {/** TODO: afficher filteredTests dans un tableau */}
+      {loading && <p className="list-empty">Chargement…</p>}
+
+      {error && <p className="list-empty list-empty--error">{error}</p>}
+
+      {!loading && !error && filteredTests.length === 0 && (
+        <p className="list-empty">Aucun test physique trouvé.</p>
+      )}
+
+      {!loading && !error && filteredTests.length > 0 && (
+        <div className="table-wrapper">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Nom du test</th>
+                <th>Unité de mesure</th>
+                <th>Sports associés</th>
+                <th>Preuve vidéo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredTests.map((test) => (
+                <tr key={test.id}>
+                  <td className="cell--name">{test.name}</td>
+                  <td>{UNIT_LABELS[test.unit] ?? test.unit}</td>
+                  <td>
+                    {test.sports.length > 0
+                      ? test.sports.map((s) => s.name).join(', ')
+                      : <span className="cell--muted">Aucun</span>}
+                  </td>
+                  <td>
+                    {test.proof
+                      ? <span className="badge badge--blue">{test.proof}</span>
+                      : <span className="cell--muted">—</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
     </section>
   )
 }
