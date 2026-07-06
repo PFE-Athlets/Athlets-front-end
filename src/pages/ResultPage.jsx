@@ -1,9 +1,11 @@
 import { useEffect } from 'react'
-import { useResultStore } from '../stores/resultStore'
+import { useResultStore } from '@/stores/resultStore'
+import { ResultFilters } from '../components/results/ResultsFilters'
+import { ResultList } from '../components/results/ResultList'
+import { Container, Alert, Box, CircularProgress } from '@mui/material'
 
 export const ResultsDashboard = () => {
   const results = useResultStore((state) => state.results)
-  const pagination = useResultStore((state) => state.pagination)
   const isLoading = useResultStore((state) => state.isLoading)
   const error = useResultStore((state) => state.error)
   
@@ -21,45 +23,27 @@ export const ResultsDashboard = () => {
     }
   }
 
-  if (isLoading) return <div>Chargement des résultats...</div>
+  if (isLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
-    <div className="p-4">
-      <h2>Tableau des Résultats</h2>
+    console.log('Rendering ResultsDashboard with results:', results),
+    <Container sx={{ py: 4 }}>
+      <Box sx={{ mb: 3 }}>
+  <ResultFilters />
+</Box>
       
-      {error && <div className="text-red-500">{error}</div>}
+      {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
-      <ul>
-        {results.map((result) => (
-          <li key={result.id} className="border-b py-2 flex justify-between">
-            <span>Athlète ID: {result.athleteId} — Test: {result.testName}</span>
-            <button 
-              onClick={() => handleCancel(result.id)}
-              className="bg-red-500 text-white px-2 py-1 rounded"
-            >
-              Annuler
-            </button>
-          </li>
-        ))}
-      </ul>
-
-      <div className="flex gap-4 mt-4 items-center">
-        <button
-          disabled={pagination.page === 0}
-          onClick={() => fetchResults(pagination.page - 1)}
-          className="border p-2 disabled:opacity-50"
-        >
-          Précédent
-        </button>
-        <span>Page {pagination.page + 1} sur {pagination.totalPages}</span>
-        <button
-          disabled={pagination.page >= pagination.totalPages - 1}
-          onClick={() => fetchResults(pagination.page + 1)}
-          className="border p-2 disabled:opacity-50"
-        >
-          Suivant
-        </button>
-      </div>
-    </div>
+      <ResultList 
+        results={results}
+        onCancelResult={handleCancel}
+      />
+    </Container>
   )
 }
