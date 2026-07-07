@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import './App.css'
 import { AppShell } from './components/AppShell.jsx'
@@ -70,13 +71,53 @@ const pages = [
   },
 ]
 
+function ProtectedRoute({ currentUser, children }) {
+  if (!currentUser) {
+    return <Navigate to="/connection" replace />
+  }
+  return children
+}
+
+const HOME_BY_ROLE = {
+  'Administrateur': '/tableau-de-bord',
+  'Coach': '/athletes',
+  'Athlète': '/resultats',
+}
+
+const ROLE_BY_ACCESS_LEVEL = {
+  1: 'Administrateur',
+  2: 'Coach',
+  3: 'Athlète',
+}
+
 function App() {
   const navigate = useNavigate()
+  const [currentUser, setCurrentUser] = useState(() => {
+    const stored = sessionStorage.getItem('currentUser')
+    return stored ? JSON.parse(stored) : null
+  })
 
-  // hardcoded user info for demo purposes
+  const activeUserRole = currentUser
+    ? (ROLE_BY_ACCESS_LEVEL[currentUser.accessLevel] ?? 'Coach')
+    : 'Coach'
+
+  const handleLoginSuccess = (user) => {
+    sessionStorage.setItem('currentUser', JSON.stringify(user))
+    setCurrentUser(user)
+    const role = ROLE_BY_ACCESS_LEVEL[user.accessLevel] ?? 'Coach'
+    navigate(HOME_BY_ROLE[role] ?? '/tableau-de-bord')
+  }
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('currentUser')
+    setCurrentUser(null)
+    navigate('/connection')
+  }
+
   const shellProps = {
-    activeUserName: 'Camille Tremblay',
-    activeUserRole: 'Coach',
+    activeUserName: currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : '—',
+    activeUserRole,
+    onLogout: handleLogout,
     notificationsCount: 2,
   }
 
@@ -99,13 +140,14 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/connection" replace />} />
-      <Route path="/connection" element={<LoginPage />} />
+      <Route path="/connection" element={<LoginPage onLoginSuccess={handleLoginSuccess} />} />
 
       {pages.map((page) => (
         <Route
           key={page.path}
           path={page.path}
           element={
+            <ProtectedRoute currentUser={currentUser}>
             <AppShell
               pageTitle={page.title}
               pageSubtitle={page.subtitle}
@@ -123,6 +165,7 @@ function App() {
                 <PageView />
               )}
             </AppShell>
+            </ProtectedRoute>
           }
         />
       ))}

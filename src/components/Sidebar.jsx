@@ -12,16 +12,17 @@ import {
   XIcon,
 } from './Icons'
 
-const navigationItems = [
-  { label: 'Tableau de bord', icon: HomeIcon, to: '/tableau-de-bord' },
-  { label: 'Athlètes', icon: UsersIcon, to: '/athletes' },
-  { label: 'Tests physiques', icon: PulseIcon, to: '/tests-physiques' },
-  { label: 'Résultats', icon: ChartIcon, to: '/resultats' },
-  { label: 'Séances', icon: CalendarIcon, to: '/seances' },
-  { label: 'Rapports', icon: FileIcon, to: '/rapports' },
+const ALL_NAV_ITEMS = [
+  { label: 'Tableau de bord', icon: HomeIcon, to: '/tableau-de-bord', roles: ['Coach', 'Administrateur'] },
+  { label: 'Athlètes', icon: UsersIcon, to: '/athletes', roles: ['Coach', 'Administrateur'] },
+  { label: 'Tests physiques', icon: PulseIcon, to: '/tests-physiques', roles: ['Coach', 'Administrateur'] },
+  { label: 'Résultats', icon: ChartIcon, to: '/resultats', roles: ['Coach', 'Administrateur', 'Athlète'] },
+  { label: 'Séances', icon: CalendarIcon, to: '/seances', roles: ['Coach', 'Administrateur', 'Athlète'] },
+  { label: 'Rapports', icon: FileIcon, to: '/rapports', roles: ['Coach', 'Administrateur', 'Athlète'] },
 ]
 
-export function Sidebar({ isOpen, onClose }) {
+export function Sidebar({ isOpen, onClose, activeUserRole, onLogout }) {
+  const navigationItems = ALL_NAV_ITEMS.filter((item) => item.roles.includes(activeUserRole))
   return (
     <aside className={`app-sidebar${isOpen ? ' is-open' : ''}`}>
       <div>
@@ -73,10 +74,10 @@ export function Sidebar({ isOpen, onClose }) {
           <SettingsIcon />
           <span>Paramètres</span>
         </NavLink>
-        <a href="/connection" className="sidebar-nav__item sidebar-nav__item--muted">
+        <button type="button" onClick={onLogout} className="sidebar-nav__item sidebar-nav__item--muted">
           <LogoutIcon />
           <span>Déconnexion</span>
-        </a>
+        </button>
       </div>
     </aside>
   )
