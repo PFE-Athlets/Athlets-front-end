@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import '../styles/login.css'
 
-export default function LoginPage() {
-  const navigate = useNavigate()
+export default function LoginPage({ onLoginSuccess }) {
 
   const loginStore = useAuthStore((state) => state.login)
 
@@ -23,8 +22,6 @@ export default function LoginPage() {
       const result = await loginStore(username, password)
 
       if (result.success) {
-        console.log('Login réussi via Zustand:', result.data)
-
         navigate('/')
       } else {
         setError(result.error)

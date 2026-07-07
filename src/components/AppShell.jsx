@@ -11,7 +11,7 @@ export function AppShell({ children, pageTitle, pageSubtitle }) {
         <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />
       )}
 
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} activeUserRole={activeUserRole} onLogout={onLogout} />
 
       <div className="app-shell__main">
         <Header
