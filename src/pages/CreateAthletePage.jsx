@@ -5,8 +5,14 @@ import '../styles/create-athlete.css'
 export default function CreateAthletePage() {
   const [teams, setTeams] = useState([])
   const [selectedTeam, setSelectedTeam] = useState('')
+  const [selectedPosition, setSelectedPosition] = useState('')
+  const [selectedDiscipline, setSelectedDiscipline] = useState('')
   const [teamsLoading, setTeamsLoading] = useState(true)
   const [teamsError, setTeamsError] = useState(null)
+  const [positions] = useState([])
+  const [disciplines] = useState([])
+
+  const teamSelected = selectedTeam !== ''
 
   useEffect(() => {
     let cancelled = false
@@ -103,11 +109,35 @@ export default function CreateAthletePage() {
             </div>
 
             <div className="form-field">
-              <label>Position / Discipline</label>
-              <input
-                type="text"
-                placeholder="Ex. : Demi de mêlée, Sprint 100m"
-              />
+              <label>Position</label>
+              <select
+                value={selectedPosition}
+                onChange={(event) => setSelectedPosition(event.target.value)}
+                disabled={!teamSelected}
+              >
+                <option value="" disabled>
+                  {teamSelected ? 'En attente des positions backend' : 'Sélectionner une équipe d’abord'}
+                </option>
+                {positions.map((position) => (
+                  <option key={position} value={position}>{position}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-field">
+              <label>Discipline</label>
+              <select
+                value={selectedDiscipline}
+                onChange={(event) => setSelectedDiscipline(event.target.value)}
+                disabled={!teamSelected}
+              >
+                <option value="" disabled>
+                  {teamSelected ? 'En attente des disciplines backend' : 'Sélectionner une équipe d’abord'}
+                </option>
+                {disciplines.map((discipline) => (
+                  <option key={discipline} value={discipline}>{discipline}</option>
+                ))}
+              </select>
             </div>
 
             <div className="form-field">
