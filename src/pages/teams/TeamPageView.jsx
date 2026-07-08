@@ -3,51 +3,7 @@ import { Link } from 'react-router-dom'
 import '../../styles/page-view.css'
 import '../../styles/team-page.css'
 import { PlusIcon, ResetIcon, SearchIcon } from '../../components/Icons'
-
-const TEAM_ROWS = [
-  {
-    id: 1,
-    name: 'Rugby féminin',
-    sport: 'Rugby',
-    athletesCount: 24,
-    headCoach: 'Marie-Claude Gauthier',
-  },
-  {
-    id: 2,
-    name: 'Sprint universitaire',
-    sport: 'Athlétisme',
-    athletesCount: 18,
-    headCoach: 'Étienne Lavoie',
-  },
-  {
-    id: 3,
-    name: 'Cross-country mixte',
-    sport: 'Cross-country',
-    athletesCount: 22,
-    headCoach: 'Julien Perreault',
-  },
-  {
-    id: 4,
-    name: 'Badminton compétition',
-    sport: 'Badminton',
-    athletesCount: 16,
-    headCoach: 'Sophie Nadeau',
-  },
-  {
-    id: 5,
-    name: 'Flag football féminin',
-    sport: 'Flag football',
-    athletesCount: 20,
-    headCoach: 'Marc-Antoine Bouchard',
-  },
-  {
-    id: 6,
-    name: 'Volley masculin',
-    sport: 'Volley',
-    athletesCount: 18,
-    headCoach: 'Alexandre Morin',
-  },
-]
+import { TEAM_ROWS } from './teamData'
 
 const SPORT_OPTIONS = [
   { value: 'all', label: 'Tous' },
@@ -144,7 +100,11 @@ export default function TeamPageView() {
               {visibleTeams.length > 0 ? (
                 visibleTeams.map((team) => (
                   <tr key={team.id}>
-                    <td className="cell--name">{team.name}</td>
+                    <td className="cell--name">
+                      <Link className="team-table__team-link" to={`/equipes/${team.id}`}>
+                        {team.name}
+                      </Link>
+                    </td>
                     <td>{team.sport}</td>
                     <td>{team.athletesCount}</td>
                     <td>{team.headCoach}</td>

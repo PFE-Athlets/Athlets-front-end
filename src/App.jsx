@@ -10,6 +10,7 @@ import CreateAthletePage from './pages/athletes/CreateAthletePage.jsx'
 import CreatePhysicalTestPage from './pages/physical-test/CreatePhysicalTestPage.jsx'
 import CreateTeamPage from './pages/teams/CreateTeamPage.jsx'
 import TeamPageView from './pages/teams/TeamPageView.jsx'
+import TeamDetailsPage from './pages/teams/TeamDetailsPage.jsx'
 
 const pages = [
   {
@@ -185,6 +186,21 @@ function App() {
           }
         />
       ))}
+
+      <Route
+        path="/equipes/:teamId"
+        element={
+          <ProtectedRoute currentUser={currentUser}>
+            <AppShell
+              pageTitle="Fiche de l'équipe"
+              pageSubtitle=""
+              {...shellProps}
+            >
+              <TeamDetailsPage />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
 
       <Route path="*" element={<Navigate to="/connection" replace />} />
     </Routes>
