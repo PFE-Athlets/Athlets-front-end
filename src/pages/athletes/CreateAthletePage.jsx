@@ -1,6 +1,44 @@
+import { useEffect, useState } from 'react'
+import api from '../../api/config'
 import '../../styles/page-form.css'
 
 export default function CreateAthletePage() {
+  const [teams, setTeams] = useState([])
+  const [selectedTeam, setSelectedTeam] = useState('')
+  const [teamsLoading, setTeamsLoading] = useState(true)
+  const [teamsError, setTeamsError] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadTeams = async () => {
+      try {
+        setTeamsLoading(true)
+        setTeamsError(null)
+        const response = await api.get('/api/sport/teams')
+
+        if (!cancelled) {
+          setTeams(Array.isArray(response.data) ? response.data : [])
+        }
+      } catch {
+        if (!cancelled) {
+          setTeams([])
+          setTeamsError('Impossible de charger les équipes.')
+        }
+      } finally {
+        if (!cancelled) {
+          setTeamsLoading(false)
+        }
+      }
+    }
+
+    loadTeams()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   return (
     <div className="create-page">
       <form className="entity-form">
@@ -47,18 +85,20 @@ export default function CreateAthletePage() {
 
           <div className="form-grid">
             <div className="form-field">
-              <label>Sport</label>
-
-              {/* Temporaire.
-                  Plus tard remplacer par un vrai multiselect */}
-              <select defaultValue="">
-                <option value="" disabled>Sélectionner</option>
-                <option>Rugby</option>
-                <option>Athlétisme</option>
-                <option>Soccer</option>
-                <option>Volleyball</option>
-                <option>Basketball</option>
+              <label>Équipe</label>
+              <select
+                value={selectedTeam}
+                onChange={(event) => setSelectedTeam(event.target.value)}
+                disabled={teamsLoading || teams.length === 0}
+              >
+                <option value="" disabled>
+                  {teamsLoading ? 'Chargement des équipes...' : 'Sélectionner'}
+                </option>
+                {teams.map((team) => (
+                  <option key={team} value={team}>{team}</option>
+                ))}
               </select>
+              {teamsError ? <p style={{ color: '#ef4444', margin: '8px 0 0', fontSize: '0.85rem' }}>{teamsError}</p> : null}
             </div>
 
             <div className="form-field">
