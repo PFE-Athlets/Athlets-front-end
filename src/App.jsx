@@ -23,6 +23,11 @@ const pages = [
     primaryActionPath: '/athletes/creer',
   },
   {
+    path: '/equipes',
+    title: 'Équipes',
+    subtitle: 'Gestion des équipes du club',
+  },
+  {
     path: '/athletes/creer',
     title: 'Créer un athlète',
     subtitle: 'Ajout d’un nouvel athlète',
