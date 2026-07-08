@@ -1,0 +1,56 @@
+.create-team-page .entity-form {
+  max-width: 1040px;
+}
+
+.form-grid--single {
+  grid-template-columns: 1fr;
+}
+
+.token-select {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 14px;
+  border: 1px solid #d9e2f2;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.token-select__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.selection-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: #eef4ff;
+  color: #2d5bdb;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.selection-chip span:last-child {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.token-select__caret {
+  color: #2d5bdb;
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+@media (max-width: 900px) {
+  .token-select {
+    align-items: flex-start;
+  }
+}

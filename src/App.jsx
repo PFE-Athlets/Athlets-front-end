@@ -8,6 +8,8 @@ import AthletePageView from './pages/athletes/AthletePageView.jsx'
 import PhysicalTestPageView from './pages/physical-test/PhysicalTestPageView.jsx'
 import CreateAthletePage from './pages/athletes/CreateAthletePage.jsx'
 import CreatePhysicalTestPage from './pages/physical-test/CreatePhysicalTestPage.jsx'
+import CreateTeamPage from './pages/teams/CreateTeamPage.jsx'
+import TeamPageView from './pages/teams/TeamPageView.jsx'
 
 const pages = [
   {
@@ -25,7 +27,12 @@ const pages = [
   {
     path: '/equipes',
     title: 'Équipes',
-    subtitle: 'Gestion des équipes du club',
+    subtitle: '',
+  },
+  {
+    path: '/equipes/creer',
+    title: 'Créer une équipe',
+    subtitle: '',
   },
   {
     path: '/athletes/creer',
@@ -160,6 +167,10 @@ function App() {
             >
               {page.path === '/athletes' ? (
                 <AthletePageView />
+              ) : page.path === '/equipes' ? (
+                <TeamPageView />
+              ) : page.path === '/equipes/creer' ? (
+                <CreateTeamPage />
               ) : page.path === '/tests-physiques' ? (
                 <PhysicalTestPageView />
               ) : page.path === '/athletes/creer' ? (

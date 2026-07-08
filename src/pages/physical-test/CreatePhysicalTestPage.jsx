@@ -28,15 +28,15 @@ const SPORTS = [
 ]
 
 const BOOLEAN_OPTIONS = [
-  { value: 'non', label: 'Non' },
-  { value: 'oui', label: 'Oui' },
+  { value: 'None', label: 'Non' },
+  { value: 'Video', label: 'Oui' },
 ]
 
 const INITIAL_FORM = {
   nom: '',
   categorie: '',
   unit: '',
-  proof: 'non',
+  proof: 'None',
   sports: [],
   protocol: '',
 }
