@@ -13,11 +13,26 @@ export default function TeamDetailsPage() {
   const { teamId } = useParams()
 
   const team = useMemo(() => {
-    if (location.state?.team) {
-      return location.state.team
-    }
+    const fallbackTeam = TEAM_ROWS.find((item) => String(item.id) === String(teamId)) ?? TEAM_ROWS[0]
+    const sourceTeam = location.state?.team ?? fallbackTeam
 
-    return TEAM_ROWS.find((item) => String(item.id) === String(teamId)) ?? TEAM_ROWS[0]
+    return {
+      id: sourceTeam?.id ?? fallbackTeam?.id ?? '',
+      name: sourceTeam?.name ?? fallbackTeam?.name ?? 'Équipe sans nom',
+      sport: sourceTeam?.sport ?? fallbackTeam?.sport ?? '—',
+      athletesCount: sourceTeam?.athletesCount ?? fallbackTeam?.athletesCount ?? 0,
+      headCoach: sourceTeam?.headCoach ?? fallbackTeam?.headCoach ?? '—',
+      assistantCoaches: Array.isArray(sourceTeam?.assistantCoaches)
+        ? sourceTeam.assistantCoaches
+        : Array.isArray(fallbackTeam?.assistantCoaches)
+          ? fallbackTeam.assistantCoaches
+          : [],
+      physios: Array.isArray(sourceTeam?.physios)
+        ? sourceTeam.physios
+        : Array.isArray(fallbackTeam?.physios)
+          ? fallbackTeam.physios
+          : [],
+    }
   }, [teamId, location.state])
 
   const athletes = TEAM_ATHLETES_BY_ID[Number(team.id)] ?? DEFAULT_ATHLETES
@@ -55,17 +70,25 @@ export default function TeamDetailsPage() {
             <div>
               <p className="team-details-label">Coach(s) secondaire(s)</p>
               <div className="team-details-chips">
-                {team.assistantCoaches.map((name) => (
-                  <span key={name} className="team-details-chip">{name}</span>
-                ))}
+                {team.assistantCoaches.length > 0 ? (
+                  team.assistantCoaches.map((name) => (
+                    <span key={name} className="team-details-chip">{name}</span>
+                  ))
+                ) : (
+                  <span className="team-details-value">—</span>
+                )}
               </div>
             </div>
             <div>
               <p className="team-details-label">Kiné(s)</p>
               <div className="team-details-chips">
-                {team.physios.map((name) => (
-                  <span key={name} className="team-details-chip">{name}</span>
-                ))}
+                {team.physios.length > 0 ? (
+                  team.physios.map((name) => (
+                    <span key={name} className="team-details-chip">{name}</span>
+                  ))
+                ) : (
+                  <span className="team-details-value">—</span>
+                )}
               </div>
             </div>
           </div>
