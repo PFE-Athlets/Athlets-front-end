@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import '../../styles/team-details.css'
 import { TEAM_ATHLETES_BY_ID, TEAM_ROWS } from './teamData'
 
@@ -9,14 +9,18 @@ const DEFAULT_ATHLETES = [
 
 export default function TeamDetailsPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { teamId } = useParams()
 
   const team = useMemo(() => {
-    const id = Number(teamId)
-    return TEAM_ROWS.find((item) => item.id === id) ?? TEAM_ROWS[0]
-  }, [teamId])
+    if (location.state?.team) {
+      return location.state.team
+    }
 
-  const athletes = TEAM_ATHLETES_BY_ID[team.id] ?? DEFAULT_ATHLETES
+    return TEAM_ROWS.find((item) => String(item.id) === String(teamId)) ?? TEAM_ROWS[0]
+  }, [teamId, location.state])
+
+  const athletes = TEAM_ATHLETES_BY_ID[Number(team.id)] ?? DEFAULT_ATHLETES
 
   return (
     <section className="team-details-page">
