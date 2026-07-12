@@ -19,7 +19,7 @@ export default function EditTeamPage() {
   }, [teamId, location.state])
 
   const [teamName, setTeamName] = useState(team.name)
-  const [headCoach, setHeadCoach] = useState(team.headCoach)
+  const [headCoachId, setHeadCoachId] = useState(team.headCoachId ? String(team.headCoachId) : '')
   const [coachOptions, setCoachOptions] = useState([])
   const [coachesLoading, setCoachesLoading] = useState(true)
   const [coachesError, setCoachesError] = useState(null)
@@ -27,6 +27,8 @@ export default function EditTeamPage() {
   const [selectedSubcoachIds, setSelectedSubcoachIds] = useState([])
   const [subcoachesLoading, setSubcoachesLoading] = useState(true)
   const [subcoachesError, setSubcoachesError] = useState(null)
+  const [submitError, setSubmitError] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -37,22 +39,31 @@ export default function EditTeamPage() {
 
       try {
         const response = await api.get('/api/coach/coaches')
-        const names = Array.isArray(response.data)
+        const options = Array.isArray(response.data)
           ? response.data
-              .map((item) => item?.coachName)
-              .filter((name) => typeof name === 'string' && name.trim() !== '')
+              .filter((item) => item?.coachId != null)
+              .map((item) => ({
+                id: String(item.coachId),
+                name: item.coachName ?? 'Coach',
+              }))
           : []
 
         if (!cancelled) {
-          const unique = [...new Set(names)]
-          if (team.headCoach && !unique.includes(team.headCoach)) {
-            unique.unshift(team.headCoach)
+          setCoachOptions(options)
+          setSubcoachOptions(options)
+
+          if (team.headCoachId) {
+            setHeadCoachId(String(team.headCoachId))
+          } else {
+            const matched = options.find((option) => option.name === team.headCoach)
+            setHeadCoachId(matched?.id ?? '')
           }
-          setCoachOptions(unique)
         }
       } catch {
         if (!cancelled) {
           setCoachOptions([])
+          setSubcoachOptions([])
+          setHeadCoachId('')
           setCoachesError('Impossible de charger la liste des coachs.')
         }
       } finally {
@@ -78,22 +89,17 @@ export default function EditTeamPage() {
 
       try {
         const response = await api.get(`/api/team/subcoaches/${team.id}`)
-        const options = Array.isArray(response.data)
+        const ids = Array.isArray(response.data)
           ? response.data
               .filter((item) => item?.coachId != null)
-              .map((item) => ({
-                id: String(item.coachId),
-                name: item.subcoachName ?? 'Coach secondaire',
-              }))
+              .map((item) => String(item.coachId))
           : []
 
         if (!cancelled) {
-          setSubcoachOptions(options)
-          setSelectedSubcoachIds(options.map((option) => option.id))
+          setSelectedSubcoachIds(ids)
         }
       } catch {
         if (!cancelled) {
-          setSubcoachOptions([])
           setSelectedSubcoachIds([])
           setSubcoachesError('Impossible de charger les coachs secondaires.')
         }
@@ -111,20 +117,57 @@ export default function EditTeamPage() {
     }
   }, [team.id])
 
+  useEffect(() => {
+    if (!headCoachId) {
+      return
+    }
+
+    setSelectedSubcoachIds((prev) => prev.filter((id) => id !== headCoachId))
+  }, [headCoachId])
+
   const selectedSubcoaches = useMemo(
     () => subcoachOptions.filter((option) => selectedSubcoachIds.includes(option.id)),
     [subcoachOptions, selectedSubcoachIds],
   )
 
   const availableSubcoaches = useMemo(
-    () => subcoachOptions.filter((option) => !selectedSubcoachIds.includes(option.id)),
-    [subcoachOptions, selectedSubcoachIds],
+    () => subcoachOptions.filter((option) => !selectedSubcoachIds.includes(option.id) && option.id !== headCoachId),
+    [subcoachOptions, selectedSubcoachIds, headCoachId],
   )
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
 
-    navigate('/equipes')
+    setSubmitError(null)
+
+    if (!headCoachId) {
+      setSubmitError('Veuillez sélectionner un coach principal.')
+      return
+    }
+
+    if (selectedSubcoachIds.includes(headCoachId)) {
+      setSubmitError('Le coach principal ne peut pas être aussi coach secondaire.')
+      return
+    }
+
+    setSubmitting(true)
+
+    try {
+      await api.patch(`/api/team/modify/${team.id ?? teamId}`, {
+        teamId: Number(team.id ?? teamId),
+        newTeamName: teamName.trim(),
+        newCoachId: Number(headCoachId),
+        newSubcoachesIds: selectedSubcoachIds.map((id) => Number(id)),
+      })
+
+      navigate('/equipes')
+    } catch (error) {
+      const data = error.response?.data
+      const message = typeof data === 'string' ? data : data?.message
+      setSubmitError(message ?? 'Impossible de modifier cette équipe.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -160,12 +203,13 @@ export default function EditTeamPage() {
             <div className="form-field full-width">
               <label>Coach principal</label>
               <select
-                value={headCoach}
-                onChange={(event) => setHeadCoach(event.target.value)}
+                value={headCoachId}
+                onChange={(event) => setHeadCoachId(event.target.value)}
                 disabled={coachesLoading || coachOptions.length === 0}
               >
+                <option value="">Sélectionner un coach principal</option>
                 {coachOptions.map((option) => (
-                  <option key={option} value={option}>{option}</option>
+                  <option key={option.id} value={option.id}>{option.name}</option>
                 ))}
               </select>
               {coachesError ? <p className="form-field__error">{coachesError}</p> : null}
@@ -235,10 +279,11 @@ export default function EditTeamPage() {
             Annuler
           </button>
 
-          <button type="submit" className="btn-primary">
-            Enregistrer les modifications
+          <button type="submit" className="btn-primary" disabled={submitting}>
+            {submitting ? 'Enregistrement...' : 'Enregistrer les modifications'}
           </button>
         </div>
+        {submitError ? <p className="form-field__error">{submitError}</p> : null}
       </form>
     </div>
   )
