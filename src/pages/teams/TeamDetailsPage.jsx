@@ -31,11 +31,6 @@ export default function TeamDetailsPage() {
         : Array.isArray(fallbackTeam?.assistantCoaches)
           ? fallbackTeam.assistantCoaches
           : [],
-      physios: Array.isArray(sourceTeam?.physios)
-        ? sourceTeam.physios
-        : Array.isArray(fallbackTeam?.physios)
-          ? fallbackTeam.physios
-          : [],
     }
   }, [teamId, location.state])
 
@@ -132,13 +127,7 @@ export default function TeamDetailsPage() {
             <div>
               <p className="team-details-label">Kiné(s)</p>
               <div className="team-details-chips">
-                {team.physios.length > 0 ? (
-                  team.physios.map((name) => (
-                    <span key={name} className="team-details-chip">{name}</span>
-                  ))
-                ) : (
-                  <span className="team-details-value">—</span>
-                )}
+                <span className="team-details-value">TODO: brancher la gestion des kinés</span>
               </div>
             </div>
           </div>
