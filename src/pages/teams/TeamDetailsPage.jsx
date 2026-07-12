@@ -1,5 +1,6 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import api from '../../api/config'
 import '../../styles/team-details.css'
 import { TEAM_ATHLETES_BY_ID, TEAM_ROWS } from './teamData'
 
@@ -11,6 +12,9 @@ export default function TeamDetailsPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { teamId } = useParams()
+  const [subcoachNames, setSubcoachNames] = useState([])
+  const [subcoachesLoading, setSubcoachesLoading] = useState(true)
+  const [subcoachesError, setSubcoachesError] = useState(null)
 
   const team = useMemo(() => {
     const fallbackTeam = TEAM_ROWS.find((item) => String(item.id) === String(teamId)) ?? TEAM_ROWS[0]
@@ -36,6 +40,48 @@ export default function TeamDetailsPage() {
   }, [teamId, location.state])
 
   const athletes = TEAM_ATHLETES_BY_ID[Number(team.id)] ?? DEFAULT_ATHLETES
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadSubcoaches = async () => {
+      setSubcoachesLoading(true)
+      setSubcoachesError(null)
+
+      try {
+        const response = await api.get(`/api/team/subcoaches/${team.id ?? teamId}`)
+        const names = Array.isArray(response.data)
+          ? response.data
+              .map((item) => item?.subcoachName)
+              .filter((name) => typeof name === 'string' && name.trim() !== '')
+          : []
+
+        if (!cancelled) {
+          setSubcoachNames(names)
+        }
+      } catch {
+        if (!cancelled) {
+          setSubcoachNames([])
+          setSubcoachesError('Impossible de charger les coachs secondaires.')
+        }
+      } finally {
+        if (!cancelled) {
+          setSubcoachesLoading(false)
+        }
+      }
+    }
+
+    if (team.id || teamId) {
+      loadSubcoaches()
+    } else {
+      setSubcoachesLoading(false)
+      setSubcoachNames([])
+    }
+
+    return () => {
+      cancelled = true
+    }
+  }, [team.id, teamId])
 
   return (
     <section className="team-details-page">
@@ -70,8 +116,12 @@ export default function TeamDetailsPage() {
             <div>
               <p className="team-details-label">Coach(s) secondaire(s)</p>
               <div className="team-details-chips">
-                {team.assistantCoaches.length > 0 ? (
-                  team.assistantCoaches.map((name) => (
+                {subcoachesLoading ? (
+                  <span className="team-details-value">Chargement...</span>
+                ) : subcoachesError ? (
+                  <span className="team-details-value">{subcoachesError}</span>
+                ) : subcoachNames.length > 0 ? (
+                  subcoachNames.map((name) => (
                     <span key={name} className="team-details-chip">{name}</span>
                   ))
                 ) : (
