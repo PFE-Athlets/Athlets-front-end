@@ -4,6 +4,7 @@ import '../../styles/page-view.css'
 import '../../styles/team-page.css'
 import { PlusIcon, ResetIcon, SearchIcon } from '../../components/Icons'
 import { teamService } from '../../api/teamService'
+import { teamService } from '../../api/teamService'
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50]
 const INITIAL_FILTERS = { search: '', sport: 'all' }
@@ -16,6 +17,36 @@ export default function TeamPageView() {
   const [filters, setFilters] = useState(INITIAL_FILTERS)
   const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[0])
   const [currentPage, setCurrentPage] = useState(1)
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadTeams = async () => {
+      setLoading(true)
+      setError(null)
+
+      const result = await teamService.getDisplayTeams()
+
+      if (cancelled) {
+        return
+      }
+
+      if (result.success) {
+        setTeams(result.data)
+      } else {
+        setTeams([])
+        setError(result.error)
+      }
+
+      setLoading(false)
+    }
+
+    loadTeams()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -62,13 +93,20 @@ export default function TeamPageView() {
     return [{ value: 'all', label: 'Tous' }, ...sports.map((sport) => ({ value: sport, label: sport }))]
   }, [teams])
 
+  const sportOptions = useMemo(() => {
+    const sports = [...new Set(teams.map((team) => team.sport).filter(Boolean))]
+    return [{ value: 'all', label: 'Tous' }, ...sports.map((sport) => ({ value: sport, label: sport }))]
+  }, [teams])
+
   const filteredTeams = useMemo(() => {
+    return teams.filter((team) => {
     return teams.filter((team) => {
       const matchesSearch =
         filters.search === '' || team.name.toLowerCase().includes(filters.search.toLowerCase())
       const matchesSport = filters.sport === 'all' || team.sport === filters.sport
       return matchesSearch && matchesSport
     })
+  }, [teams, filters])
   }, [teams, filters])
 
   const totalPages = Math.max(1, Math.ceil(filteredTeams.length / pageSize))
@@ -94,6 +132,7 @@ export default function TeamPageView() {
           <label className="list-filter team-page__sport-filter">
             <span>Sport</span>
             <select value={filters.sport} onChange={(event) => updateFilter('sport', event.target.value)}>
+              {sportOptions.map((option) => (
               {sportOptions.map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
@@ -130,7 +169,7 @@ export default function TeamPageView() {
                 visibleTeams.map((team) => (
                   <tr key={team.id}>
                     <td className="cell--name">
-                      <Link className="team-table__team-link" to={`/equipes/${team.id}`}>
+                      <Link className="team-table__team-link" to={`/equipes/${team.id}`} state={{ team }}>
                         {team.name}
                       </Link>
                     </td>
@@ -162,6 +201,13 @@ export default function TeamPageView() {
                         ? error
                         : 'Aucune equipe ne correspond aux filtres.'}
                   </td>
+                  <td colSpan="5" className="list-empty">
+                    {loading
+                      ? 'Chargement des équipes...'
+                      : error
+                        ? error
+                        : 'Aucune equipe ne correspond aux filtres.'}
+                  </td>
                 </tr>
               )}
             </tbody>
@@ -170,6 +216,9 @@ export default function TeamPageView() {
 
         <div className="team-table__footer">
           <p className="team-table__count">
+            {loading
+              ? 'Chargement en cours...'
+              : filteredTeams.length === 0
             {loading
               ? 'Chargement en cours...'
               : filteredTeams.length === 0
