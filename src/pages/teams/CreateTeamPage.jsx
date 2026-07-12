@@ -4,17 +4,58 @@ import api from '../../api/config'
 import '../../styles/page-form.css'
 import '../../styles/create-team.css'
 
-const SPORT_OPTIONS = ['Rugby', 'Athlétisme', 'Soccer', 'Basketball', 'Volleyball']
-
 export default function CreateTeamPage() {
   const navigate = useNavigate()
   const [teamName, setTeamName] = useState('')
   const [sport, setSport] = useState('')
+  const [sportOptions, setSportOptions] = useState([])
+  const [sportsLoading, setSportsLoading] = useState(true)
+  const [sportsError, setSportsError] = useState(null)
   const [headCoachId, setHeadCoachId] = useState('')
   const [coachOptions, setCoachOptions] = useState([])
   const [coachesLoading, setCoachesLoading] = useState(true)
   const [coachesError, setCoachesError] = useState(null)
   const [selectedSubcoachIds, setSelectedSubcoachIds] = useState([])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadSports = async () => {
+      setSportsLoading(true)
+      setSportsError(null)
+
+      try {
+        const response = await api.get('/api/sport/sports')
+        const options = Array.isArray(response.data)
+          ? response.data
+              .filter((item) => item?.sportId != null)
+              .map((item) => ({
+                id: String(item.sportId),
+                name: item.sportName ?? 'Sport',
+              }))
+          : []
+
+        if (!cancelled) {
+          setSportOptions(options)
+        }
+      } catch {
+        if (!cancelled) {
+          setSportOptions([])
+          setSportsError('Impossible de charger la liste des sports.')
+        }
+      } finally {
+        if (!cancelled) {
+          setSportsLoading(false)
+        }
+      }
+    }
+
+    loadSports()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -97,12 +138,17 @@ export default function CreateTeamPage() {
 
             <div className="form-field">
               <label>Sport</label>
-              <select value={sport} onChange={(event) => setSport(event.target.value)}>
+              <select
+                value={sport}
+                onChange={(event) => setSport(event.target.value)}
+                disabled={sportsLoading || sportOptions.length === 0}
+              >
                 <option value="">Sélectionner un sport</option>
-                {SPORT_OPTIONS.map((option) => (
-                  <option key={option} value={option}>{option}</option>
+                {sportOptions.map((option) => (
+                  <option key={option.id} value={option.id}>{option.name}</option>
                 ))}
               </select>
+              {sportsError ? <p className="form-field__error">{sportsError}</p> : null}
             </div>
           </div>
         </section>
