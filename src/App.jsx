@@ -114,6 +114,7 @@ function App() {
   const activeUserRole = currentUser
     ? (ROLE_BY_ACCESS_LEVEL[currentUser.accessLevel] ?? 'Coach')
     : 'Coach'
+  const canCreateTeam = activeUserRole === 'Administrateur'
 
   const handleLoginSuccess = (user) => {
     sessionStorage.setItem('currentUser', JSON.stringify(user))
@@ -170,9 +171,9 @@ function App() {
               {page.path === '/athletes' ? (
                 <AthletePageView />
               ) : page.path === '/equipes' ? (
-                <TeamPageView />
+                <TeamPageView canCreateTeam={canCreateTeam} />
               ) : page.path === '/equipes/creer' ? (
-                <CreateTeamPage />
+                canCreateTeam ? <CreateTeamPage /> : <Navigate to="/equipes" replace />
               ) : page.path === '/tests-physiques' ? (
                 <PhysicalTestPageView />
               ) : page.path === '/athletes/creer' ? (
