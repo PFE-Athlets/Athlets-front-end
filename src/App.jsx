@@ -9,6 +9,7 @@ import PhysicalTestPageView from './pages/physical-test/PhysicalTestPageView.jsx
 import CreateAthletePage from './pages/athletes/CreateAthletePage.jsx'
 import CreatePhysicalTestPage from './pages/physical-test/CreatePhysicalTestPage.jsx'
 import CreateTeamPage from './pages/teams/CreateTeamPage.jsx'
+import EditTeamPage from './pages/teams/EditTeamPage.jsx'
 import TeamPageView from './pages/teams/TeamPageView.jsx'
 import TeamDetailsPage from './pages/teams/TeamDetailsPage.jsx'
 
@@ -197,6 +198,21 @@ function App() {
               {...shellProps}
             >
               <TeamDetailsPage />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/equipes/:teamId/modifier"
+        element={
+          <ProtectedRoute currentUser={currentUser}>
+            <AppShell
+              pageTitle="Modifier une équipe"
+              pageSubtitle=""
+              {...shellProps}
+            >
+              <EditTeamPage />
             </AppShell>
           </ProtectedRoute>
         }
