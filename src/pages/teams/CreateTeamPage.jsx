@@ -16,6 +16,8 @@ export default function CreateTeamPage() {
   const [coachesLoading, setCoachesLoading] = useState(true)
   const [coachesError, setCoachesError] = useState(null)
   const [selectedSubcoachIds, setSelectedSubcoachIds] = useState([])
+  const [submitError, setSubmitError] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -115,8 +117,50 @@ export default function CreateTeamPage() {
     [coachOptions, selectedSubcoachIds, headCoachId],
   )
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
+
+    setSubmitError(null)
+
+    const trimmedTeamName = teamName.trim()
+    if (!trimmedTeamName) {
+      setSubmitError('Veuillez saisir un nom d\'équipe.')
+      return
+    }
+
+    if (!sport) {
+      setSubmitError('Veuillez sélectionner un sport.')
+      return
+    }
+
+    if (!headCoachId) {
+      setSubmitError('Veuillez sélectionner un coach principal.')
+      return
+    }
+
+    if (selectedSubcoachIds.includes(headCoachId)) {
+      setSubmitError('Le coach principal ne peut pas être aussi coach secondaire.')
+      return
+    }
+
+    setSubmitting(true)
+
+    try {
+      await api.post('/api/team', {
+        teamName: trimmedTeamName,
+        sportId: Number(sport),
+        headCoachId: Number(headCoachId),
+        subcoachIds: selectedSubcoachIds.map((id) => Number(id)),
+      })
+
+      navigate('/equipes')
+    } catch (error) {
+      const data = error.response?.data
+      const message = typeof data === 'string' ? data : data?.message
+      setSubmitError(message ?? 'Impossible de créer cette équipe.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -245,10 +289,11 @@ export default function CreateTeamPage() {
             Annuler
           </button>
 
-          <button type="submit" className="btn-primary">
-            Créer l&apos;équipe
+          <button type="submit" className="btn-primary" disabled={submitting}>
+            {submitting ? 'Création...' : 'Créer l\'équipe'}
           </button>
         </div>
+        {submitError ? <p className="form-field__error">{submitError}</p> : null}
       </form>
     </div>
   )
