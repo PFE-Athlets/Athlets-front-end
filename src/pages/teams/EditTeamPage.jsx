@@ -18,20 +18,56 @@ export default function EditTeamPage() {
     return TEAM_ROWS.find((item) => String(item.id) === String(teamId)) ?? TEAM_ROWS[0]
   }, [teamId, location.state])
 
-  const coachOptions = useMemo(() => {
-    const unique = [...new Set(TEAM_ROWS.map((item) => item.headCoach).filter(Boolean))]
-    if (!unique.includes(team.headCoach)) {
-      unique.unshift(team.headCoach)
-    }
-    return unique
-  }, [team.headCoach])
-
   const [teamName, setTeamName] = useState(team.name)
   const [headCoach, setHeadCoach] = useState(team.headCoach)
+  const [coachOptions, setCoachOptions] = useState([])
+  const [coachesLoading, setCoachesLoading] = useState(true)
+  const [coachesError, setCoachesError] = useState(null)
   const [subcoachOptions, setSubcoachOptions] = useState([])
   const [selectedSubcoachIds, setSelectedSubcoachIds] = useState([])
   const [subcoachesLoading, setSubcoachesLoading] = useState(true)
   const [subcoachesError, setSubcoachesError] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadCoaches = async () => {
+      setCoachesLoading(true)
+      setCoachesError(null)
+
+      try {
+        const response = await api.get('/api/coach/coaches')
+        const names = Array.isArray(response.data)
+          ? response.data
+              .map((item) => item?.coachName)
+              .filter((name) => typeof name === 'string' && name.trim() !== '')
+          : []
+
+        if (!cancelled) {
+          const unique = [...new Set(names)]
+          if (team.headCoach && !unique.includes(team.headCoach)) {
+            unique.unshift(team.headCoach)
+          }
+          setCoachOptions(unique)
+        }
+      } catch {
+        if (!cancelled) {
+          setCoachOptions([])
+          setCoachesError('Impossible de charger la liste des coachs.')
+        }
+      } finally {
+        if (!cancelled) {
+          setCoachesLoading(false)
+        }
+      }
+    }
+
+    loadCoaches()
+
+    return () => {
+      cancelled = true
+    }
+  }, [team.headCoach])
 
   useEffect(() => {
     let cancelled = false
@@ -123,11 +159,16 @@ export default function EditTeamPage() {
           <div className="form-grid form-grid--single">
             <div className="form-field full-width">
               <label>Coach principal</label>
-              <select value={headCoach} onChange={(event) => setHeadCoach(event.target.value)}>
+              <select
+                value={headCoach}
+                onChange={(event) => setHeadCoach(event.target.value)}
+                disabled={coachesLoading || coachOptions.length === 0}
+              >
                 {coachOptions.map((option) => (
                   <option key={option} value={option}>{option}</option>
                 ))}
               </select>
+              {coachesError ? <p className="form-field__error">{coachesError}</p> : null}
             </div>
 
             <div className="form-field full-width">
