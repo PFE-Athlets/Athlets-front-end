@@ -8,7 +8,7 @@ import { teamService } from '../../api/teamService'
 const PAGE_SIZE_OPTIONS = [10, 20, 50]
 const INITIAL_FILTERS = { search: '', sport: 'all' }
 
-export default function TeamPageView() {
+export default function TeamPageView({ canCreateTeam = false }) {
   const navigate = useNavigate()
   const [teams, setTeams] = useState([])
   const [loading, setLoading] = useState(true)
@@ -106,10 +106,12 @@ export default function TeamPageView() {
           </button>
         </div>
 
-        <Link to="/equipes/creer" className="create-btn">
-          <PlusIcon />
-          <span>Créer une équipe</span>
-        </Link>
+        {canCreateTeam ? (
+          <Link to="/equipes/creer" className="create-btn">
+            <PlusIcon />
+            <span>Créer une équipe</span>
+          </Link>
+        ) : null}
       </div>
 
       <div className="team-table-card">
