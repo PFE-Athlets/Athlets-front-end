@@ -9,6 +9,7 @@ import PhysicalTestPageView from './pages/physical-test/PhysicalTestPageView.jsx
 import CreateAthletePage from './pages/athletes/CreateAthletePage.jsx'
 import CreatePhysicalTestPage from './pages/physical-test/CreatePhysicalTestPage.jsx'
 import CreateTeamPage from './pages/teams/CreateTeamPage.jsx'
+import EditTeamPage from './pages/teams/EditTeamPage.jsx'
 import TeamPageView from './pages/teams/TeamPageView.jsx'
 import TeamDetailsPage from './pages/teams/TeamDetailsPage.jsx'
 
@@ -113,6 +114,7 @@ function App() {
   const activeUserRole = currentUser
     ? (ROLE_BY_ACCESS_LEVEL[currentUser.accessLevel] ?? 'Coach')
     : 'Coach'
+  const canCreateTeam = activeUserRole === 'Administrateur'
 
   const handleLoginSuccess = (user) => {
     sessionStorage.setItem('currentUser', JSON.stringify(user))
@@ -169,9 +171,9 @@ function App() {
               {page.path === '/athletes' ? (
                 <AthletePageView />
               ) : page.path === '/equipes' ? (
-                <TeamPageView />
+                <TeamPageView canCreateTeam={canCreateTeam} />
               ) : page.path === '/equipes/creer' ? (
-                <CreateTeamPage />
+                canCreateTeam ? <CreateTeamPage /> : <Navigate to="/equipes" replace />
               ) : page.path === '/tests-physiques' ? (
                 <PhysicalTestPageView />
               ) : page.path === '/athletes/creer' ? (
@@ -197,6 +199,21 @@ function App() {
               {...shellProps}
             >
               <TeamDetailsPage />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/equipes/:teamId/modifier"
+        element={
+          <ProtectedRoute currentUser={currentUser}>
+            <AppShell
+              pageTitle="Modifier une équipe"
+              pageSubtitle=""
+              {...shellProps}
+            >
+              <EditTeamPage />
             </AppShell>
           </ProtectedRoute>
         }

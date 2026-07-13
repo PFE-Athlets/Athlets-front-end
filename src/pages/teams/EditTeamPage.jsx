@@ -1,63 +1,34 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import api from '../../api/config'
 import '../../styles/page-form.css'
 import '../../styles/create-team.css'
+import { TEAM_ROWS } from './teamData'
 
-export default function CreateTeamPage() {
+export default function EditTeamPage() {
   const navigate = useNavigate()
-  const [teamName, setTeamName] = useState('')
-  const [sport, setSport] = useState('')
-  const [sportOptions, setSportOptions] = useState([])
-  const [sportsLoading, setSportsLoading] = useState(true)
-  const [sportsError, setSportsError] = useState(null)
-  const [headCoachId, setHeadCoachId] = useState('')
+  const location = useLocation()
+  const { teamId } = useParams()
+
+  const team = useMemo(() => {
+    if (location.state?.team) {
+      return location.state.team
+    }
+
+    return TEAM_ROWS.find((item) => String(item.id) === String(teamId)) ?? TEAM_ROWS[0]
+  }, [teamId, location.state])
+
+  const [teamName, setTeamName] = useState(team.name)
+  const [headCoachId, setHeadCoachId] = useState(team.headCoachId ? String(team.headCoachId) : '')
   const [coachOptions, setCoachOptions] = useState([])
   const [coachesLoading, setCoachesLoading] = useState(true)
   const [coachesError, setCoachesError] = useState(null)
+  const [subcoachOptions, setSubcoachOptions] = useState([])
   const [selectedSubcoachIds, setSelectedSubcoachIds] = useState([])
+  const [subcoachesLoading, setSubcoachesLoading] = useState(true)
+  const [subcoachesError, setSubcoachesError] = useState(null)
   const [submitError, setSubmitError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
-
-  useEffect(() => {
-    let cancelled = false
-
-    const loadSports = async () => {
-      setSportsLoading(true)
-      setSportsError(null)
-
-      try {
-        const response = await api.get('/api/sport/sports')
-        const options = Array.isArray(response.data)
-          ? response.data
-              .filter((item) => item?.sportId != null)
-              .map((item) => ({
-                id: String(item.sportId),
-                name: item.sportName ?? 'Sport',
-              }))
-          : []
-
-        if (!cancelled) {
-          setSportOptions(options)
-        }
-      } catch {
-        if (!cancelled) {
-          setSportOptions([])
-          setSportsError('Impossible de charger la liste des sports.')
-        }
-      } finally {
-        if (!cancelled) {
-          setSportsLoading(false)
-        }
-      }
-    }
-
-    loadSports()
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -79,10 +50,20 @@ export default function CreateTeamPage() {
 
         if (!cancelled) {
           setCoachOptions(options)
+          setSubcoachOptions(options)
+
+          if (team.headCoachId) {
+            setHeadCoachId(String(team.headCoachId))
+          } else {
+            const matched = options.find((option) => option.name === team.headCoach)
+            setHeadCoachId(matched?.id ?? '')
+          }
         }
       } catch {
         if (!cancelled) {
           setCoachOptions([])
+          setSubcoachOptions([])
+          setHeadCoachId('')
           setCoachesError('Impossible de charger la liste des coachs.')
         }
       } finally {
@@ -97,7 +78,44 @@ export default function CreateTeamPage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [team.headCoach])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadSubcoaches = async () => {
+      setSubcoachesLoading(true)
+      setSubcoachesError(null)
+
+      try {
+        const response = await api.get(`/api/team/subcoaches/${team.id}`)
+        const ids = Array.isArray(response.data)
+          ? response.data
+              .filter((item) => item?.coachId != null)
+              .map((item) => String(item.coachId))
+          : []
+
+        if (!cancelled) {
+          setSelectedSubcoachIds(ids)
+        }
+      } catch {
+        if (!cancelled) {
+          setSelectedSubcoachIds([])
+          setSubcoachesError('Impossible de charger les coachs secondaires.')
+        }
+      } finally {
+        if (!cancelled) {
+          setSubcoachesLoading(false)
+        }
+      }
+    }
+
+    loadSubcoaches()
+
+    return () => {
+      cancelled = true
+    }
+  }, [team.id])
 
   useEffect(() => {
     if (!headCoachId) {
@@ -108,30 +126,19 @@ export default function CreateTeamPage() {
   }, [headCoachId])
 
   const selectedSubcoaches = useMemo(
-    () => coachOptions.filter((option) => selectedSubcoachIds.includes(option.id)),
-    [coachOptions, selectedSubcoachIds],
+    () => subcoachOptions.filter((option) => selectedSubcoachIds.includes(option.id)),
+    [subcoachOptions, selectedSubcoachIds],
   )
 
   const availableSubcoaches = useMemo(
-    () => coachOptions.filter((option) => !selectedSubcoachIds.includes(option.id) && option.id !== headCoachId),
-    [coachOptions, selectedSubcoachIds, headCoachId],
+    () => subcoachOptions.filter((option) => !selectedSubcoachIds.includes(option.id) && option.id !== headCoachId),
+    [subcoachOptions, selectedSubcoachIds, headCoachId],
   )
 
   const handleSubmit = async (event) => {
     event.preventDefault()
 
     setSubmitError(null)
-
-    const trimmedTeamName = teamName.trim()
-    if (!trimmedTeamName) {
-      setSubmitError('Veuillez saisir un nom d\'équipe.')
-      return
-    }
-
-    if (!sport) {
-      setSubmitError('Veuillez sélectionner un sport.')
-      return
-    }
 
     if (!headCoachId) {
       setSubmitError('Veuillez sélectionner un coach principal.')
@@ -146,18 +153,18 @@ export default function CreateTeamPage() {
     setSubmitting(true)
 
     try {
-      await api.post('/api/team', {
-        teamName: trimmedTeamName,
-        sportId: Number(sport),
-        headCoachId: Number(headCoachId),
-        subcoachIds: selectedSubcoachIds.map((id) => Number(id)),
+      await api.patch(`/api/team/modify/${team.id ?? teamId}`, {
+        teamId: Number(team.id ?? teamId),
+        newTeamName: teamName.trim(),
+        newCoachId: Number(headCoachId),
+        newSubcoachesIds: selectedSubcoachIds.map((id) => Number(id)),
       })
 
       navigate('/equipes')
     } catch (error) {
       const data = error.response?.data
       const message = typeof data === 'string' ? data : data?.message
-      setSubmitError(message ?? 'Impossible de créer cette équipe.')
+      setSubmitError(message ?? 'Impossible de modifier cette équipe.')
     } finally {
       setSubmitting(false)
     }
@@ -182,17 +189,9 @@ export default function CreateTeamPage() {
 
             <div className="form-field">
               <label>Sport</label>
-              <select
-                value={sport}
-                onChange={(event) => setSport(event.target.value)}
-                disabled={sportsLoading || sportOptions.length === 0}
-              >
-                <option value="">Sélectionner un sport</option>
-                {sportOptions.map((option) => (
-                  <option key={option.id} value={option.id}>{option.name}</option>
-                ))}
+              <select value={team.sport} disabled>
+                <option value={team.sport}>{team.sport}</option>
               </select>
-              {sportsError ? <p className="form-field__error">{sportsError}</p> : null}
             </div>
           </div>
         </section>
@@ -220,7 +219,7 @@ export default function CreateTeamPage() {
               <label>Coach(s) secondaire(s)</label>
               <div className="token-select" role="group" aria-label="Coachs secondaires sélectionnés">
                 <div className="token-select__chips">
-                  {coachesLoading ? (
+                  {subcoachesLoading ? (
                     <span className="selection-chip selection-chip--placeholder">Chargement...</span>
                   ) : selectedSubcoaches.length === 0 ? (
                     <span className="selection-chip selection-chip--placeholder">Aucun coach secondaire</span>
@@ -252,10 +251,10 @@ export default function CreateTeamPage() {
 
                     setSelectedSubcoachIds((prev) => (prev.includes(nextId) ? prev : [...prev, nextId]))
                   }}
-                  disabled={coachesLoading || availableSubcoaches.length === 0}
+                  disabled={subcoachesLoading || availableSubcoaches.length === 0}
                 >
                   <option value="">
-                    {coachesLoading
+                    {subcoachesLoading
                       ? 'Chargement...'
                       : availableSubcoaches.length === 0
                         ? 'Aucun coach à ajouter'
@@ -266,16 +265,7 @@ export default function CreateTeamPage() {
                   ))}
                 </select>
               </div>
-              {coachesError ? <p className="form-field__error">{coachesError}</p> : null}
-            </div>
-
-            <div className="form-field full-width">
-              <label>Kiné(s)</label>
-              <div className="token-select" role="group" aria-label="Kinés sélectionnés">
-                <div className="token-select__chips">
-                  <span className="selection-chip selection-chip--placeholder">TODO: brancher la gestion des kinés</span>
-                </div>
-              </div>
+              {subcoachesError ? <p className="form-field__error">{subcoachesError}</p> : null}
             </div>
           </div>
         </section>
@@ -290,7 +280,7 @@ export default function CreateTeamPage() {
           </button>
 
           <button type="submit" className="btn-primary" disabled={submitting}>
-            {submitting ? 'Création...' : 'Créer l\'équipe'}
+            {submitting ? 'Enregistrement...' : 'Enregistrer les modifications'}
           </button>
         </div>
         {submitError ? <p className="form-field__error">{submitError}</p> : null}

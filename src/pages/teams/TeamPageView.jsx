@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import '../../styles/page-view.css'
 import '../../styles/team-page.css'
 import { PlusIcon, ResetIcon, SearchIcon } from '../../components/Icons'
@@ -8,7 +8,8 @@ import { teamService } from '../../api/teamService'
 const PAGE_SIZE_OPTIONS = [10, 20, 50]
 const INITIAL_FILTERS = { search: '', sport: 'all' }
 
-export default function TeamPageView() {
+export default function TeamPageView({ canCreateTeam = false }) {
+  const navigate = useNavigate()
   const [teams, setTeams] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -105,10 +106,12 @@ export default function TeamPageView() {
           </button>
         </div>
 
-        <Link to="/equipes/creer" className="create-btn">
-          <PlusIcon />
-          <span>Créer une équipe</span>
-        </Link>
+        {canCreateTeam ? (
+          <Link to="/equipes/creer" className="create-btn">
+            <PlusIcon />
+            <span>Créer une équipe</span>
+          </Link>
+        ) : null}
       </div>
 
       <div className="team-table-card">
@@ -138,7 +141,13 @@ export default function TeamPageView() {
                     <td>{team.headCoach}</td>
                     <td>
                       <div className="team-table__actions">
-                        <button type="button" className="team-table__edit-btn">Modifier</button>
+                        <button
+                          type="button"
+                          className="team-table__edit-btn"
+                          onClick={() => navigate(`/equipes/${team.id}/modifier`, { state: { team } })}
+                        >
+                          Modifier
+                        </button>
                         <button type="button" className="team-table__menu-btn" aria-label={`Plus d'actions pour ${team.name}`}>
                           <span aria-hidden="true">⋮</span>
                         </button>
