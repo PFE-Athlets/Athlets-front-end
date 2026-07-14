@@ -6,10 +6,9 @@ export const ResultDetailModal = ({ result, onClose }) => {
   const submitAthleteResult = useResultStore((state) => state.submitAthleteResult)
   const cancelSubmission = useResultStore((state) => state.cancelSubmission)
 
-  // Local Form States
-  const [resultValue, setResultValue] = useState('')
-  const [videoProof, setVideoProof] = useState('')
-  const [commentText, setCommentText] = useState('')
+  const [resultValue, setResultValue] = useState(result.resultValue || '')
+  const [videoProof, setVideoProof] = useState(result.videoProof || '')
+  const [commentText, setCommentText] = useState(result.commentText || '')
   const [formError, setFormError] = useState('')
 
   const isAssigned = result.status === 'Assigned'
@@ -19,11 +18,6 @@ export const ResultDetailModal = ({ result, onClose }) => {
 
   useEffect(() => {
     if (result) {
-      setResultValue(result.resultValue || '')
-      setVideoProof(result.videoProof || '')
-      setCommentText(result.commentText || '')
-      setFormError('')
-
       if (isRejected) {
         alert("Ce résultat a été refusé. En fermant cette fenêtre, son statut repassera à 'Assigné' pour vous permettre de soumettre une nouvelle performance.")
       }

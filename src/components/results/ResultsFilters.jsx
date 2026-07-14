@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { useResultStore } from '@/stores/resultStore'
 import { SearchIcon, ResetIcon } from '../../components/Icons'
 
@@ -24,22 +23,6 @@ export const ResultFilters = ({ totalCount = 0 }) => {
   const setFilter = useResultStore((state) => state.setFilter);
   const resetFilters = useResultStore((state) => state.resetFilters); 
 
-  const [searchTerm, setSearchTerm] = useState(filters.search || '');
-
-  useEffect(() => {
-    if (searchTerm === '' && !filters.search) return;
-
-    const delayDebounceFn = setTimeout(() => {
-      setFilter('search', searchTerm);
-    }, 400); 
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, setFilter, filters.search]);
-
-  useEffect(() => {
-    setSearchTerm(filters.search || '');
-  }, [filters.search]);
-
   return (
     <>
       <div className="list-page__top">
@@ -53,12 +36,10 @@ export const ResultFilters = ({ totalCount = 0 }) => {
 
       <div className="list-filters">
         <label className="list-search">
-          <input
-            type="search"
-            placeholder="Rechercher un résultat..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+          <input 
+              value={filters.search || ''} 
+              onChange={(e) => setFilter('search', e.target.value)}
+            />
           <SearchIcon />
         </label>
 
