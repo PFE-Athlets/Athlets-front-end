@@ -14,7 +14,7 @@ export const ResultDetailModal = ({ result, onClose }) => {
 
   const isAssigned = result.status === 'Assigned'
   const isPending = result.status === 'Pending approval'
-  const isRejected = result.status === 'Rejected' // or 'Refused' depending on exact backend casing
+  const isRejected = result.status === 'Rejected'
   const isReadOnly = !isAssigned
 
   useEffect(() => {
@@ -32,8 +32,6 @@ export const ResultDetailModal = ({ result, onClose }) => {
 
   const handleCloseAndResetRejected = async () => {
     if (isReadOnly && isRejected) {
-      // If it was rejected, we change status back to Assigned on close
-      // Assuming your api can handle a cancellation or clean reassignment workflow
       await cancelSubmission(result.id)
     }
     onClose()
@@ -43,13 +41,11 @@ export const ResultDetailModal = ({ result, onClose }) => {
     e.preventDefault()
     setFormError('')
 
-    // Validation matching backend fields
     if (!resultValue.trim()) {
       setFormError('Le champ résultat est requis.')
       return
     }
 
-    // Check if proof is needed ("oui" matching CreatePhysicalTestPage logic)
     const proofRequired = result.proofNeeded?.toLowerCase() === 'oui'
     if (proofRequired && !videoProof.trim()) {
       setFormError('Une preuve vidéo est requise pour ce test physique.')
@@ -82,12 +78,9 @@ export const ResultDetailModal = ({ result, onClose }) => {
 
   return (
     <div className="modal-backdrop" onClick={handleCloseAndResetRejected}>
-      {/* Stop propagation so clicking inside the form doesn't close it */}
       <div className="create-athlete-page modal-content" onClick={(e) => e.stopPropagation()}>
   
-  {/* CHANGED: alignItems to 'flex-start' and added a gap to prevent text hitting the button */}
   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
-    {/* CHANGED: added style with a responsive line-height and reset margin if needed */}
     <h1 style={{ lineHeight: '1.2', margin: '0 0 10px 0' }}>
       Détails du Test : {result.physicalTestName}
     </h1>
@@ -100,7 +93,6 @@ export const ResultDetailModal = ({ result, onClose }) => {
 
         <form className="athlete-form" onSubmit={handleSubmit}>
           
-          {/* PROTOCOL INFORMATION SECTION */}
           <section className="form-section form-section--notes">
             <h2>Protocole de test</h2>
             <div className="readonly-info text-protocol" style={{ whiteSpace: 'pre-wrap' }}>
@@ -108,7 +100,6 @@ export const ResultDetailModal = ({ result, onClose }) => {
             </div>
           </section>
 
-          {/* PERFORMANCE / SUBMISSION DATA SECTION */}
           <section className="form-section">
             <h2>Performances & Preuves</h2>
             
@@ -153,7 +144,6 @@ export const ResultDetailModal = ({ result, onClose }) => {
             </div>
           </section>
 
-          {/* ACTION ACTIONS SECTION */}
           <div className="form-actions">
             <button type="button" className="btn-secondary" onClick={handleCloseAndResetRejected}>
               {isReadOnly ? 'Fermer' : 'Annuler'}

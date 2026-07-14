@@ -26,18 +26,16 @@ export const ResultFilters = ({ totalCount = 0 }) => {
 
   const [searchTerm, setSearchTerm] = useState(filters.search || '');
 
-  // Handle input changes using a built-in debounce
   useEffect(() => {
     if (searchTerm === '' && !filters.search) return;
 
     const delayDebounceFn = setTimeout(() => {
-      setFilter('search', searchTerm); // This now triggers fetchResults() under the hood
+      setFilter('search', searchTerm);
     }, 400); 
 
     return () => clearTimeout(delayDebounceFn);
   }, [searchTerm, setFilter, filters.search]);
 
-  // Keep local search field synced if filters reset globally
   useEffect(() => {
     setSearchTerm(filters.search || '');
   }, [filters.search]);

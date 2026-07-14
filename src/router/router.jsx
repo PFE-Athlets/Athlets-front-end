@@ -21,7 +21,6 @@ const PAGE_META = {
   '/parametres': { title: 'Paramètres', subtitle: 'Réglages de l’application' },
 }
 
-// ─── AUTHENTICATION AND ACCESS LEVEL GUARD ───────────────────────────
 const ProtectedLayout = ({ allowedLevels }) => {
   const { isAuthenticated, user } = useAuthStore()
   const location = useLocation()
@@ -47,7 +46,6 @@ const ProtectedLayout = ({ allowedLevels }) => {
   )
 }
 
-// ─── DYNAMIC ROOT REDIRECTOR ─────────────────────────────────────────
 const RootRedirector = () => {
   const { isAuthenticated, user } = useAuthStore()
 
@@ -60,7 +58,6 @@ const RootRedirector = () => {
   return <Navigate to="/resultats" replace />
 }
 
-// ─── CENTRAL APP BROWSER ROUTER TREE ─────────────────────────────────
 export const router = createBrowserRouter([
   {
     path: '/',
