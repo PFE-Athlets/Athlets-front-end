@@ -252,7 +252,14 @@ export default function TeamDetailsPage() {
                         </span>
                       </td>
                       <td>
-                        <button type="button" className="team-details-profile-btn">Voir le profil</button>
+                        <button
+                          type="button"
+                          className="team-details-profile-btn"
+                          onClick={() => navigate(`/athletes/${athlete.id}`)}
+                          disabled={!athlete.id}
+                        >
+                          Voir le profil
+                        </button>
                       </td>
                     </tr>
                   ))
