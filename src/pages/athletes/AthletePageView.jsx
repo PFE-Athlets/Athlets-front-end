@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { athleteService } from '../../api/athleteService'
 import '../../styles/page-view.css'
 import {
   PlusIcon,
@@ -37,113 +38,37 @@ export default function AthletePageView() {
 
   useEffect(() => {
     const fetchAthletes = async () => {
-      try {
-        setLoading(true)
-        setError('')
+      setLoading(true)
+      setError('')
 
-        const response = await fetch(
-          'http://localhost:8080/api/athlete/all',
-          {
-            method: 'GET',
-            credentials: 'include',
-            headers: {
-              Accept: 'application/json',
-            },
-          },
-        )
+      const result = await athleteService.getDisplayAthletes()
 
-        if (response.status === 401) {
-          throw new Error(
-            'Vous devez être connecté pour consulter les athlètes.',
-          )
-        }
-
-        if (response.status === 403) {
-          throw new Error(
-            'Vous n’êtes pas autorisé à consulter la liste des athlètes.',
-          )
-        }
-
-        if (!response.ok) {
-          throw new Error(
-            `Impossible de récupérer les athlètes. Erreur ${response.status}.`,
-          )
-        }
-
-        const data = await response.json()
-        setAthletes(Array.isArray(data) ? data : [])
-      } catch (requestError) {
+      if (!result.success) {
         console.error(
           'Erreur lors du chargement des athlètes :',
-          requestError,
+          result.error,
         )
 
         setError(
-          requestError instanceof Error
-            ? requestError.message
-            : 'Une erreur est survenue lors du chargement des athlètes.',
+          result.error ||
+            'Une erreur est survenue lors du chargement des athlètes.',
         )
-      } finally {
+
         setLoading(false)
+        return
       }
+
+      setAthletes(result.data)
+      setLoading(false)
     }
 
     fetchAthletes()
   }, [])
 
-  const normalizeText = (value) =>
-    String(value ?? '')
-      .trim()
-      .toLowerCase()
-
-  const getAthleteStatus = (athlete) => {
-    const rawStatus = athlete.authUser?.accountStatus
-      ?.trim()
-      .toUpperCase()
-
-    if (rawStatus === 'ACTIVE') {
-      return 'active'
-    }
-
-    if (rawStatus === 'A_ACTIVER') {
-      return 'pending'
-    }
-
-    return 'inactive'
-  }
-
-  const getAthleteTeams = (athlete) => {
-    const teams =
-      athlete.teams
-        ?.map((team) => team.name)
-        .filter(Boolean) ?? []
-
-    return [...new Set(teams)]
-  }
-
-  const getAthleteSports = (athlete) => {
-    const teamSports =
-      athlete.teams
-        ?.map((team) => team.sport?.name)
-        .filter(Boolean) ?? []
-
-    const disciplineSports =
-      athlete.disciplines
-        ?.map((discipline) => discipline.sport?.name)
-        .filter(Boolean) ?? []
-
-    return [
-      ...new Set([
-        ...teamSports,
-        ...disciplineSports,
-      ]),
-    ]
-  }
-
   const teamOptions = useMemo(() => {
     const teams = [
       ...new Set(
-        athletes.flatMap(getAthleteTeams),
+        athletes.flatMap((athlete) => athlete.teams),
       ),
     ].sort((first, second) =>
       first.localeCompare(second, 'fr'),
@@ -152,7 +77,7 @@ export default function AthletePageView() {
     return [
       { value: 'all', label: 'Toutes' },
       ...teams.map((team) => ({
-        value: normalizeText(team),
+        value: athleteService.helpers.normalizeText(team),
         label: team,
       })),
     ]
@@ -161,7 +86,7 @@ export default function AthletePageView() {
   const sportOptions = useMemo(() => {
     const sports = [
       ...new Set(
-        athletes.flatMap(getAthleteSports),
+        athletes.flatMap((athlete) => athlete.sports),
       ),
     ].sort((first, second) =>
       first.localeCompare(second, 'fr'),
@@ -170,7 +95,7 @@ export default function AthletePageView() {
     return [
       { value: 'all', label: 'Tous' },
       ...sports.map((sport) => ({
-        value: normalizeText(sport),
+        value: athleteService.helpers.normalizeText(sport),
         label: sport,
       })),
     ]
@@ -178,26 +103,28 @@ export default function AthletePageView() {
 
   const filteredAthletes = useMemo(() => {
     return athletes.filter((athlete) => {
-      const user = athlete.authUser ?? {}
-      const teams = getAthleteTeams(athlete)
-      const sports = getAthleteSports(athlete)
-
       const searchableText = [
-        user.firstName,
-        user.lastName,
-        user.username,
-        user.email,
-        ...teams,
-        ...sports,
+        athlete.firstName,
+        athlete.lastName,
+        athlete.username,
+        athlete.email,
+        ...athlete.teams,
+        ...athlete.sports,
       ]
         .filter(Boolean)
         .join(' ')
         .toLowerCase()
 
-      const searchValue = normalizeText(filters.search)
-      const normalizedTeams = teams.map(normalizeText)
-      const normalizedSports = sports.map(normalizeText)
-      const athleteStatus = getAthleteStatus(athlete)
+      const searchValue =
+        athleteService.helpers.normalizeText(filters.search)
+
+      const normalizedTeams = athlete.teams.map(
+        athleteService.helpers.normalizeText,
+      )
+
+      const normalizedSports = athlete.sports.map(
+        athleteService.helpers.normalizeText,
+      )
 
       const matchesSearch =
         searchValue === '' ||
@@ -213,7 +140,7 @@ export default function AthletePageView() {
 
       const matchesStatus =
         filters.status === 'all' ||
-        athleteStatus === filters.status
+        athlete.status === filters.status
 
       return (
         matchesSearch &&
@@ -225,15 +152,15 @@ export default function AthletePageView() {
   }, [athletes, filters])
 
   const activeCount = athletes.filter(
-    (athlete) => getAthleteStatus(athlete) === 'active',
+    (athlete) => athlete.status === 'active',
   ).length
 
   const inactiveCount = athletes.filter(
-    (athlete) => getAthleteStatus(athlete) === 'inactive',
+    (athlete) => athlete.status === 'inactive',
   ).length
 
   const pendingCount = athletes.filter(
-    (athlete) => getAthleteStatus(athlete) === 'pending',
+    (athlete) => athlete.status === 'pending',
   ).length
 
   const totalPages = Math.max(
@@ -284,8 +211,6 @@ export default function AthletePageView() {
   }
 
   const getStatusConfig = (athlete) => {
-    const status = getAthleteStatus(athlete)
-
     const configurations = {
       active: {
         label: 'Actif',
@@ -301,7 +226,10 @@ export default function AthletePageView() {
       },
     }
 
-    return configurations[status]
+    return (
+      configurations[athlete.status] ??
+      configurations.inactive
+    )
   }
 
   return (
@@ -418,27 +346,28 @@ export default function AthletePageView() {
 
             <tbody>
               {visibleAthletes.map((athlete) => {
-                const user = athlete.authUser ?? {}
-                const teams = getAthleteTeams(athlete)
-                const sports = getAthleteSports(athlete)
                 const statusConfig = getStatusConfig(athlete)
 
                 return (
                   <tr
-                    key={user.id}
+                    key={athlete.id}
                     className="clickable-row"
-                    onClick={() => navigate(`/athletes/${user.id}`)}
+                    onClick={() =>
+                      navigate(`/athletes/${athlete.id}`)
+                    }
                   >
                     <td className="cell--name">
-                      {user.firstName} {user.lastName}
+                      {athlete.firstName} {athlete.lastName}
                     </td>
 
                     <td>
-                      {teams.join(', ') || 'Aucune équipe'}
+                      {athlete.teams.join(', ') ||
+                        'Aucune équipe'}
                     </td>
 
                     <td>
-                      {sports.join(', ') || 'Non spécifié'}
+                      {athlete.sports.join(', ') ||
+                        'Non spécifié'}
                     </td>
 
                     <td className="athlete-status-cell">
@@ -451,7 +380,7 @@ export default function AthletePageView() {
 
                     <td className="athlete-edit-cell">
                       <Link
-                        to={`/athletes/${user.id}/modifier`}
+                        to={`/athletes/${athlete.id}/modifier`}
                         className="edit-btn"
                         onClick={(event) => {
                           event.stopPropagation()
@@ -465,7 +394,7 @@ export default function AthletePageView() {
                       <button
                         type="button"
                         className="more-btn"
-                        aria-label={`Plus d’options pour ${user.firstName} ${user.lastName}`}
+                        aria-label={`Plus d’options pour ${athlete.firstName} ${athlete.lastName}`}
                         onClick={(event) => {
                           event.stopPropagation()
                         }}

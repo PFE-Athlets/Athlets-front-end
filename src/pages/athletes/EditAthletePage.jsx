@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { athleteService } from '../../api/athleteService'
+import { teamService } from '../../api/teamService'
 import '../../styles/page-form.css'
 
 const EMPTY_FORM = {
@@ -25,6 +27,9 @@ const STATUS_LABELS = {
   ACTIVE: 'Actif',
   A_ACTIVER: 'En attente',
   INACTIVE: 'Non actif',
+
+  Active: 'Actif',
+  Inactive: 'Non actif',
 }
 
 export default function EditAthletePage() {
@@ -32,6 +37,7 @@ export default function EditAthletePage() {
   const navigate = useNavigate()
 
   const [form, setForm] = useState(EMPTY_FORM)
+
   const [teams, setTeams] = useState([])
   const [athleteTeams, setAthleteTeams] = useState([])
   const [athletePositions, setAthletePositions] = useState([])
@@ -40,127 +46,120 @@ export default function EditAthletePage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [deactivating, setDeactivating] = useState(false)
+
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [fieldErrors, setFieldErrors] = useState({})
 
   useEffect(() => {
     const loadPage = async () => {
-      try {
-        setLoading(true)
-        setError('')
+      setLoading(true)
+      setError('')
 
-        const [athletesResponse, teamsResponse] = await Promise.all([
-          fetch('http://localhost:8080/api/athlete/all', {
-            credentials: 'include',
-            headers: {
-              Accept: 'application/json',
-            },
-          }),
-          fetch('http://localhost:8080/api/team/teams', {
-            credentials: 'include',
-            headers: {
-              Accept: 'application/json',
-            },
-          }),
-        ])
+      const [athleteResult, teamsResult] = await Promise.all([
+        athleteService.getAthleteById(id),
+        teamService.getDisplayTeams(),
+      ])
 
-        if (athletesResponse.status === 401 || teamsResponse.status === 401) {
-          throw new Error('Vous devez être connecté.')
-        }
-
-        if (athletesResponse.status === 403) {
-          throw new Error(
-            'Vous n’êtes pas autorisé à modifier ce profil athlète.',
-          )
-        }
-
-        if (!athletesResponse.ok) {
-          throw new Error(
-            `Impossible de charger l’athlète. Erreur ${athletesResponse.status}.`,
-          )
-        }
-
-        const athletesData = await athletesResponse.json()
-        const teamsData = teamsResponse.ok ? await teamsResponse.json() : []
-
-        const athlete = Array.isArray(athletesData)
-          ? athletesData.find(
-              (item) => String(item.authUser?.id) === String(id),
-            )
-          : null
-
-        if (!athlete) {
-          throw new Error(
-            'Athlète introuvable ou inaccessible avec vos permissions.',
-          )
-        }
-
-        const currentTeams = Array.isArray(athlete.teams) ? athlete.teams : []
-        const currentPositions = Array.isArray(athlete.positions)
-          ? athlete.positions
-          : []
-        const currentDisciplines = Array.isArray(athlete.disciplines)
-          ? athlete.disciplines
-          : []
-
-        setTeams(normalizeTeamsResponse(teamsData))
-        setAthleteTeams(currentTeams)
-        setAthletePositions(currentPositions)
-        setAthleteDisciplines(currentDisciplines)
-
-        setForm({
-          firstName: athlete.authUser?.firstName ?? '',
-          lastName: athlete.authUser?.lastName ?? '',
-          birthDate: athlete.birthDate ?? '',
-          gender: athlete.gender ?? '',
-          email: athlete.authUser?.email ?? '',
-          username: athlete.authUser?.username ?? '',
-          accountStatus: athlete.authUser?.accountStatus ?? '',
-          phone: athlete.phone ?? '',
-          weightKg: athlete.weightKg ?? '',
-          heightMeters: athlete.heightMeters ?? '',
-          dominantArm: athlete.dominantArm ?? '',
-          dominantLeg: athlete.dominantLeg ?? '',
-          injuryHistory: athlete.injuryHistory ?? '',
-          teamIds: currentTeams
-            .map((team) => team.id)
-            .filter((teamId) => teamId != null),
-          positionIds: currentPositions
-            .map((position) => position.id)
-            .filter((positionId) => positionId != null),
-          disciplineIds: currentDisciplines
-            .map((discipline) => discipline.id)
-            .filter((disciplineId) => disciplineId != null),
-        })
-      } catch (requestError) {
+      if (!athleteResult.success) {
         console.error(
           'Erreur lors du chargement du profil athlète :',
-          requestError,
+          athleteResult.error,
         )
 
         setError(
-          requestError instanceof Error
-            ? requestError.message
-            : 'Une erreur est survenue lors du chargement.',
+          athleteResult.error ||
+            'Une erreur est survenue lors du chargement.',
         )
-      } finally {
+
         setLoading(false)
+        return
       }
+
+      const athlete = athleteResult.data
+
+      const currentTeams = Array.isArray(athlete.teams)
+        ? athlete.teams
+        : []
+
+      const currentPositions = Array.isArray(athlete.positions)
+        ? athlete.positions
+        : []
+
+      const currentDisciplines = Array.isArray(athlete.disciplines)
+        ? athlete.disciplines
+        : []
+
+      setAthleteTeams(currentTeams)
+      setAthletePositions(currentPositions)
+      setAthleteDisciplines(currentDisciplines)
+
+      if (teamsResult.success) {
+        setTeams(teamsResult.data)
+      } else {
+        console.error(
+          'Erreur lors du chargement des équipes :',
+          teamsResult.error,
+        )
+
+        setTeams([])
+      }
+
+      setForm({
+        firstName: athlete.authUser?.firstName ?? '',
+        lastName: athlete.authUser?.lastName ?? '',
+        birthDate: athlete.birthDate ?? '',
+        gender: athlete.gender ?? '',
+        email: athlete.authUser?.email ?? '',
+        username: athlete.authUser?.username ?? '',
+        accountStatus:
+          athlete.authUser?.accountStatus ?? '',
+        phone: athlete.phone ?? '',
+        weightKg: athlete.weightKg ?? '',
+        heightMeters: athlete.heightMeters ?? '',
+        dominantArm: athlete.dominantArm ?? '',
+        dominantLeg: athlete.dominantLeg ?? '',
+        injuryHistory: athlete.injuryHistory ?? '',
+
+        teamIds: currentTeams
+          .map((team) => Number(team.id))
+          .filter((teamId) => !Number.isNaN(teamId)),
+
+        positionIds: currentPositions
+          .map((position) => Number(position.id))
+          .filter(
+            (positionId) => !Number.isNaN(positionId),
+          ),
+
+        disciplineIds: currentDisciplines
+          .map((discipline) => Number(discipline.id))
+          .filter(
+            (disciplineId) =>
+              !Number.isNaN(disciplineId),
+          ),
+      })
+
+      setLoading(false)
     }
 
     loadPage()
   }, [id])
 
   const selectedTeamNames = useMemo(() => {
-    const teamSource = teams.length > 0 ? teams : athleteTeams
+    const teamSource =
+      teams.length > 0 ? teams : athleteTeams
 
     return teamSource
-      .filter((team) => form.teamIds.includes(Number(team.id)))
+      .filter((team) =>
+        form.teamIds.includes(Number(team.id)),
+      )
       .map((team) => team.name)
   }, [athleteTeams, form.teamIds, teams])
 
-  const isInactive = form.accountStatus?.trim().toUpperCase() === 'INACTIVE'
+  const normalizedStatus =
+    form.accountStatus?.trim().toUpperCase()
+
+  const isInactive = normalizedStatus === 'INACTIVE'
 
   const updateField = (field, value) => {
     setForm((current) => ({
@@ -176,20 +175,15 @@ export default function EditAthletePage() {
     setSuccess('')
   }
 
-  const handleTeamChange = (event) => {
-    const selectedIds = Array.from(
-      event.target.selectedOptions,
-      (option) => Number(option.value),
-    )
-
-    updateField('teamIds', selectedIds)
-  }
-
   const validate = () => {
     const errors = {}
 
-    if (form.phone && !/^[+()\d\s.-]{7,25}$/.test(form.phone.trim())) {
-      errors.phone = 'Le numéro de téléphone est invalide.'
+    if (
+      form.phone &&
+      !/^[+()\d\s.-]{7,25}$/.test(form.phone.trim())
+    ) {
+      errors.phone =
+        'Le numéro de téléphone est invalide.'
     }
 
     if (
@@ -203,10 +197,12 @@ export default function EditAthletePage() {
     }
 
     if (form.teamIds.length === 0) {
-      errors.teamIds = 'L’athlète doit être associé à au moins une équipe.'
+      errors.teamIds =
+        'L’athlète doit être associé à au moins une équipe.'
     }
 
     setFieldErrors(errors)
+
     return Object.keys(errors).length === 0
   }
 
@@ -214,139 +210,93 @@ export default function EditAthletePage() {
     event.preventDefault()
 
     if (!validate()) {
-        setSuccess('')
-        setError('Veuillez corriger les erreurs du formulaire.')
-        return
+      setSuccess('')
+      setError(
+        'Veuillez corriger les erreurs du formulaire.',
+      )
+      return
     }
 
     const confirmed = window.confirm(
-        'Voulez-vous vraiment enregistrer les modifications du profil athlète?',
+      'Voulez-vous vraiment enregistrer les modifications du profil athlète?',
     )
 
     if (!confirmed) {
-        return
+      return
     }
 
-    try {
-        setSaving(true)
-        setError('')
-        setSuccess('')
+    setSaving(true)
+    setError('')
+    setSuccess('')
 
-        const response = await fetch(`http://localhost:8080/api/athlete/${id}`, {
-        method: 'PUT',
-        credentials: 'include',
-        headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            phone: form.phone.trim() || null,
-            weightKg: Number(form.weightKg),
-            injuryHistory: form.injuryHistory.trim() || null,
-            teamIds: form.teamIds,
-            positionIds: [],
-            disciplineIds: [],
-        }),
-        })
+    const result =
+      await athleteService.updateAthlete(id, form)
 
-        if (response.status === 401) {
-        throw new Error('Votre session a expiré. Veuillez vous reconnecter.')
-        }
-
-        if (response.status === 403) {
-        throw new Error(
-            'Vous n’êtes pas autorisé à modifier ce profil athlète.',
-        )
-        }
-
-        if (!response.ok) {
-        const message = await readErrorMessage(response)
-
-        throw new Error(
-            message ||
-            `Impossible d’enregistrer les modifications. Erreur ${response.status}.`,
-        )
-        }
-
-        setSuccess('Le profil athlète a été modifié avec succès.')
-    } catch (requestError) {
-        console.error(
+    if (!result.success) {
+      console.error(
         'Erreur lors de la modification de l’athlète :',
-        requestError,
-        )
+        result.error,
+      )
 
-        setError(
-        requestError instanceof Error
-            ? requestError.message
-            : 'Une erreur est survenue pendant la modification.',
-        )
-    } finally {
-        setSaving(false)
+      setError(
+        result.error ||
+          'Une erreur est survenue pendant la modification.',
+      )
+
+      setSaving(false)
+      return
     }
-    }
+
+    setSuccess(
+      result.message ||
+        'Le profil athlète a été modifié avec succès.',
+    )
+
+    setSaving(false)
+  }
 
   const handleDeactivate = async () => {
     const confirmed = window.confirm(
       'Voulez-vous vraiment désactiver cet athlète? Il ne pourra plus se connecter.',
     )
 
-    if (!confirmed) return
+    if (!confirmed) {
+      return
+    }
 
-    try {
-      setDeactivating(true)
-      setError('')
-      setSuccess('')
+    setDeactivating(true)
+    setError('')
+    setSuccess('')
 
-      const response = await fetch(
-        `http://localhost:8080/api/athlete/${id}/deactivate`,
-        {
-          method: 'PUT',
-          credentials: 'include',
-          headers: {
-            Accept: 'application/json',
-          },
-        },
-      )
+    const result =
+      await athleteService.deactivateAthlete(id)
 
-      if (response.status === 401) {
-        throw new Error('Votre session a expiré. Veuillez vous reconnecter.')
-      }
-
-      if (response.status === 403) {
-        throw new Error(
-          'Vous n’êtes pas autorisé à désactiver ce profil athlète.',
-        )
-      }
-
-      if (!response.ok) {
-        const message = await readErrorMessage(response)
-
-        throw new Error(
-          message ||
-            `Impossible de désactiver l’athlète. Erreur ${response.status}.`,
-        )
-      }
-
-      setForm((current) => ({
-        ...current,
-        accountStatus: 'INACTIVE',
-      }))
-
-      setSuccess('Le compte de l’athlète a été désactivé avec succès.')
-    } catch (requestError) {
+    if (!result.success) {
       console.error(
         'Erreur lors de la désactivation de l’athlète :',
-        requestError,
+        result.error,
       )
 
       setError(
-        requestError instanceof Error
-          ? requestError.message
-          : 'Une erreur est survenue pendant la désactivation.',
+        result.error ||
+          'Une erreur est survenue pendant la désactivation.',
       )
-    } finally {
+
       setDeactivating(false)
+      return
     }
+
+    setForm((current) => ({
+      ...current,
+      accountStatus: 'Inactive',
+    }))
+
+    setSuccess(
+      result.message ||
+        'Le compte de l’athlète a été désactivé avec succès.',
+    )
+
+    setDeactivating(false)
   }
 
   if (loading) {
@@ -362,7 +312,9 @@ export default function EditAthletePage() {
   if (error && !form.username) {
     return (
       <div className="create-page">
-        <div className="form-message form-message--error">{error}</div>
+        <div className="form-message form-message--error">
+          {error}
+        </div>
 
         <div className="form-actions">
           <button
@@ -379,15 +331,24 @@ export default function EditAthletePage() {
 
   return (
     <div className="create-page">
-      <form className="entity-form" onSubmit={handleSubmit}>
+      <form
+        className="entity-form"
+        onSubmit={handleSubmit}
+      >
         {success && (
-          <div className="form-message form-message--success" role="status">
+          <div
+            className="form-message form-message--success"
+            role="status"
+          >
             {success}
           </div>
         )}
 
         {error && (
-          <div className="form-message form-message--error" role="alert">
+          <div
+            className="form-message form-message--error"
+            role="alert"
+          >
             {error}
           </div>
         )}
@@ -396,9 +357,15 @@ export default function EditAthletePage() {
           <h2>Informations personnelles</h2>
 
           <div className="form-grid">
-            <ReadOnlyField label="Prénom" value={form.firstName} />
+            <ReadOnlyField
+              label="Prénom"
+              value={form.firstName}
+            />
 
-            <ReadOnlyField label="Nom" value={form.lastName} />
+            <ReadOnlyField
+              label="Nom"
+              value={form.lastName}
+            />
 
             <ReadOnlyField
               label="Date de naissance"
@@ -406,10 +373,15 @@ export default function EditAthletePage() {
               type="date"
             />
 
-            <ReadOnlyField label="Sexe" value={form.gender} />
+            <ReadOnlyField
+              label="Sexe"
+              value={formatGender(form.gender)}
+            />
 
             <div className="form-field full-width">
-              <label htmlFor="athlete-email">Courriel</label>
+              <label htmlFor="athlete-email">
+                Courriel
+              </label>
 
               <input
                 id="athlete-email"
@@ -421,15 +393,24 @@ export default function EditAthletePage() {
             </div>
 
             <div className="form-field full-width">
-              <label htmlFor="athlete-phone">Téléphone</label>
+              <label htmlFor="athlete-phone">
+                Téléphone
+              </label>
 
               <input
                 id="athlete-phone"
                 type="tel"
                 value={form.phone}
                 placeholder="Ex. : 514 555-1234"
-                onChange={(event) => updateField('phone', event.target.value)}
-                aria-invalid={Boolean(fieldErrors.phone)}
+                onChange={(event) =>
+                  updateField(
+                    'phone',
+                    event.target.value,
+                  )
+                }
+                aria-invalid={Boolean(
+                  fieldErrors.phone,
+                )}
               />
 
               {fieldErrors.phone && (
@@ -446,18 +427,33 @@ export default function EditAthletePage() {
 
           <div className="form-grid">
             <div className="form-field full-width">
-              <label htmlFor="athlete-teams">Équipe</label>
+              <label htmlFor="athlete-teams">
+                Équipe
+              </label>
 
               {teams.length > 0 ? (
                 <select
                   id="athlete-teams"
-                  multiple
-                  value={form.teamIds.map(String)}
-                  onChange={handleTeamChange}
+                  value={form.teamIds[0] ? String(form.teamIds[0]) : ''}
+                  onChange={(event) =>
+                    updateField(
+                      'teamIds',
+                      event.target.value
+                        ? [Number(event.target.value)]
+                        : [],
+                    )
+                  }
                   aria-invalid={Boolean(fieldErrors.teamIds)}
                 >
+                  <option value="" disabled>
+                    Sélectionner une équipe
+                  </option>
+
                   {teams.map((team) => (
-                    <option key={team.id} value={team.id}>
+                    <option
+                      key={team.id}
+                      value={team.id}
+                    >
                       {team.name}
                     </option>
                   ))}
@@ -465,17 +461,13 @@ export default function EditAthletePage() {
               ) : (
                 <input
                   type="text"
-                  value={selectedTeamNames.join(', ') || 'Aucune équipe'}
+                  value={
+                    selectedTeamNames.join(', ') ||
+                    'Aucune équipe'
+                  }
                   readOnly
                   disabled
                 />
-              )}
-
-              {teams.length > 0 && (
-                <small>
-                  Maintenez Commande sur Mac ou Ctrl sur Windows pour
-                  sélectionner plusieurs équipes.
-                </small>
               )}
 
               {fieldErrors.teamIds && (
@@ -489,8 +481,12 @@ export default function EditAthletePage() {
               label="Position / Discipline"
               value={
                 [
-                  ...athletePositions.map((position) => position.name),
-                  ...athleteDisciplines.map((discipline) => discipline.name),
+                  ...athletePositions.map(
+                    (position) => position.name,
+                  ),
+                  ...athleteDisciplines.map(
+                    (discipline) => discipline.name,
+                  ),
                 ]
                   .filter(Boolean)
                   .join(', ') || 'Non spécifié'
@@ -499,11 +495,17 @@ export default function EditAthletePage() {
 
             <ReadOnlyField
               label="Taille"
-              value={form.heightMeters !== '' ? `${form.heightMeters} m` : ''}
+              value={
+                form.heightMeters !== ''
+                  ? `${form.heightMeters} cm`
+                  : ''
+              }
             />
 
             <div className="form-field">
-              <label htmlFor="athlete-weight">Poids</label>
+              <label htmlFor="athlete-weight">
+                Poids
+              </label>
 
               <input
                 id="athlete-weight"
@@ -514,9 +516,14 @@ export default function EditAthletePage() {
                 value={form.weightKg}
                 placeholder="Ex. : 75"
                 onChange={(event) =>
-                  updateField('weightKg', event.target.value)
+                  updateField(
+                    'weightKg',
+                    event.target.value,
+                  )
                 }
-                aria-invalid={Boolean(fieldErrors.weightKg)}
+                aria-invalid={Boolean(
+                  fieldErrors.weightKg,
+                )}
                 required
               />
 
@@ -527,9 +534,21 @@ export default function EditAthletePage() {
               )}
             </div>
 
-            <ReadOnlyField label="Bras dominant" value={form.dominantArm} />
+            <ReadOnlyField
+              label="Bras dominant"
+              value={formatDominantSide(
+                form.dominantArm,
+                false,
+              )}
+            />
 
-            <ReadOnlyField label="Jambe dominante" value={form.dominantLeg} />
+            <ReadOnlyField
+              label="Jambe dominante"
+              value={formatDominantSide(
+                form.dominantLeg,
+                true,
+              )}
+            />
           </div>
         </section>
 
@@ -537,12 +556,20 @@ export default function EditAthletePage() {
           <h2>Compte utilisateur</h2>
 
           <div className="form-grid form-grid--three">
-            <ReadOnlyField label="Nom d'utilisateur" value={form.username} />
+            <ReadOnlyField
+              label="Nom d'utilisateur"
+              value={form.username}
+            />
 
             <ReadOnlyField
               label="Statut du compte"
               value={
-                STATUS_LABELS[form.accountStatus.trim().toUpperCase()] ||
+                STATUS_LABELS[form.accountStatus] ||
+                STATUS_LABELS[
+                  form.accountStatus
+                    ?.trim()
+                    .toUpperCase()
+                ] ||
                 form.accountStatus
               }
             />
@@ -573,7 +600,10 @@ export default function EditAthletePage() {
               value={form.injuryHistory}
               placeholder="Ex. : Antécédents de blessures, interventions, recommandations particulières..."
               onChange={(event) =>
-                updateField('injuryHistory', event.target.value)
+                updateField(
+                  'injuryHistory',
+                  event.target.value,
+                )
               }
             />
           </div>
@@ -581,7 +611,10 @@ export default function EditAthletePage() {
 
         <section className="deactivate-section">
           <div className="deactivate-section__content">
-            <span className="deactivate-section__icon" aria-hidden="true">
+            <span
+              className="deactivate-section__icon"
+              aria-hidden="true"
+            >
               ⚠
             </span>
 
@@ -589,8 +622,10 @@ export default function EditAthletePage() {
               <h2>Désactiver le compte</h2>
 
               <p>
-                La désactivation rendra l’athlète inactif. Il ne pourra plus se
-                connecter ni apparaître dans les sélections ou les rapports.
+                La désactivation rendra l’athlète
+                inactif. Il ne pourra plus se connecter
+                ni apparaître dans les sélections ou les
+                rapports.
               </p>
             </div>
           </div>
@@ -599,7 +634,11 @@ export default function EditAthletePage() {
             type="button"
             className="btn-danger-outline"
             onClick={handleDeactivate}
-            disabled={deactivating || saving || isInactive}
+            disabled={
+              deactivating ||
+              saving ||
+              isInactive
+            }
           >
             {isInactive
               ? 'Compte désactivé'
@@ -608,21 +647,27 @@ export default function EditAthletePage() {
                 : 'Désactiver le compte'}
           </button>
         </section>
-        
+
         {success && (
-            <section className="success-section" role="status">
-                <div className="success-section__content">
-                <span className="success-section__icon" aria-hidden="true">
-                    ✓
-                </span>
+          <section
+            className="success-section"
+            role="status"
+          >
+            <div className="success-section__content">
+              <span
+                className="success-section__icon"
+                aria-hidden="true"
+              >
+                ✓
+              </span>
 
-                <div>
-                    <h2>Modification enregistrée</h2>
+              <div>
+                <h2>Modification enregistrée</h2>
 
-                    <p>{success}</p>
-                </div>
-                </div>
-            </section>
+                <p>{success}</p>
+              </div>
+            </div>
+          </section>
         )}
 
         <div className="form-actions">
@@ -640,7 +685,9 @@ export default function EditAthletePage() {
             className="btn-primary"
             disabled={saving || deactivating}
           >
-            {saving ? 'Enregistrement...' : 'Enregistrer les modifications'}
+            {saving
+              ? 'Enregistrement...'
+              : 'Enregistrer les modifications'}
           </button>
         </div>
       </form>
@@ -648,53 +695,48 @@ export default function EditAthletePage() {
   )
 }
 
-function ReadOnlyField({ label, value, type = 'text' }) {
+function ReadOnlyField({
+  label,
+  value,
+  type = 'text',
+}) {
   return (
     <div className="form-field">
       <label>{label}</label>
 
-      <input type={type} value={value ?? ''} readOnly disabled />
+      <input
+        type={type}
+        value={value ?? ''}
+        readOnly
+        disabled
+      />
     </div>
   )
 }
 
-function normalizeTeamsResponse(data) {
-  if (Array.isArray(data)) {
-    return data.map(normalizeTeam).filter(Boolean)
+function formatGender(value) {
+  if (value === 'Female') {
+    return 'Femme'
   }
 
-  const possibleArrays = [data?.teams, data?.content, data?.items]
-  const teamArray = possibleArrays.find(Array.isArray)
+  if (value === 'Male') {
+    return 'Homme'
+  }
 
-  return teamArray ? teamArray.map(normalizeTeam).filter(Boolean) : []
+  return value || 'Non spécifié'
 }
 
-function normalizeTeam(team) {
-  const id = team?.id ?? team?.teamId
-  const name = team?.name ?? team?.teamName
-
-  if (id == null || !name) {
-    return null
+function formatDominantSide(
+  value,
+  feminine = false,
+) {
+  if (value === 'Right') {
+    return feminine ? 'Droite' : 'Droit'
   }
 
-  return {
-    id: Number(id),
-    name,
+  if (value === 'Left') {
+    return 'Gauche'
   }
-}
 
-async function readErrorMessage(response) {
-  try {
-    const contentType = response.headers.get('content-type') ?? ''
-
-    if (contentType.includes('application/json')) {
-      const data = await response.json()
-
-      return data.message || data.error || data.erreur || ''
-    }
-
-    return await response.text()
-  } catch {
-    return ''
-  }
+  return value || 'Non spécifié'
 }

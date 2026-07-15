@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { athleteService } from '../../api/athleteService'
 import '../../styles/athlete-details.css'
 
 const STATUS_CONFIG = {
@@ -28,91 +29,29 @@ export default function AthleteDetailsPage() {
 
   useEffect(() => {
     const fetchAthlete = async () => {
-      try {
-        setLoading(true)
-        setError('')
-        setCanEdit(false)
+      setLoading(true)
+      setError('')
+      setCanEdit(false)
 
-        const athletesResponse = await fetch('http://localhost:8080/api/athlete/all', {
-          method: 'GET',
-          credentials: 'include',
-          headers: {
-            Accept: 'application/json',
-          },
-        })
+      const result = await athleteService.getAthleteById(id)
 
-        if (athletesResponse.ok) {
-          const data = await athletesResponse.json()
-
-          const foundAthlete = Array.isArray(data)
-            ? data.find((item) => String(item.authUser?.id) === String(id))
-            : null
-
-          if (!foundAthlete) {
-            throw new Error(
-              'Athlète introuvable ou inaccessible avec vos permissions.',
-            )
-          }
-
-          setAthlete(foundAthlete)
-          setCanEdit(true)
-          return
-        }
-
-        if (athletesResponse.status !== 403 && athletesResponse.status !== 401) {
-          throw new Error(
-            `Impossible de récupérer la fiche athlète. Erreur ${athletesResponse.status}.`,
-          )
-        }
-
-        const currentResponse = await fetch('http://localhost:8080/api/athlete/current', {
-          method: 'GET',
-          credentials: 'include',
-          headers: {
-            Accept: 'application/json',
-          },
-        })
-
-        if (currentResponse.status === 401) {
-          throw new Error('Vous devez être connecté pour consulter cette fiche.')
-        }
-
-        if (currentResponse.status === 403) {
-          throw new Error(
-            'Vous n’êtes pas autorisé à consulter cette fiche athlète.',
-          )
-        }
-
-        if (!currentResponse.ok) {
-          throw new Error(
-            `Impossible de récupérer votre fiche athlète. Erreur ${currentResponse.status}.`,
-          )
-        }
-
-        const currentAthlete = await currentResponse.json()
-
-        if (String(currentAthlete.authUser?.id) !== String(id)) {
-          throw new Error(
-            'Vous pouvez seulement consulter votre propre fiche athlète.',
-          )
-        }
-
-        setAthlete(currentAthlete)
-        setCanEdit(false)
-      } catch (requestError) {
+      if (!result.success) {
         console.error(
           'Erreur lors du chargement de la fiche athlète :',
-          requestError,
+          result.error,
         )
 
         setError(
-          requestError instanceof Error
-            ? requestError.message
-            : 'Une erreur est survenue lors du chargement de la fiche.',
+          result.error ||
+            'Une erreur est survenue lors du chargement de la fiche.',
         )
-      } finally {
         setLoading(false)
+        return
       }
+
+      setAthlete(result.data)
+      setCanEdit(result.canEdit ?? false)
+      setLoading(false)
     }
 
     fetchAthlete()
@@ -120,10 +59,25 @@ export default function AthleteDetailsPage() {
 
   const user = athlete?.authUser ?? {}
 
-  const sports = useMemo(() => getAthleteSports(athlete), [athlete])
-  const teams = useMemo(() => getAthleteTeams(athlete), [athlete])
-  const positions = useMemo(() => getAthletePositions(athlete), [athlete])
-  const disciplines = useMemo(() => getAthleteDisciplines(athlete), [athlete])
+  const sports = useMemo(
+    () => athleteService.helpers.getAthleteSports(athlete),
+    [athlete],
+  )
+
+  const teams = useMemo(
+    () => athleteService.helpers.getAthleteTeams(athlete),
+    [athlete],
+  )
+
+  const positions = useMemo(
+    () => athleteService.helpers.getAthletePositions(athlete),
+    [athlete],
+  )
+
+  const disciplines = useMemo(
+    () => athleteService.helpers.getAthleteDisciplines(athlete),
+    [athlete],
+  )
 
   const statusKey = user.accountStatus?.trim().toUpperCase()
   const statusConfig = STATUS_CONFIG[statusKey] ?? {
@@ -208,7 +162,11 @@ export default function AthleteDetailsPage() {
               icon={<TrophyIcon />}
               label="Sport"
               value={
-                sports.length > 0 ? <TagList items={sports} /> : 'Non spécifié'
+                sports.length > 0 ? (
+                  <TagList items={sports} />
+                ) : (
+                  'Non spécifié'
+                )
               }
             />
 
@@ -217,7 +175,9 @@ export default function AthleteDetailsPage() {
               label="Position / Discipline"
               value={
                 positions.length > 0 || disciplines.length > 0 ? (
-                  <span>{[...positions, ...disciplines].join(', ')}</span>
+                  <span>
+                    {[...positions, ...disciplines].join(', ')}
+                  </span>
                 ) : (
                   'Non spécifié'
                 )
@@ -228,7 +188,11 @@ export default function AthleteDetailsPage() {
               icon={<TeamIcon />}
               label="Équipe"
               value={
-                teams.length > 0 ? <TagList items={teams} /> : 'Aucune équipe'
+                teams.length > 0 ? (
+                  <TagList items={teams} />
+                ) : (
+                  'Aucune équipe'
+                )
               }
             />
 
@@ -331,7 +295,10 @@ export default function AthleteDetailsPage() {
 function InfoItem({ icon, label, value }) {
   return (
     <article className="athlete-profile-info">
-      <div className="athlete-profile-info__icon" aria-hidden="true">
+      <div
+        className="athlete-profile-info__icon"
+        aria-hidden="true"
+      >
         {icon}
       </div>
 
@@ -350,7 +317,10 @@ function TagList({ items }) {
   return (
     <div className="athlete-profile-tags">
       {items.map((item) => (
-        <span key={item} className="athlete-profile-tag">
+        <span
+          key={item}
+          className="athlete-profile-tag"
+        >
           {item}
         </span>
       ))}
@@ -513,52 +483,6 @@ function LockIcon() {
   )
 }
 
-function getAthleteTeams(athlete) {
-  if (!athlete?.teams) return []
-
-  return [
-    ...new Set(
-      athlete.teams.map((team) => team.name).filter(Boolean),
-    ),
-  ]
-}
-
-function getAthleteSports(athlete) {
-  if (!athlete) return []
-
-  const teamSports =
-    athlete.teams?.map((team) => team.sport?.name).filter(Boolean) ?? []
-
-  const disciplineSports =
-    athlete.disciplines
-      ?.map((discipline) => discipline.sport?.name)
-      .filter(Boolean) ?? []
-
-  return [...new Set([...teamSports, ...disciplineSports])]
-}
-
-function getAthletePositions(athlete) {
-  if (!athlete?.positions) return []
-
-  return [
-    ...new Set(
-      athlete.positions.map((position) => position.name).filter(Boolean),
-    ),
-  ]
-}
-
-function getAthleteDisciplines(athlete) {
-  if (!athlete?.disciplines) return []
-
-  return [
-    ...new Set(
-      athlete.disciplines
-        .map((discipline) => discipline.name)
-        .filter(Boolean),
-    ),
-  ]
-}
-
 function formatDate(value) {
   if (!value) return 'Non spécifié'
 
@@ -578,11 +502,17 @@ function formatDate(value) {
 function formatGender(value) {
   const normalizedValue = value?.trim().toLowerCase()
 
-  if (normalizedValue === 'female' || normalizedValue === 'femme') {
+  if (
+    normalizedValue === 'female' ||
+    normalizedValue === 'femme'
+  ) {
     return 'Féminin'
   }
 
-  if (normalizedValue === 'male' || normalizedValue === 'homme') {
+  if (
+    normalizedValue === 'male' ||
+    normalizedValue === 'homme'
+  ) {
     return 'Masculin'
   }
 
@@ -592,11 +522,17 @@ function formatGender(value) {
 function formatDominantSide(value) {
   const normalizedValue = value?.trim().toLowerCase()
 
-  if (normalizedValue === 'right' || normalizedValue === 'droite') {
+  if (
+    normalizedValue === 'right' ||
+    normalizedValue === 'droite'
+  ) {
     return 'Droite'
   }
 
-  if (normalizedValue === 'left' || normalizedValue === 'gauche') {
+  if (
+    normalizedValue === 'left' ||
+    normalizedValue === 'gauche'
+  ) {
     return 'Gauche'
   }
 
