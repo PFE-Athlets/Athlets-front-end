@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import '../../styles/page-view.css'
 import {
   PlusIcon,
@@ -32,6 +32,8 @@ export default function AthletePageView() {
   const [error, setError] = useState('')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
+
+  const navigate = useNavigate()
 
   useEffect(() => {
     const fetchAthletes = async () => {
@@ -422,7 +424,11 @@ export default function AthletePageView() {
                 const statusConfig = getStatusConfig(athlete)
 
                 return (
-                  <tr key={user.id}>
+                  <tr
+                    key={user.id}
+                    className="clickable-row"
+                    onClick={() => navigate(`/athletes/${user.id}`)}
+                  >
                     <td className="cell--name">
                       {user.firstName} {user.lastName}
                     </td>
@@ -447,6 +453,9 @@ export default function AthletePageView() {
                       <Link
                         to={`/athletes/${user.id}/modifier`}
                         className="edit-btn"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                        }}
                       >
                         Modifier
                       </Link>
@@ -457,6 +466,9 @@ export default function AthletePageView() {
                         type="button"
                         className="more-btn"
                         aria-label={`Plus d’options pour ${user.firstName} ${user.lastName}`}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                        }}
                       >
                         ⋮
                       </button>

@@ -15,6 +15,7 @@ import LoginPage from './pages/LoginPage.jsx'
 import AthletePageView from './pages/athletes/AthletePageView.jsx'
 import CreateAthletePage from './pages/athletes/CreateAthletePage.jsx'
 import EditAthletePage from './pages/athletes/EditAthletePage.jsx'
+import AthleteDetailsPage from './pages/athletes/AthleteDetailsPage.jsx'
 
 import PhysicalTestPageView from './pages/physical-test/PhysicalTestPageView.jsx'
 import CreatePhysicalTestPage from './pages/physical-test/CreatePhysicalTestPage.jsx'
@@ -180,6 +181,7 @@ function App() {
       ? `${currentUser.firstName} ${currentUser.lastName}`
       : '—',
     activeUserRole,
+    activeUserId: currentUser?.id,
     onLogout: handleLogout,
     notificationsCount: 2,
   }
@@ -277,6 +279,21 @@ function App() {
               {...shellProps}
             >
               <EditAthletePage />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/athletes/:id"
+        element={
+          <ProtectedRoute currentUser={currentUser}>
+            <AppShell
+              pageTitle="Profil de l’athlète"
+              pageSubtitle=""
+              {...shellProps}
+            >
+              <AthleteDetailsPage />
             </AppShell>
           </ProtectedRoute>
         }

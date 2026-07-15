@@ -8,24 +8,21 @@ export function AppShell({
   pageSubtitle,
   activeUserName,
   activeUserRole,
-  onLogout,
+  activeUserId,
   notificationsCount = 0,
-  primaryActionLabel,
-  onPrimaryAction,
+  onLogout,
 }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   return (
     <div className="app-shell">
-      {sidebarOpen && (
-        <div
-          className="sidebar-overlay"
-          onClick={() => setSidebarOpen(false)}
-          aria-hidden="true"
-        />
-      )}
-
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} activeUserRole={activeUserRole} onLogout={onLogout} />
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        activeUserRole={activeUserRole}
+        activeUserId={activeUserId}
+        onLogout={onLogout}
+      />
 
       <div className="app-shell__main">
         <Header
@@ -34,12 +31,12 @@ export function AppShell({
           activeUserName={activeUserName}
           activeUserRole={activeUserRole}
           notificationsCount={notificationsCount}
-          primaryActionLabel={primaryActionLabel}
-          onPrimaryAction={onPrimaryAction}
-          onMenuClick={() => setSidebarOpen(true)}
+          onMenuClick={() => setIsSidebarOpen(true)}
         />
 
-        <main className="app-shell__content">{children}</main>
+        <main className="app-shell__content">
+          {children}
+        </main>
       </div>
     </div>
   )

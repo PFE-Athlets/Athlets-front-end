@@ -782,3 +782,15 @@
     height: 34px;
   }
 }
+
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:hover {
+  background-color: #f8fafc;
+}
+
+.clickable-row .cell--name {
+  color: var(--primary);
+}

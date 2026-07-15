@@ -1,0 +1,226 @@
+.athlete-profile-page {
+  width: 100%;
+}
+
+.athlete-profile-card {
+  padding: 28px 28px 24px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
+}
+
+.athlete-profile-section {
+  padding: 0 0 24px;
+  margin: 0 0 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.athlete-profile-section:last-of-type {
+  margin-bottom: 0;
+}
+
+.athlete-profile-section h2 {
+  margin: 0 0 22px;
+  color: #001b79;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.athlete-profile-grid {
+  display: grid;
+  gap: 22px 34px;
+}
+
+.athlete-profile-grid--two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.athlete-profile-grid--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.athlete-profile-info {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+}
+
+.athlete-profile-info__icon {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #001b79;
+  background: #eef2ff;
+  border-radius: 999px;
+}
+
+.athlete-profile-svg-icon {
+  width: 21px;
+  height: 21px;
+  display: block;
+}
+
+.athlete-profile-info__label {
+  margin: 0 0 6px;
+  color: #001b79;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.athlete-profile-info__value {
+  min-width: 0;
+  color: #001b79;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.athlete-profile-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.athlete-profile-tag {
+  padding: 5px 12px;
+  color: #0047ff;
+  background: #eef2ff;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.athlete-profile-status {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.athlete-profile-status--active {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.athlete-profile-status--pending {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.athlete-profile-status--inactive {
+  color: #475569;
+  background: #f1f5f9;
+}
+
+.athlete-profile-notes {
+  padding: 18px 20px;
+  min-height: 92px;
+  color: #001b79;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 650;
+  line-height: 1.65;
+  white-space: pre-line;
+}
+
+.athlete-profile-actions {
+  padding-top: 22px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+}
+
+.athlete-profile-btn {
+  min-width: 160px;
+  min-height: 44px;
+  padding: 0 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.athlete-profile-btn--secondary {
+  color: #0047ff;
+  background: #fff;
+  border: 1px solid #0047ff;
+}
+
+.athlete-profile-btn--primary {
+  color: #fff;
+  background: #0047ff;
+  border: 1px solid #0047ff;
+}
+
+.athlete-profile-message {
+  padding: 22px;
+  color: #001b79;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+  font-weight: 700;
+}
+
+.athlete-profile-message--error {
+  color: #b91c1c;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+@media (max-width: 900px) {
+  .athlete-profile-card {
+    padding: 22px;
+  }
+
+  .athlete-profile-grid--two,
+  .athlete-profile-grid--three {
+    grid-template-columns: 1fr;
+  }
+
+  .athlete-profile-actions {
+    flex-direction: column-reverse;
+  }
+
+  .athlete-profile-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .athlete-profile-card {
+    padding: 18px;
+  }
+
+  .athlete-profile-info {
+    grid-template-columns: 38px minmax(0, 1fr);
+  }
+
+  .athlete-profile-info__icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .athlete-profile-svg-icon {
+    width: 18px;
+    height: 18px;
+  }
+}
