@@ -19,10 +19,6 @@ import AthleteDetailsPage from './pages/athletes/AthleteDetailsPage.jsx'
 
 import PhysicalTestPageView from './pages/physical-test/PhysicalTestPageView.jsx'
 import CreatePhysicalTestPage from './pages/physical-test/CreatePhysicalTestPage.jsx'
-import CreateTeamPage from './pages/teams/CreateTeamPage.jsx'
-import EditTeamPage from './pages/teams/EditTeamPage.jsx'
-import TeamPageView from './pages/teams/TeamPageView.jsx'
-import TeamDetailsPage from './pages/teams/TeamDetailsPage.jsx'
 
 import CreateTeamPage from './pages/teams/CreateTeamPage.jsx'
 import EditTeamPage from './pages/teams/EditTeamPage.jsx'
@@ -144,9 +140,6 @@ function App() {
       ] ?? 'Coach'
     : 'Coach'
   const canCreateTeam = activeUserRole === 'Administrateur'
-
-  const canCreateTeam =
-    activeUserRole === 'Administrateur'
 
   const handleLoginSuccess = (user) => {
     sessionStorage.setItem(
