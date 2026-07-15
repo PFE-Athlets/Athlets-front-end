@@ -1,0 +1,68 @@
+export const TEAM_ROWS = [
+  {
+    id: 1,
+    name: 'Rugby féminin',
+    sport: 'Rugby',
+    athletesCount: 24,
+    headCoach: 'Marie-Claude Gauthier',
+    assistantCoaches: ['Sophie Nadeau', 'Marc Bouchard'],
+    physios: ['Mélanie Roy', 'Julie Gagnon'],
+  },
+  {
+    id: 2,
+    name: 'Sprint universitaire',
+    sport: 'Athlétisme',
+    athletesCount: 18,
+    headCoach: 'Étienne Lavoie',
+    assistantCoaches: ['Nicolas Bergeron'],
+    physios: ['Ariane Gauthier'],
+  },
+  {
+    id: 3,
+    name: 'Cross-country mixte',
+    sport: 'Cross-country',
+    athletesCount: 22,
+    headCoach: 'Julien Perreault',
+    assistantCoaches: ['David Roy'],
+    physios: ['Mélanie Roy'],
+  },
+  {
+    id: 4,
+    name: 'Badminton compétition',
+    sport: 'Badminton',
+    athletesCount: 16,
+    headCoach: 'Sophie Nadeau',
+    assistantCoaches: ['Marc Bouchard'],
+    physios: ['Julie Gagnon'],
+  },
+  {
+    id: 5,
+    name: 'Flag football féminin',
+    sport: 'Flag football',
+    athletesCount: 20,
+    headCoach: 'Marc-Antoine Bouchard',
+    assistantCoaches: ['Nicolas Bergeron'],
+    physios: ['Camille Lévesque'],
+  },
+  {
+    id: 6,
+    name: 'Volley masculin',
+    sport: 'Volley',
+    athletesCount: 18,
+    headCoach: 'Alexandre Morin',
+    assistantCoaches: ['Samuel Gagnon'],
+    physios: ['Mélanie Roy'],
+  },
+]
+
+export const TEAM_ATHLETES_BY_ID = {
+  1: [
+    { id: 1, name: 'Léa Martin', position: 'Ailier', status: 'Actif' },
+    { id: 2, name: 'Sarah Dubois', position: 'Demi de mêlée', status: 'Actif' },
+    { id: 3, name: 'Chloé Bouchard', position: 'Centre', status: 'Actif' },
+    { id: 4, name: 'Jade Roy', position: 'Pilier', status: 'Actif' },
+    { id: 5, name: 'Élodie Bergeron', position: 'Talonneur', status: 'Actif' },
+    { id: 6, name: 'Thomas Gagnon', position: 'Arrière', status: 'Actif' },
+    { id: 7, name: 'Antoine Lefebvre', position: 'Deuxième ligne', status: 'Inactif' },
+  ],
+}

@@ -15,6 +15,7 @@ import {
 const ALL_NAV_ITEMS = [
   { label: 'Tableau de bord', icon: HomeIcon, to: '/tableau-de-bord', roles: ['Coach', 'Administrateur'] },
   { label: 'Athlètes', icon: UsersIcon, to: '/athletes', roles: ['Coach', 'Administrateur'] },
+  { label: 'Équipes', icon: UsersIcon, to: '/equipes', roles: ['Coach', 'Administrateur'] },
   { label: 'Tests physiques', icon: PulseIcon, to: '/tests-physiques', roles: ['Coach', 'Administrateur'] },
   { label: 'Résultats', icon: ChartIcon, to: '/resultats', roles: ['Coach', 'Administrateur', 'Athlète'] },
   { label: 'Séances', icon: CalendarIcon, to: '/seances', roles: ['Coach', 'Administrateur', 'Athlète'] },

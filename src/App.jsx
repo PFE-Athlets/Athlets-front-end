@@ -8,6 +8,10 @@ import AthletePageView from './pages/athletes/AthletePageView.jsx'
 import PhysicalTestPageView from './pages/physical-test/PhysicalTestPageView.jsx'
 import CreateAthletePage from './pages/athletes/CreateAthletePage.jsx'
 import CreatePhysicalTestPage from './pages/physical-test/CreatePhysicalTestPage.jsx'
+import CreateTeamPage from './pages/teams/CreateTeamPage.jsx'
+import EditTeamPage from './pages/teams/EditTeamPage.jsx'
+import TeamPageView from './pages/teams/TeamPageView.jsx'
+import TeamDetailsPage from './pages/teams/TeamDetailsPage.jsx'
 
 const pages = [
   {
@@ -21,6 +25,16 @@ const pages = [
     subtitle: 'Gestion de la liste des athlètes',
     primaryActionLabel: 'Créer un athlète',
     primaryActionPath: '/athletes/creer',
+  },
+  {
+    path: '/equipes',
+    title: 'Équipes',
+    subtitle: '',
+  },
+  {
+    path: '/equipes/creer',
+    title: 'Créer une équipe',
+    subtitle: '',
   },
   {
     path: '/athletes/creer',
@@ -100,6 +114,7 @@ function App() {
   const activeUserRole = currentUser
     ? (ROLE_BY_ACCESS_LEVEL[currentUser.accessLevel] ?? 'Coach')
     : 'Coach'
+  const canCreateTeam = activeUserRole === 'Administrateur'
 
   const handleLoginSuccess = (user) => {
     sessionStorage.setItem('currentUser', JSON.stringify(user))
@@ -155,6 +170,10 @@ function App() {
             >
               {page.path === '/athletes' ? (
                 <AthletePageView />
+              ) : page.path === '/equipes' ? (
+                <TeamPageView canCreateTeam={canCreateTeam} />
+              ) : page.path === '/equipes/creer' ? (
+                canCreateTeam ? <CreateTeamPage /> : <Navigate to="/equipes" replace />
               ) : page.path === '/tests-physiques' ? (
                 <PhysicalTestPageView />
               ) : page.path === '/athletes/creer' ? (
@@ -169,6 +188,36 @@ function App() {
           }
         />
       ))}
+
+      <Route
+        path="/equipes/:teamId"
+        element={
+          <ProtectedRoute currentUser={currentUser}>
+            <AppShell
+              pageTitle="Fiche de l'équipe"
+              pageSubtitle=""
+              {...shellProps}
+            >
+              <TeamDetailsPage />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/equipes/:teamId/modifier"
+        element={
+          <ProtectedRoute currentUser={currentUser}>
+            <AppShell
+              pageTitle="Modifier une équipe"
+              pageSubtitle=""
+              {...shellProps}
+            >
+              <EditTeamPage />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
 
       <Route path="*" element={<Navigate to="/connection" replace />} />
     </Routes>

@@ -1,0 +1,128 @@
+.team-details-page {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.team-details-page__subtitle {
+  margin: 0;
+  color: #6e7ca8;
+  font-size: 0.95rem;
+}
+
+.team-details-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.05);
+  padding: 20px;
+}
+
+.team-details-section {
+  padding: 10px 0 18px;
+  border-bottom: 1px solid #e8edf7;
+}
+
+.team-details-section--last {
+  border-bottom: none;
+  padding-bottom: 8px;
+}
+
+.team-details-section h2 {
+  margin: 0 0 12px;
+  color: #24396f;
+  font-size: 1.75rem;
+}
+
+.team-details-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.team-details-grid--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.team-details-label {
+  margin: 0 0 6px;
+  color: #7b87ad;
+  font-size: 0.88rem;
+}
+
+.team-details-value {
+  margin: 0;
+  color: #24396f;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.team-details-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.team-details-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #2d5bdb;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.team-details-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.78rem;
+}
+
+.team-details-status--active {
+  color: #15803d;
+  background: #dcfce7;
+}
+
+.team-details-status--inactive {
+  color: #dc2626;
+  background: #fee2e2;
+}
+
+.team-details-profile-btn {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid #4f46e5;
+  border-radius: 8px;
+  background: #fff;
+  color: #4f46e5;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.team-details-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 10px;
+}
+
+@media (max-width: 900px) {
+  .team-details-grid--three {
+    grid-template-columns: 1fr;
+  }
+
+  .team-details-actions {
+    flex-direction: column;
+  }
+
+  .team-details-actions .btn-secondary,
+  .team-details-actions .btn-primary {
+    width: 100%;
+  }
+}
