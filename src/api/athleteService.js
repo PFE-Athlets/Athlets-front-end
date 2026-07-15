@@ -368,29 +368,6 @@ export const athleteService = {
     }
   },
 
-  deactivateAthlete: async (athleteId) => {
-    try {
-      await api.put(
-        `/api/athlete/${athleteId}/deactivate`,
-      )
-
-      return {
-        success: true,
-        message:
-          'Le compte de l’athlète a été désactivé avec succès.',
-      }
-    } catch (error) {
-      return {
-        success: false,
-        status: error.response?.status,
-        error: extractError(
-          error,
-          'Impossible de désactiver l’athlète',
-        ),
-      }
-    }
-  },
-
   helpers: {
     normalizeText,
     getAthleteStatus,

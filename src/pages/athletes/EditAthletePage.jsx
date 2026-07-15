@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { authService } from '../../api/authService'
 import { athleteService } from '../../api/athleteService'
 import { teamService } from '../../api/teamService'
 import '../../styles/page-form.css'
@@ -269,7 +270,7 @@ export default function EditAthletePage() {
     setSuccess('')
 
     const result =
-      await athleteService.deactivateAthlete(id)
+      await authService.deactivateAthlete(id)
 
     if (!result.success) {
       console.error(
