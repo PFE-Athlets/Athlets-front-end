@@ -22,7 +22,7 @@ const mapTeamDisplayItem = (item) => {
 export const teamService = {
   getDisplayTeams: async () => {
     try {
-      const response = await api.get('/api/team/teams/display')
+      const response = await api.get('/api/team/teams')
       const rawList = Array.isArray(response.data) ? response.data : []
       return { success: true, data: rawList.map(mapTeamDisplayItem) }
     } catch (error) {
