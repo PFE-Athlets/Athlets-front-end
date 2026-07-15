@@ -25,13 +25,11 @@ export default function AthleteDetailsPage() {
   const [athlete, setAthlete] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [canEdit, setCanEdit] = useState(false)
 
   useEffect(() => {
     const fetchAthlete = async () => {
       setLoading(true)
       setError('')
-      setCanEdit(false)
 
       const result = await athleteService.getAthleteById(id)
 
@@ -50,7 +48,6 @@ export default function AthleteDetailsPage() {
       }
 
       setAthlete(result.data)
-      setCanEdit(result.canEdit ?? false)
       setLoading(false)
     }
 
@@ -277,15 +274,6 @@ export default function AthleteDetailsPage() {
           >
             Retour
           </button>
-
-          {canEdit && (
-            <Link
-              to={`/athletes/${user.id}/modifier`}
-              className="athlete-profile-btn athlete-profile-btn--primary"
-            >
-              Modifier le profil
-            </Link>
-          )}
         </div>
       </div>
     </section>
