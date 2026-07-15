@@ -244,6 +244,31 @@ export const athleteService = {
     }
   },
 
+  getDisplayAthletesByTeam: async (teamId) => {
+    try {
+      const response = await api.get(
+        `/api/athlete/team/${teamId}`,
+      )
+      const rawList = Array.isArray(response.data)
+        ? response.data
+        : []
+
+      return {
+        success: true,
+        data: rawList.map(mapAthleteDisplayItem),
+      }
+    } catch (error) {
+      return {
+        success: false,
+        status: error.response?.status,
+        error: extractError(
+          error,
+          'Erreur lors du chargement des athlètes de l’équipe',
+        ),
+      }
+    }
+  },
+
   getAthleteById: async (athleteId) => {
     try {
       const response = await api.get('/api/athlete/all')
