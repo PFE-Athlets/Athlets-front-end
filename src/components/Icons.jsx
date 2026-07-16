@@ -110,3 +110,158 @@ export function XIcon() {
     </svg>
   )
 }
+
+function IconBase({ children }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="athlete-profile-svg-icon"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {children}
+    </svg>
+  )
+}
+
+export function UserIcon() {
+  return (
+    <IconBase>
+      <path d="M20 21a8 8 0 0 0-16 0" />
+      <circle cx="12" cy="7" r="4" />
+    </IconBase>
+  )
+}
+
+export function CalendarDateIcon() {
+  return (
+    <IconBase>
+      <rect x="4" y="5" width="16" height="15" rx="2" />
+      <path d="M8 3v4" />
+      <path d="M16 3v4" />
+      <path d="M4 10h16" />
+    </IconBase>
+  )
+}
+
+export function GenderIcon() {
+  return (
+    <IconBase>
+      <circle cx="9" cy="9" r="4" />
+      <path d="M12 12l6 6" />
+      <path d="M15 18h3v-3" />
+      <path d="M9 13v7" />
+      <path d="M6 17h6" />
+    </IconBase>
+  )
+}
+
+export function MailIcon() {
+  return (
+    <IconBase>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M3 7l9 6 9-6" />
+    </IconBase>
+  )
+}
+
+export function TrophyIcon() {
+  return (
+    <IconBase>
+      <path d="M8 4h8v4a4 4 0 0 1-8 0V4Z" />
+      <path d="M8 6H5a2 2 0 0 0 2 4h1" />
+      <path d="M16 6h3a2 2 0 0 1-2 4h-1" />
+      <path d="M12 12v5" />
+      <path d="M9 21h6" />
+      <path d="M10 17h4" />
+    </IconBase>
+  )
+}
+
+export function TargetIcon() {
+  return (
+    <IconBase>
+      <circle cx="12" cy="12" r="8" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="12" cy="12" r="1" />
+    </IconBase>
+  )
+}
+
+export function TeamIcon() {
+  return (
+    <IconBase>
+      <path d="M17 21a5 5 0 0 0-10 0" />
+      <circle cx="12" cy="9" r="3" />
+      <path d="M3 21a4 4 0 0 1 4-4" />
+      <path d="M21 21a4 4 0 0 0-4-4" />
+      <path d="M6.5 8a2.5 2.5 0 0 0 0 5" />
+      <path d="M17.5 8a2.5 2.5 0 0 1 0 5" />
+    </IconBase>
+  )
+}
+
+export function RulerIcon() {
+  return (
+    <IconBase>
+      <path d="M6 3h12v18H6z" />
+      <path d="M10 7h4" />
+      <path d="M10 11h3" />
+      <path d="M10 15h4" />
+    </IconBase>
+  )
+}
+
+export function ScaleIcon() {
+  return (
+    <IconBase>
+      <path d="M7 20h10" />
+      <path d="M9 20l1-9h4l1 9" />
+      <path d="M8 11a4 4 0 0 1 8 0" />
+      <path d="M12 11l2-3" />
+    </IconBase>
+  )
+}
+
+export function ArmIcon() {
+  return (
+    <IconBase>
+      <path d="M7 20c3-1 5-4 5-8V5" />
+      <path d="M12 5c3 0 5 2 5 5v3" />
+      <path d="M17 13c0 3-2 6-5 7" />
+      <path d="M9 8h6" />
+    </IconBase>
+  )
+}
+
+export function LegIcon() {
+  return (
+    <IconBase>
+      <path d="M10 3v6l-2 5v7" />
+      <path d="M14 3v7l2 5v6" />
+      <path d="M8 21h4" />
+      <path d="M14 21h4" />
+    </IconBase>
+  )
+}
+
+export function ShieldIcon() {
+  return (
+    <IconBase>
+      <path d="M12 22s7-3 7-10V5l-7-3-7 3v7c0 7 7 10 7 10Z" />
+      <path d="M9 12l2 2 4-4" />
+    </IconBase>
+  )
+}
+
+export function LockIcon() {
+  return (
+    <IconBase>
+      <rect x="5" y="11" width="14" height="10" rx="2" />
+      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+    </IconBase>
+  )
+}

@@ -714,30 +714,3 @@ function ReadOnlyField({
     </div>
   )
 }
-
-function formatGender(value) {
-  if (value === 'Female') {
-    return 'Femme'
-  }
-
-  if (value === 'Male') {
-    return 'Homme'
-  }
-
-  return value || 'Non spécifié'
-}
-
-function formatDominantSide(
-  value,
-  feminine = false,
-) {
-  if (value === 'Right') {
-    return feminine ? 'Droite' : 'Droit'
-  }
-
-  if (value === 'Left') {
-    return 'Gauche'
-  }
-
-  return value || 'Non spécifié'
-}
