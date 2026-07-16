@@ -1,40 +1,79 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import api from '../../api/config'
+import { athleteService } from '../../api/athleteService'
+import { teamService } from '../../api/teamService'
 import '../../styles/team-details.css'
-import { TEAM_ATHLETES_BY_ID, TEAM_ROWS } from './teamData'
-
-const DEFAULT_ATHLETES = [
-  { id: 1, name: 'Athlète exemple', position: 'Position', status: 'Actif' },
-]
 
 export default function TeamDetailsPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { teamId } = useParams()
+  const [team, setTeam] = useState(location.state?.team ?? null)
+  const [teamLoading, setTeamLoading] = useState(!location.state?.team)
+  const [teamError, setTeamError] = useState(null)
   const [subcoachNames, setSubcoachNames] = useState([])
   const [subcoachesLoading, setSubcoachesLoading] = useState(true)
   const [subcoachesError, setSubcoachesError] = useState(null)
+  const [athletes, setAthletes] = useState([])
+  const [athletesLoading, setAthletesLoading] = useState(true)
+  const [athletesError, setAthletesError] = useState(null)
 
-  const team = useMemo(() => {
-    const fallbackTeam = TEAM_ROWS.find((item) => String(item.id) === String(teamId)) ?? TEAM_ROWS[0]
-    const sourceTeam = location.state?.team ?? fallbackTeam
+  const athletesCount =
+    !athletesLoading && !athletesError
+      ? athletes.length
+      : team?.athletesCount ?? 0
 
-    return {
-      id: sourceTeam?.id ?? fallbackTeam?.id ?? '',
-      name: sourceTeam?.name ?? fallbackTeam?.name ?? 'Équipe sans nom',
-      sport: sourceTeam?.sport ?? fallbackTeam?.sport ?? '—',
-      athletesCount: sourceTeam?.athletesCount ?? fallbackTeam?.athletesCount ?? 0,
-      headCoach: sourceTeam?.headCoach ?? fallbackTeam?.headCoach ?? '—',
-      assistantCoaches: Array.isArray(sourceTeam?.assistantCoaches)
-        ? sourceTeam.assistantCoaches
-        : Array.isArray(fallbackTeam?.assistantCoaches)
-          ? fallbackTeam.assistantCoaches
-          : [],
+  const mapStatusLabel = (status) => {
+    if (status === 'active') {
+      return 'Actif'
+    }
+
+    if (status === 'pending') {
+      return 'À activer'
+    }
+
+    return 'Inactif'
+  }
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadTeam = async () => {
+      if (location.state?.team) {
+        setTeam(location.state.team)
+        setTeamLoading(false)
+        setTeamError(null)
+        return
+      }
+
+      setTeamLoading(true)
+      setTeamError(null)
+
+      const result = await teamService.getDisplayTeamById(teamId)
+
+      if (cancelled) {
+        return
+      }
+
+      if (result.success) {
+        setTeam(result.data)
+      } else {
+        setTeam(null)
+        setTeamError(result.error)
+      }
+
+      setTeamLoading(false)
+    }
+
+    if (teamId) {
+      loadTeam()
+    }
+
+    return () => {
+      cancelled = true
     }
   }, [teamId, location.state])
-
-  const athletes = TEAM_ATHLETES_BY_ID[Number(team.id)] ?? DEFAULT_ATHLETES
 
   useEffect(() => {
     let cancelled = false
@@ -44,7 +83,7 @@ export default function TeamDetailsPage() {
       setSubcoachesError(null)
 
       try {
-        const response = await api.get(`/api/team/subcoaches/${team.id ?? teamId}`)
+        const response = await api.get(`/api/team/subcoaches/${team?.id ?? teamId}`)
         const names = Array.isArray(response.data)
           ? response.data
               .map((item) => item?.subcoachName)
@@ -66,7 +105,7 @@ export default function TeamDetailsPage() {
       }
     }
 
-    if (team.id || teamId) {
+    if (team?.id || teamId) {
       loadSubcoaches()
     } else {
       setSubcoachesLoading(false)
@@ -76,7 +115,53 @@ export default function TeamDetailsPage() {
     return () => {
       cancelled = true
     }
-  }, [team.id, teamId])
+  }, [team?.id, teamId])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadAthletes = async () => {
+      setAthletesLoading(true)
+      setAthletesError(null)
+
+      const resolvedTeamId = team?.id ?? teamId
+      const result = await athleteService.getDisplayAthletesByTeam(resolvedTeamId)
+
+      if (cancelled) {
+        return
+      }
+
+      if (result.success) {
+        const rows = result.data.map((athlete) => ({
+          id: athlete.id,
+          name: athlete.fullName || athlete.username || '—',
+          position:
+            Array.isArray(athlete.positions) && athlete.positions.length > 0
+              ? athlete.positions.join(', ')
+              : '—',
+          status: mapStatusLabel(athlete.status),
+        }))
+
+        setAthletes(rows)
+      } else {
+        setAthletes([])
+        setAthletesError(result.error)
+      }
+
+      setAthletesLoading(false)
+    }
+
+    if (team?.id || teamId) {
+      loadAthletes()
+    } else {
+      setAthletesLoading(false)
+      setAthletes([])
+    }
+
+    return () => {
+      cancelled = true
+    }
+  }, [team?.id, teamId])
 
   return (
     <section className="team-details-page">
@@ -88,15 +173,15 @@ export default function TeamDetailsPage() {
           <div className="team-details-grid team-details-grid--three">
             <div>
               <p className="team-details-label">Nom de l&apos;équipe</p>
-              <p className="team-details-value">{team.name}</p>
+              <p className="team-details-value">{teamLoading ? 'Chargement...' : team?.name ?? '—'}</p>
             </div>
             <div>
               <p className="team-details-label">Sport</p>
-              <p className="team-details-value">{team.sport}</p>
+              <p className="team-details-value">{teamLoading ? 'Chargement...' : team?.sport ?? '—'}</p>
             </div>
             <div>
               <p className="team-details-label">Nombre d&apos;athlètes associés</p>
-              <p className="team-details-value">{team.athletesCount}</p>
+              <p className="team-details-value">{athletesCount}</p>
             </div>
           </div>
         </section>
@@ -106,7 +191,7 @@ export default function TeamDetailsPage() {
           <div className="team-details-grid team-details-grid--three">
             <div>
               <p className="team-details-label">Coach principal</p>
-              <p className="team-details-value">{team.headCoach}</p>
+              <p className="team-details-value">{teamLoading ? 'Chargement...' : team?.headCoach ?? '—'}</p>
             </div>
             <div>
               <p className="team-details-label">Coach(s) secondaire(s)</p>
@@ -123,6 +208,7 @@ export default function TeamDetailsPage() {
                   <span className="team-details-value">—</span>
                 )}
               </div>
+              {teamError ? <p className="team-details-value">{teamError}</p> : null}
             </div>
             <div>
               <p className="team-details-label">Kiné(s)</p>
@@ -147,20 +233,41 @@ export default function TeamDetailsPage() {
                 </tr>
               </thead>
               <tbody>
-                {athletes.map((athlete) => (
-                  <tr key={athlete.id}>
-                    <td className="cell--name">{athlete.name}</td>
-                    <td>{athlete.position}</td>
-                    <td>
-                      <span className={`team-details-status ${athlete.status === 'Actif' ? 'team-details-status--active' : 'team-details-status--inactive'}`}>
-                        {athlete.status}
-                      </span>
-                    </td>
-                    <td>
-                      <button type="button" className="team-details-profile-btn">Voir le profil</button>
-                    </td>
+                {athletesLoading ? (
+                  <tr>
+                    <td colSpan="4" className="list-empty">Chargement des athlètes...</td>
                   </tr>
-                ))}
+                ) : athletesError ? (
+                  <tr>
+                    <td colSpan="4" className="list-empty">{athletesError}</td>
+                  </tr>
+                ) : athletes.length > 0 ? (
+                  athletes.map((athlete) => (
+                    <tr key={athlete.id}>
+                      <td className="cell--name">{athlete.name}</td>
+                      <td>{athlete.position}</td>
+                      <td>
+                        <span className={`team-details-status ${athlete.status === 'Actif' ? 'team-details-status--active' : 'team-details-status--inactive'}`}>
+                          {athlete.status}
+                        </span>
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          className="team-details-profile-btn"
+                          onClick={() => navigate(`/athletes/${athlete.id}`)}
+                          disabled={!athlete.id}
+                        >
+                          Voir le profil
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="4" className="list-empty">Aucun athlète associé à cette équipe.</td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

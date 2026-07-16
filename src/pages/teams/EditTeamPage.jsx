@@ -3,23 +3,17 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import api from '../../api/config'
 import '../../styles/page-form.css'
 import '../../styles/create-team.css'
-import { TEAM_ROWS } from './teamData'
+import { teamService } from '../../api/teamService'
 
 export default function EditTeamPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { teamId } = useParams()
-
-  const team = useMemo(() => {
-    if (location.state?.team) {
-      return location.state.team
-    }
-
-    return TEAM_ROWS.find((item) => String(item.id) === String(teamId)) ?? TEAM_ROWS[0]
-  }, [teamId, location.state])
-
-  const [teamName, setTeamName] = useState(team.name)
-  const [headCoachId, setHeadCoachId] = useState(team.headCoachId ? String(team.headCoachId) : '')
+  const [team, setTeam] = useState(location.state?.team ?? null)
+  const [teamLoading, setTeamLoading] = useState(!location.state?.team)
+  const [teamError, setTeamError] = useState(null)
+  const [teamName, setTeamName] = useState(location.state?.team?.name ?? '')
+  const [headCoachId, setHeadCoachId] = useState(location.state?.team?.headCoachId ? String(location.state.team.headCoachId) : '')
   const [coachOptions, setCoachOptions] = useState([])
   const [coachesLoading, setCoachesLoading] = useState(true)
   const [coachesError, setCoachesError] = useState(null)
@@ -29,6 +23,50 @@ export default function EditTeamPage() {
   const [subcoachesError, setSubcoachesError] = useState(null)
   const [submitError, setSubmitError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadTeam = async () => {
+      if (location.state?.team) {
+        setTeam(location.state.team)
+        setTeamError(null)
+        setTeamLoading(false)
+        return
+      }
+
+      setTeamLoading(true)
+      setTeamError(null)
+
+      const result = await teamService.getDisplayTeamById(teamId)
+
+      if (cancelled) {
+        return
+      }
+
+      if (result.success) {
+        setTeam(result.data)
+      } else {
+        setTeam(null)
+        setTeamError(result.error)
+      }
+
+      setTeamLoading(false)
+    }
+
+    if (teamId) {
+      loadTeam()
+    }
+
+    return () => {
+      cancelled = true
+    }
+  }, [teamId, location.state])
+
+  useEffect(() => {
+    setTeamName(team?.name ?? '')
+    setHeadCoachId(team?.headCoachId ? String(team.headCoachId) : '')
+  }, [team?.id])
 
   useEffect(() => {
     let cancelled = false
@@ -52,10 +90,10 @@ export default function EditTeamPage() {
           setCoachOptions(options)
           setSubcoachOptions(options)
 
-          if (team.headCoachId) {
+          if (team?.headCoachId) {
             setHeadCoachId(String(team.headCoachId))
           } else {
-            const matched = options.find((option) => option.name === team.headCoach)
+            const matched = options.find((option) => option.name === team?.headCoach)
             setHeadCoachId(matched?.id ?? '')
           }
         }
@@ -78,7 +116,7 @@ export default function EditTeamPage() {
     return () => {
       cancelled = true
     }
-  }, [team.headCoach])
+  }, [team?.headCoach, team?.headCoachId])
 
   useEffect(() => {
     let cancelled = false
@@ -88,7 +126,7 @@ export default function EditTeamPage() {
       setSubcoachesError(null)
 
       try {
-        const response = await api.get(`/api/team/subcoaches/${team.id}`)
+        const response = await api.get(`/api/team/subcoaches/${team?.id}`)
         const ids = Array.isArray(response.data)
           ? response.data
               .filter((item) => item?.coachId != null)
@@ -110,12 +148,17 @@ export default function EditTeamPage() {
       }
     }
 
-    loadSubcoaches()
+    if (team?.id) {
+      loadSubcoaches()
+    } else {
+      setSubcoachesLoading(false)
+      setSelectedSubcoachIds([])
+    }
 
     return () => {
       cancelled = true
     }
-  }, [team.id])
+  }, [team?.id])
 
   useEffect(() => {
     if (!headCoachId) {
@@ -153,8 +196,8 @@ export default function EditTeamPage() {
     setSubmitting(true)
 
     try {
-      await api.patch(`/api/team/modify/${team.id ?? teamId}`, {
-        teamId: Number(team.id ?? teamId),
+      await api.patch(`/api/team/modify/${team?.id ?? teamId}`, {
+        teamId: Number(team?.id ?? teamId),
         newTeamName: teamName.trim(),
         newCoachId: Number(headCoachId),
         newSubcoachesIds: selectedSubcoachIds.map((id) => Number(id)),
@@ -168,6 +211,23 @@ export default function EditTeamPage() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  if (teamLoading) {
+    return <div className="create-page create-team-page">Chargement de l&apos;équipe...</div>
+  }
+
+  if (teamError && !team) {
+    return (
+      <div className="create-page create-team-page">
+        <p className="form-field__error">{teamError}</p>
+        <div className="form-actions">
+          <button type="button" className="btn-secondary" onClick={() => navigate('/equipes')}>
+            Retour
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -189,8 +249,8 @@ export default function EditTeamPage() {
 
             <div className="form-field">
               <label>Sport</label>
-              <select value={team.sport} disabled>
-                <option value={team.sport}>{team.sport}</option>
+              <select value={team?.sport ?? '—'} disabled>
+                <option value={team?.sport ?? '—'}>{team?.sport ?? '—'}</option>
               </select>
             </div>
           </div>

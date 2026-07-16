@@ -29,4 +29,26 @@ export const teamService = {
       return { success: false, error: extractError(error, 'Erreur lors du chargement des équipes') }
     }
   },
+
+  getDisplayTeamById: async (teamId) => {
+    const result = await teamService.getDisplayTeams()
+
+    if (!result.success) {
+      return result
+    }
+
+    const team = result.data.find((item) => String(item.id) === String(teamId))
+
+    if (!team) {
+      return {
+        success: false,
+        error: 'Equipe introuvable.',
+      }
+    }
+
+    return {
+      success: true,
+      data: team,
+    }
+  },
 }
