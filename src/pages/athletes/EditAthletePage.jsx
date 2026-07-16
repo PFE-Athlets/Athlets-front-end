@@ -5,6 +5,12 @@ import { athleteService } from '../../api/athleteService'
 import { teamService } from '../../api/teamService'
 import '../../styles/page-form.css'
 
+import {
+  formatDate,
+  formatGender,
+  formatDominantSide,
+} from '../../utils/athleteFormatters'
+
 const EMPTY_FORM = {
   firstName: '',
   lastName: '',
