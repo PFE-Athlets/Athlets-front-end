@@ -147,6 +147,14 @@
   border: none;
 }
 
+.btn-secondary:disabled,
+.btn-primary:disabled {
+  background: #e2e8f0;
+  color: #94a3b8;
+  border-color: #cbd5e1;
+  cursor: not-allowed;
+}
+
 @media (max-width: 900px) {
   .form-section {
     grid-template-columns: 1fr;

@@ -22,6 +22,7 @@ export default function EditTeamPage() {
   const [subcoachesLoading, setSubcoachesLoading] = useState(true)
   const [subcoachesError, setSubcoachesError] = useState(null)
   const [submitError, setSubmitError] = useState(null)
+  const [submitSuccess, setSubmitSuccess] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
@@ -182,6 +183,7 @@ export default function EditTeamPage() {
     event.preventDefault()
 
     setSubmitError(null)
+    setSubmitSuccess('')
 
     if (!headCoachId) {
       setSubmitError('Veuillez sélectionner un coach principal.')
@@ -202,8 +204,7 @@ export default function EditTeamPage() {
         newCoachId: Number(headCoachId),
         newSubcoachesIds: selectedSubcoachIds.map((id) => Number(id)),
       })
-
-      navigate('/equipes')
+      setSubmitSuccess('Modifications enregistrées avec succès.')
     } catch (error) {
       const data = error.response?.data
       const message = typeof data === 'string' ? data : data?.message
@@ -344,6 +345,25 @@ export default function EditTeamPage() {
           </button>
         </div>
         {submitError ? <p className="form-field__error">{submitError}</p> : null}
+        {submitSuccess ? (
+          <section className="success-section" role="status" aria-live="polite">
+            <div className="success-section__content">
+              <span className="success-section__icon" aria-hidden="true">✓</span>
+              <div>
+                <h2>Succès</h2>
+                <p>{submitSuccess}</p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => navigate('/equipes')}
+            >
+              Retour à la liste des équipes
+            </button>
+          </section>
+        ) : null}
       </form>
     </div>
   )
