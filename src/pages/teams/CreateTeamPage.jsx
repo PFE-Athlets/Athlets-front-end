@@ -17,6 +17,7 @@ export default function CreateTeamPage() {
   const [coachesError, setCoachesError] = useState(null)
   const [selectedSubcoachIds, setSelectedSubcoachIds] = useState([])
   const [submitError, setSubmitError] = useState(null)
+  const [submitSuccess, setSubmitSuccess] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
@@ -117,10 +118,17 @@ export default function CreateTeamPage() {
     [coachOptions, selectedSubcoachIds, headCoachId],
   )
 
+  const isSubmitLocked = submitting || Boolean(submitSuccess)
+
   const handleSubmit = async (event) => {
     event.preventDefault()
 
+    if (submitSuccess) {
+      return
+    }
+
     setSubmitError(null)
+    setSubmitSuccess('')
 
     const trimmedTeamName = teamName.trim()
     if (!trimmedTeamName) {
@@ -152,8 +160,7 @@ export default function CreateTeamPage() {
         headCoachId: Number(headCoachId),
         subcoachIds: selectedSubcoachIds.map((id) => Number(id)),
       })
-
-      navigate('/equipes')
+      setSubmitSuccess('Équipe créée avec succès.')
     } catch (error) {
       const data = error.response?.data
       const message = typeof data === 'string' ? data : data?.message
@@ -285,15 +292,35 @@ export default function CreateTeamPage() {
             type="button"
             className="btn-secondary"
             onClick={() => navigate(-1)}
+            disabled={isSubmitLocked}
           >
             Annuler
           </button>
 
-          <button type="submit" className="btn-primary" disabled={submitting}>
+          <button type="submit" className="btn-primary" disabled={isSubmitLocked}>
             {submitting ? 'Création...' : 'Créer l\'équipe'}
           </button>
         </div>
         {submitError ? <p className="form-field__error">{submitError}</p> : null}
+        {submitSuccess ? (
+          <section className="success-section" role="status" aria-live="polite">
+            <div className="success-section__content">
+              <span className="success-section__icon" aria-hidden="true">✓</span>
+              <div>
+                <h2>Succès</h2>
+                <p>{submitSuccess}</p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => navigate('/equipes')}
+            >
+              Retour à la liste des équipes
+            </button>
+          </section>
+        ) : null}
       </form>
     </div>
   )
