@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import api from '../../api/config'
 import { athleteService } from '../../api/athleteService'
+import { kineService } from '../../api/kineService'
 import { teamService } from '../../api/teamService'
 import '../../styles/team-details.css'
 
@@ -15,6 +16,9 @@ export default function TeamDetailsPage() {
   const [subcoachNames, setSubcoachNames] = useState([])
   const [subcoachesLoading, setSubcoachesLoading] = useState(true)
   const [subcoachesError, setSubcoachesError] = useState(null)
+  const [kineNames, setKineNames] = useState([])
+  const [kinesLoading, setKinesLoading] = useState(true)
+  const [kinesError, setKinesError] = useState(null)
   const [athletes, setAthletes] = useState([])
   const [athletesLoading, setAthletesLoading] = useState(true)
   const [athletesError, setAthletesError] = useState(null)
@@ -35,6 +39,42 @@ export default function TeamDetailsPage() {
 
     return 'Inactif'
   }
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadKinesiologists = async () => {
+      setKinesLoading(true)
+      setKinesError(null)
+
+      const resolvedTeamId = team?.id ?? teamId
+      const result = await kineService.getDisplayKinesiologistsByTeamId(resolvedTeamId)
+
+      if (cancelled) {
+        return
+      }
+
+      if (result.success) {
+        setKineNames(result.data.map((item) => item.name))
+      } else {
+        setKineNames([])
+        setKinesError(result.error)
+      }
+
+      setKinesLoading(false)
+    }
+
+    if (team?.id || teamId) {
+      loadKinesiologists()
+    } else {
+      setKinesLoading(false)
+      setKineNames([])
+    }
+
+    return () => {
+      cancelled = true
+    }
+  }, [team?.id, teamId])
 
   useEffect(() => {
     let cancelled = false
@@ -213,7 +253,17 @@ export default function TeamDetailsPage() {
             <div>
               <p className="team-details-label">Kiné(s)</p>
               <div className="team-details-chips">
-                <span className="team-details-value">TODO: brancher la gestion des kinés par équipe</span>
+                {kinesLoading ? (
+                  <span className="team-details-value">Chargement...</span>
+                ) : kinesError ? (
+                  <span className="team-details-value">{kinesError}</span>
+                ) : kineNames.length > 0 ? (
+                  kineNames.map((name) => (
+                    <span key={name} className="team-details-chip">{name}</span>
+                  ))
+                ) : (
+                  <span className="team-details-value">—</span>
+                )}
               </div>
             </div>
           </div>

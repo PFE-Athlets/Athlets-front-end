@@ -32,4 +32,21 @@ export const kineService = {
       }
     }
   },
+
+  getDisplayKinesiologistsByTeamId: async (teamId) => {
+    try {
+      const response = await api.get(`/api/team/kinesiologists/${teamId}`)
+      const rawList = Array.isArray(response.data) ? response.data : []
+      const options = rawList
+        .map(mapKineDisplayItem)
+        .filter((item) => item.id !== '')
+
+      return { success: true, data: options }
+    } catch (error) {
+      return {
+        success: false,
+        error: extractError(error, 'Impossible de charger les kines de cette equipe.'),
+      }
+    }
+  },
 }
