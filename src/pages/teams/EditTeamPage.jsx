@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import api from '../../api/config'
 import '../../styles/page-form.css'
 import '../../styles/create-team.css'
+import { kineService } from '../../api/kineService'
 import { teamService } from '../../api/teamService'
 
 export default function EditTeamPage() {
@@ -17,10 +18,14 @@ export default function EditTeamPage() {
   const [coachOptions, setCoachOptions] = useState([])
   const [coachesLoading, setCoachesLoading] = useState(true)
   const [coachesError, setCoachesError] = useState(null)
+  const [kineOptions, setKineOptions] = useState([])
+  const [kinesLoading, setKinesLoading] = useState(true)
+  const [kinesError, setKinesError] = useState(null)
   const [subcoachOptions, setSubcoachOptions] = useState([])
   const [selectedSubcoachIds, setSelectedSubcoachIds] = useState([])
   const [subcoachesLoading, setSubcoachesLoading] = useState(true)
   const [subcoachesError, setSubcoachesError] = useState(null)
+  const [selectedKineIds, setSelectedKineIds] = useState([])
   const [submitError, setSubmitError] = useState(null)
   const [submitSuccess, setSubmitSuccess] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -122,6 +127,36 @@ export default function EditTeamPage() {
   useEffect(() => {
     let cancelled = false
 
+    const loadKinesiologists = async () => {
+      setKinesLoading(true)
+      setKinesError(null)
+
+      const result = await kineService.getDisplayKinesiologists()
+
+      if (cancelled) {
+        return
+      }
+
+      if (result.success) {
+        setKineOptions(result.data)
+      } else {
+        setKineOptions([])
+        setKinesError(result.error)
+      }
+
+      setKinesLoading(false)
+    }
+
+    loadKinesiologists()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
     const loadSubcoaches = async () => {
       setSubcoachesLoading(true)
       setSubcoachesError(null)
@@ -177,6 +212,16 @@ export default function EditTeamPage() {
   const availableSubcoaches = useMemo(
     () => subcoachOptions.filter((option) => !selectedSubcoachIds.includes(option.id) && option.id !== headCoachId),
     [subcoachOptions, selectedSubcoachIds, headCoachId],
+  )
+
+  const selectedKines = useMemo(
+    () => kineOptions.filter((option) => selectedKineIds.includes(option.id)),
+    [kineOptions, selectedKineIds],
+  )
+
+  const availableKines = useMemo(
+    () => kineOptions.filter((option) => !selectedKineIds.includes(option.id)),
+    [kineOptions, selectedKineIds],
   )
 
   const handleSubmit = async (event) => {
@@ -327,6 +372,59 @@ export default function EditTeamPage() {
                 </select>
               </div>
               {subcoachesError ? <p className="form-field__error">{subcoachesError}</p> : null}
+            </div>
+
+            <div className="form-field full-width">
+              <label>Kiné(s)</label>
+              <div className="token-select" role="group" aria-label="Kinés sélectionnés">
+                <div className="token-select__chips">
+                  {kinesLoading ? (
+                    <span className="selection-chip selection-chip--placeholder">Chargement...</span>
+                  ) : selectedKines.length === 0 ? (
+                    <span className="selection-chip selection-chip--placeholder">Aucun kiné</span>
+                  ) : (
+                    selectedKines.map((kine) => (
+                      <span key={kine.id} className="selection-chip">
+                        <span>{kine.name}</span>
+                        <button
+                          type="button"
+                          className="selection-chip__remove"
+                          onClick={() => setSelectedKineIds((prev) => prev.filter((id) => id !== kine.id))}
+                          aria-label={`Retirer ${kine.name}`}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))
+                  )}
+                </div>
+
+                <select
+                  className="token-select__add"
+                  value=""
+                  onChange={(event) => {
+                    const nextId = event.target.value
+                    if (!nextId) {
+                      return
+                    }
+
+                    setSelectedKineIds((prev) => (prev.includes(nextId) ? prev : [...prev, nextId]))
+                  }}
+                  disabled={kinesLoading || availableKines.length === 0}
+                >
+                  <option value="">
+                    {kinesLoading
+                      ? 'Chargement...'
+                      : availableKines.length === 0
+                        ? 'Aucun kiné à ajouter'
+                        : 'Ajouter un kiné'}
+                  </option>
+                  {availableKines.map((kine) => (
+                    <option key={kine.id} value={kine.id}>{kine.name}</option>
+                  ))}
+                </select>
+              </div>
+              {kinesError ? <p className="form-field__error">{kinesError}</p> : null}
             </div>
           </div>
         </section>

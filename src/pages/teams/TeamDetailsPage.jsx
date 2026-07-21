@@ -213,7 +213,7 @@ export default function TeamDetailsPage() {
             <div>
               <p className="team-details-label">Kiné(s)</p>
               <div className="team-details-chips">
-                <span className="team-details-value">TODO: brancher la gestion des kinés</span>
+                <span className="team-details-value">TODO: brancher la gestion des kinés par équipe</span>
               </div>
             </div>
           </div>
