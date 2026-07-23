@@ -1,0 +1,540 @@
+.physical-test-details-page {
+  width: 100%;
+}
+
+.physical-test-details-card {
+  padding: 28px 28px 24px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
+}
+
+/* =========================================================
+   Sections
+   ========================================================= */
+
+.physical-test-details-section {
+  padding: 0 0 24px;
+  margin: 0 0 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.physical-test-details-section:last-of-type {
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+.physical-test-details-section h2 {
+  margin: 0 0 22px;
+  color: #001b79;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.physical-test-details-section__header {
+  margin-bottom: 22px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.physical-test-details-section__header h2 {
+  margin-bottom: 4px;
+}
+
+.physical-test-details-section__description {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+/* =========================================================
+   Grilles
+   ========================================================= */
+
+.physical-test-details-grid {
+  display: grid;
+  gap: 22px 34px;
+}
+
+.physical-test-details-grid--two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.physical-test-details-grid--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.physical-test-details-grid--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* =========================================================
+   Éléments d’information
+   ========================================================= */
+
+.physical-test-details-info {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+}
+
+.physical-test-details-info__icon {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #001b79;
+  background: #eef2ff;
+  border-radius: 999px;
+}
+
+.physical-test-details-svg-icon {
+  width: 21px;
+  height: 21px;
+  display: block;
+}
+
+.physical-test-details-info__label {
+  margin: 0 0 6px;
+  color: #001b79;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.physical-test-details-info__value {
+  min-width: 0;
+  color: #001b79;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+/* =========================================================
+   Badges
+   ========================================================= */
+
+.physical-test-details-badge {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.physical-test-details-badge--primary {
+  color: #0047ff;
+  background: #eef2ff;
+}
+
+.physical-test-details-badge--success {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.physical-test-details-badge--warning {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.physical-test-details-badge--neutral {
+  color: #475569;
+  background: #f1f5f9;
+}
+
+.physical-test-details-badge--danger {
+  color: #b91c1c;
+  background: #fee2e2;
+}
+
+/* =========================================================
+   Protocole et informations supplémentaires
+   ========================================================= */
+
+.physical-test-details-text-block {
+  padding: 18px 20px;
+  min-height: 92px;
+  color: #001b79;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 650;
+  line-height: 1.65;
+  white-space: pre-line;
+}
+
+.physical-test-details-text-block--compact {
+  min-height: auto;
+}
+
+.physical-test-details-text-block--empty {
+  color: #64748b;
+  font-weight: 600;
+  font-style: italic;
+}
+
+/* =========================================================
+   Paramètres Oui / Non
+   ========================================================= */
+
+.physical-test-details-setting {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.physical-test-details-setting__indicator {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.physical-test-details-setting__indicator--yes {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.physical-test-details-setting__indicator--no {
+  color: #475569;
+  background: #f1f5f9;
+}
+
+.physical-test-details-setting__label {
+  margin: 0 0 6px;
+  color: #001b79;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.physical-test-details-setting__value {
+  color: #001b79;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+/* =========================================================
+   Types de résultats
+   ========================================================= */
+
+.physical-test-details-results {
+  display: grid;
+  gap: 12px;
+}
+
+.physical-test-details-result {
+  padding: 14px 16px;
+  display: grid;
+  grid-template-columns:
+    minmax(200px, 1.4fr)
+    minmax(160px, 0.9fr)
+    minmax(160px, 0.9fr);
+  gap: 20px;
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.physical-test-details-result__field {
+  min-width: 0;
+}
+
+.physical-test-details-result__label {
+  margin: 0 0 5px;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.physical-test-details-result__value {
+  margin: 0;
+  color: #001b79;
+  font-size: 0.9rem;
+  font-weight: 750;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+/* =========================================================
+   Équipements
+   ========================================================= */
+
+.physical-test-details-equipment-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.physical-test-details-equipment {
+  min-width: 0;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.physical-test-details-equipment__icon {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  color: #001b79;
+  background: #eef2ff;
+  border-radius: 999px;
+}
+
+.physical-test-details-equipment__content {
+  min-width: 0;
+  flex: 1;
+}
+
+.physical-test-details-equipment__name {
+  margin: 0 0 4px;
+  color: #001b79;
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.physical-test-details-equipment__quantity {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+.physical-test-details-equipment__badge {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  color: #0047ff;
+  background: #eef2ff;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+/* =========================================================
+   État vide
+   ========================================================= */
+
+.physical-test-details-empty {
+  padding: 22px;
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+
+/* =========================================================
+   Actions
+   ========================================================= */
+
+.physical-test-details-actions {
+  padding-top: 22px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+}
+
+.physical-test-details-btn {
+  min-width: 160px;
+  min-height: 44px;
+  padding: 0 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.physical-test-details-btn--secondary {
+  color: #0047ff;
+  background: #ffffff;
+  border: 1px solid #0047ff;
+}
+
+.physical-test-details-btn--secondary:hover:not(:disabled) {
+  background: #eef2ff;
+}
+
+.physical-test-details-btn--primary {
+  color: #ffffff;
+  background: #0047ff;
+  border: 1px solid #0047ff;
+}
+
+.physical-test-details-btn--primary:hover:not(:disabled) {
+  background: #003bd6;
+  border-color: #003bd6;
+}
+
+.physical-test-details-btn--danger {
+  color: #dc2626;
+  background: #ffffff;
+  border: 1px solid #ef4444;
+}
+
+.physical-test-details-btn--danger:hover:not(:disabled) {
+  background: #fef2f2;
+}
+
+.physical-test-details-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.physical-test-details-btn:disabled {
+  color: #94a3b8;
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+  cursor: not-allowed;
+}
+
+/* =========================================================
+   Chargement et erreurs
+   ========================================================= */
+
+.physical-test-details-message {
+  padding: 22px;
+  color: #001b79;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+  font-weight: 700;
+}
+
+.physical-test-details-message--error {
+  color: #b91c1c;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.physical-test-details-message--success {
+  color: #166534;
+  background: #f0fdf4;
+  border-color: #86efac;
+}
+
+/* =========================================================
+   Responsive
+   ========================================================= */
+
+@media (max-width: 900px) {
+  .physical-test-details-card {
+    padding: 22px;
+  }
+
+  .physical-test-details-grid--two,
+  .physical-test-details-grid--three {
+    grid-template-columns: 1fr;
+  }
+
+  .physical-test-details-result {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .physical-test-details-equipment-list {
+    grid-template-columns: 1fr;
+  }
+
+  .physical-test-details-actions {
+    flex-direction: column-reverse;
+  }
+
+  .physical-test-details-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .physical-test-details-card {
+    padding: 18px;
+  }
+
+  .physical-test-details-section {
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+  }
+
+  .physical-test-details-section h2 {
+    margin-bottom: 18px;
+    font-size: 1rem;
+  }
+
+  .physical-test-details-info {
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .physical-test-details-info__icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .physical-test-details-svg-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .physical-test-details-text-block {
+    padding: 16px;
+  }
+
+  .physical-test-details-result {
+    padding: 14px;
+  }
+
+  .physical-test-details-equipment {
+    padding: 12px 14px;
+  }
+
+  .physical-test-details-section__header {
+    flex-direction: column;
+  }
+}

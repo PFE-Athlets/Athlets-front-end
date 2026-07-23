@@ -6,6 +6,7 @@ import { DeleteIcon } from '../../components/Icons.jsx'
 
 const createEmptyResultType = () => ({
   name: '',
+  dataType: '',
   unitId: '',
 })
 
@@ -24,6 +25,15 @@ const INITIAL_FORM = {
   resultTypes: [createEmptyResultType()],
   equipments: [],
 }
+
+const DATA_TYPES = [
+  { value: 'INTEGER', label: 'Nombre entier' },
+  { value: 'DECIMAL', label: 'Nombre décimal' },
+  { value: 'TEXT', label: 'Texte' },
+  { value: 'BOOLEAN', label: 'Oui / Non' },
+  { value: 'DATE', label: 'Date' },
+  { value: 'TIME', label: 'Heure' },
+]
 
 export default function CreatePhysicalTestPage() {
   const navigate = useNavigate()
@@ -182,7 +192,8 @@ export default function CreatePhysicalTestPage() {
     const invalidResultType = formData.resultTypes.some(
       (resultType) =>
         !resultType.name.trim() ||
-        !resultType.unitId,
+        !resultType.unitId ||
+        !resultType.dataType,
     )
 
     if (invalidResultType) {
@@ -231,6 +242,7 @@ export default function CreatePhysicalTestPage() {
       resultTypes: formData.resultTypes.map((resultType) => ({
         name: resultType.name.trim(),
         unitId: Number(resultType.unitId),
+        dataType: resultType.dataType,
       })),
     }
 
@@ -390,36 +402,13 @@ export default function CreatePhysicalTestPage() {
         </section>
 
         <section className="physical-test-section">
-          <div className="physical-test-section__header">
-            <div>
-              <div className="physical-test-section__title">
-                <span>2.</span>
-                <h2>Types de résultats à mesurer</h2>
-              </div>
-
-              <p>
-                Définir les valeurs qui devront être saisies lors de la
-                réalisation du test.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              className="physical-test-outline-button"
-              onClick={addResultType}
-              disabled={loading || optionsLoading}
-            >
-              <span aria-hidden="true">＋</span>
-              Ajouter un type de résultat
-            </button>
-          </div>
-
           <div className="physical-test-table-wrapper">
             <div className="physical-test-table physical-test-table--results">
               <div className="physical-test-table__header">
                 <span />
                 <span>Nom du résultat</span>
                 <span>Unité de mesure</span>
+                <span>Type de donnée</span>
                 <span>Actions</span>
               </div>
 
@@ -472,9 +461,32 @@ export default function CreatePhysicalTestPage() {
                         value={unit.id}
                       >
                         {unit.name}
-                        {unit.symbol
-                          ? ` (${unit.symbol})`
-                          : ''}
+                        {unit.symbol ? ` (${unit.symbol})` : ''}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    value={resultType.dataType}
+                    onChange={(event) =>
+                      updateResultType(
+                        index,
+                        'dataType',
+                        event.target.value,
+                      )
+                    }
+                    disabled={loading}
+                  >
+                    <option value="">
+                      Sélectionner un type
+                    </option>
+
+                    {DATA_TYPES.map((dataType) => (
+                      <option
+                        key={dataType.value}
+                        value={dataType.value}
+                      >
+                        {dataType.label}
                       </option>
                     ))}
                   </select>

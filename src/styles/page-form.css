@@ -565,8 +565,9 @@
 .physical-test-table--results .physical-test-table__row {
   grid-template-columns:
     44px
-    minmax(240px, 1.3fr)
-    minmax(220px, 1fr)
+    minmax(220px, 1.2fr)
+    minmax(190px, 0.9fr)
+    minmax(180px, 0.8fr)
     90px;
 }
 

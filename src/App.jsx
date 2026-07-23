@@ -19,6 +19,7 @@ import AthleteDetailsPage from './pages/athletes/AthleteDetailsPage.jsx'
 
 import PhysicalTestPageView from './pages/physical-test/PhysicalTestPageView.jsx'
 import CreatePhysicalTestPage from './pages/physical-test/CreatePhysicalTestPage.jsx'
+import PhysicalTestDetailsPage from './pages/physical-test/PhysicalTestDetailsPage.jsx'
 
 import CreateTeamPage from './pages/teams/CreateTeamPage.jsx'
 import EditTeamPage from './pages/teams/EditTeamPage.jsx'
@@ -336,6 +337,23 @@ function App() {
               {...shellProps}
             >
               <EditTeamPage />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/tests-physiques/:id"
+        element={
+          <ProtectedRoute
+            currentUser={currentUser}
+          >
+            <AppShell
+              pageTitle="Fiche du test physqique"
+              pageSubtitle=""
+              {...shellProps}
+            >
+              <PhysicalTestDetailsPage />
             </AppShell>
           </ProtectedRoute>
         }
