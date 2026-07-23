@@ -10,21 +10,29 @@ export default function EditTeamPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { teamId } = useParams()
+
   const [team, setTeam] = useState(location.state?.team ?? null)
   const [teamLoading, setTeamLoading] = useState(!location.state?.team)
   const [teamError, setTeamError] = useState(null)
+
   const [teamName, setTeamName] = useState(location.state?.team?.name ?? '')
-  const [headCoachId, setHeadCoachId] = useState(location.state?.team?.headCoachId ? String(location.state.team.headCoachId) : '')
+  const [headCoachId, setHeadCoachId] = useState(
+    location.state?.team?.headCoachId ? String(location.state.team.headCoachId) : '',
+  )
+
   const [coachOptions, setCoachOptions] = useState([])
   const [coachesLoading, setCoachesLoading] = useState(true)
   const [coachesError, setCoachesError] = useState(null)
+
   const [kineOptions, setKineOptions] = useState([])
   const [kinesLoading, setKinesLoading] = useState(true)
   const [kinesError, setKinesError] = useState(null)
+
   const [subcoachOptions, setSubcoachOptions] = useState([])
   const [selectedSubcoachIds, setSelectedSubcoachIds] = useState([])
   const [subcoachesLoading, setSubcoachesLoading] = useState(true)
   const [subcoachesError, setSubcoachesError] = useState(null)
+
   const [selectedKineIds, setSelectedKineIds] = useState([])
   const [submitError, setSubmitError] = useState(null)
   const [submitSuccess, setSubmitSuccess] = useState('')
@@ -35,7 +43,10 @@ export default function EditTeamPage() {
 
     const loadTeam = async () => {
       if (location.state?.team) {
-        setTeam(location.state.team)
+        const initialTeam = location.state.team
+        setTeam(initialTeam)
+        setTeamName(initialTeam?.name ?? '')
+        setHeadCoachId(initialTeam?.headCoachId ? String(initialTeam.headCoachId) : '')
         setTeamError(null)
         setTeamLoading(false)
         return
@@ -52,6 +63,8 @@ export default function EditTeamPage() {
 
       if (result.success) {
         setTeam(result.data)
+        setTeamName(result.data?.name ?? '')
+        setHeadCoachId(result.data?.headCoachId ? String(result.data.headCoachId) : '')
       } else {
         setTeam(null)
         setTeamError(result.error)
@@ -68,11 +81,6 @@ export default function EditTeamPage() {
       cancelled = true
     }
   }, [teamId, location.state])
-
-  useEffect(() => {
-    setTeamName(team?.name ?? '')
-    setHeadCoachId(team?.headCoachId ? String(team.headCoachId) : '')
-  }, [team?.id])
 
   useEffect(() => {
     let cancelled = false
@@ -158,6 +166,12 @@ export default function EditTeamPage() {
     let cancelled = false
 
     const loadSubcoaches = async () => {
+      if (!team?.id) {
+        setSubcoachesLoading(false)
+        setSelectedSubcoachIds([])
+        return
+      }
+
       setSubcoachesLoading(true)
       setSubcoachesError(null)
 
@@ -184,12 +198,7 @@ export default function EditTeamPage() {
       }
     }
 
-    if (team?.id) {
-      loadSubcoaches()
-    } else {
-      setSubcoachesLoading(false)
-      setSelectedSubcoachIds([])
-    }
+    loadSubcoaches()
 
     return () => {
       cancelled = true
@@ -197,12 +206,43 @@ export default function EditTeamPage() {
   }, [team?.id])
 
   useEffect(() => {
-    if (!headCoachId) {
-      return
+    let cancelled = false
+
+    const loadKinesiologistsByTeam = async () => {
+      setKinesError(null)
+
+      const resolvedTeamId = team?.id ?? teamId
+      if (!resolvedTeamId) {
+        if (!cancelled) {
+          setSelectedKineIds([])
+        }
+        return
+      }
+
+      const result = await kineService.getDisplayKinesiologistsByTeamId(resolvedTeamId)
+
+      if (cancelled) {
+        return
+      }
+
+      if (result.success) {
+        const ids = (result.data ?? [])
+          .map((item) => String(item.id))
+          .filter((id) => id !== '')
+
+        setSelectedKineIds(ids)
+      } else {
+        setSelectedKineIds([])
+        setKinesError(result.error ?? 'Impossible de charger les kinés de cette équipe.')
+      }
     }
 
-    setSelectedSubcoachIds((prev) => prev.filter((id) => id !== headCoachId))
-  }, [headCoachId])
+    loadKinesiologistsByTeam()
+
+    return () => {
+      cancelled = true
+    }
+  }, [team?.id, teamId])
 
   const selectedSubcoaches = useMemo(
     () => subcoachOptions.filter((option) => selectedSubcoachIds.includes(option.id)),
@@ -224,8 +264,14 @@ export default function EditTeamPage() {
     [kineOptions, selectedKineIds],
   )
 
+  const isLockedAfterSave = Boolean(submitSuccess)
+
   const handleSubmit = async (event) => {
     event.preventDefault()
+
+    if (isLockedAfterSave) {
+      return
+    }
 
     setSubmitError(null)
     setSubmitSuccess('')
@@ -248,7 +294,9 @@ export default function EditTeamPage() {
         newTeamName: teamName.trim(),
         newCoachId: Number(headCoachId),
         newSubcoachesIds: selectedSubcoachIds.map((id) => Number(id)),
+        newKinesiologistsIds: selectedKineIds.map((id) => Number(id)),
       })
+
       setSubmitSuccess('Modifications enregistrées avec succès.')
     } catch (error) {
       const data = error.response?.data
@@ -310,7 +358,11 @@ export default function EditTeamPage() {
               <label>Coach principal</label>
               <select
                 value={headCoachId}
-                onChange={(event) => setHeadCoachId(event.target.value)}
+                onChange={(event) => {
+                  const nextHeadCoachId = event.target.value
+                  setHeadCoachId(nextHeadCoachId)
+                  setSelectedSubcoachIds((prev) => prev.filter((id) => id !== nextHeadCoachId))
+                }}
                 disabled={coachesLoading || coachOptions.length === 0}
               >
                 <option value="">Sélectionner un coach principal</option>
@@ -434,15 +486,18 @@ export default function EditTeamPage() {
             type="button"
             className="btn-secondary"
             onClick={() => navigate(-1)}
+            disabled={submitting || isLockedAfterSave}
           >
             Annuler
           </button>
 
-          <button type="submit" className="btn-primary" disabled={submitting}>
+          <button type="submit" className="btn-primary" disabled={submitting || isLockedAfterSave}>
             {submitting ? 'Enregistrement...' : 'Enregistrer les modifications'}
           </button>
         </div>
+
         {submitError ? <p className="form-field__error">{submitError}</p> : null}
+
         {submitSuccess ? (
           <section className="success-section" role="status" aria-live="polite">
             <div className="success-section__content">
