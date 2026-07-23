@@ -57,6 +57,13 @@
   font-weight: 800;
 }
 
+.form-section-content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
 /* =========================================================
    En-têtes de sections
    ========================================================= */
@@ -129,10 +136,10 @@
 
 .form-column,
 .physical-test-column {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 20px;
-  min-width: 0;
 }
 
 .full-width {
@@ -144,9 +151,9 @@
    ========================================================= */
 
 .form-field {
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  min-width: 0;
 }
 
 .form-field label {
@@ -204,6 +211,14 @@
   cursor: not-allowed;
 }
 
+.form-field__error {
+  margin: 7px 0 0;
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
 .form-section--notes {
   align-items: start;
 }
@@ -218,6 +233,23 @@
 
 .required-marker {
   color: #ef4444;
+}
+
+/* =========================================================
+   Champ avec action latérale
+   ========================================================= */
+
+.form-inline-action {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 14px;
+}
+
+.form-inline-action .form-outline-button {
+  min-width: 160px;
+  height: 44px;
+  white-space: nowrap;
 }
 
 /* =========================================================
@@ -515,13 +547,21 @@
 .form-table__row,
 .physical-test-table__row {
   min-height: 54px;
+  color: #24396f;
   background: #ffffff;
   border-bottom: 1px solid #edf1f7;
+  font-size: 14px;
 }
 
 .form-table__row:last-child,
 .physical-test-table__row:last-child {
   border-bottom: none;
+}
+
+.form-table__row > span,
+.physical-test-table__row > span {
+  min-width: 0;
+  padding: 10px;
 }
 
 .form-table__row > input,
@@ -559,7 +599,24 @@
   cursor: not-allowed;
 }
 
-/* Colonnes propres aux tableaux de tests physiques */
+/* Cellules génériques */
+
+.form-table__cell {
+  min-width: 0;
+  padding: 10px 12px;
+  color: #24396f;
+  font-size: 14px;
+}
+
+.form-table__cell--name {
+  overflow: hidden;
+  color: #071c52;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Tableau de résultats d’un test physique */
 
 .physical-test-table--results .physical-test-table__header,
 .physical-test-table--results .physical-test-table__row {
@@ -571,6 +628,8 @@
     90px;
 }
 
+/* Tableau d’équipements d’un test physique */
+
 .physical-test-table--equipments .physical-test-table__header,
 .physical-test-table--equipments .physical-test-table__row {
   grid-template-columns:
@@ -578,6 +637,23 @@
     minmax(280px, 1.4fr)
     minmax(180px, 0.7fr)
     90px;
+}
+
+/* Tableau des tests associés à une batterie */
+
+.form-table--battery {
+  min-width: 820px;
+}
+
+.form-table--battery .form-table__header,
+.form-table--battery .form-table__row {
+  grid-template-columns:
+    42px
+    minmax(220px, 1.4fr)
+    minmax(150px, 0.85fr)
+    minmax(100px, 0.55fr)
+    minmax(120px, 0.65fr)
+    72px;
 }
 
 .form-drag-handle,
@@ -588,6 +664,33 @@
   color: #8a9aba;
   font-size: 19px;
   user-select: none;
+}
+
+/* =========================================================
+   Badges booléens
+   ========================================================= */
+
+.boolean-badge {
+  min-width: 52px;
+  min-height: 24px;
+  padding: 3px 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.boolean-badge--yes {
+  color: #15803d;
+  background: #dcfce7;
+}
+
+.boolean-badge--no {
+  color: #475569;
+  background: #e2e8f0;
 }
 
 /* =========================================================
@@ -606,6 +709,9 @@
   background: transparent;
   border: none;
   border-radius: 8px;
+  font: inherit;
+  font-size: 20px;
+  line-height: 1;
   cursor: pointer;
 }
 
@@ -622,7 +728,7 @@
 }
 
 /* =========================================================
-   État vide
+   États vides
    ========================================================= */
 
 .form-empty-state,
@@ -632,6 +738,14 @@
   background: #f8fafc;
   border: 1px dashed #cbd5e1;
   border-radius: 10px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.form-table-empty {
+  padding: 26px 18px;
+  color: #64748b;
+  background: #f8fafc;
   text-align: center;
   font-size: 14px;
 }
@@ -826,6 +940,15 @@
     margin-left: 0;
   }
 
+  .form-inline-action {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .form-inline-action .form-outline-button {
+    width: 100%;
+  }
+
   .form-outline-button,
   .physical-test-outline-button {
     width: 100%;
@@ -875,5 +998,11 @@
   .success-section {
     margin-inline: 0;
     padding: 16px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .success-section .btn-secondary {
+    width: 100%;
   }
 }

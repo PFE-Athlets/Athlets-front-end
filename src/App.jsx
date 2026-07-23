@@ -21,6 +21,10 @@ import PhysicalTestPageView from './pages/physical-test/PhysicalTestPageView.jsx
 import CreatePhysicalTestPage from './pages/physical-test/CreatePhysicalTestPage.jsx'
 import PhysicalTestDetailsPage from './pages/physical-test/PhysicalTestDetailsPage.jsx'
 
+import BatterieTestPageView from './pages/batterie-tests/BatterieTestPageView.jsx'
+import CreateBatterieTestPage from './pages/batterie-tests/CreateBatterieTestPage.jsx'
+import BatterieTestDetailsPage from './pages/batterie-tests/BatterieTestDetailsPage.jsx'
+
 import CreateTeamPage from './pages/teams/CreateTeamPage.jsx'
 import EditTeamPage from './pages/teams/EditTeamPage.jsx'
 import TeamPageView from './pages/teams/TeamPageView.jsx'
@@ -71,6 +75,16 @@ const pages = [
     path: '/tests-physiques/creer',
     title: 'Créer un test physique',
     subtitle: 'Ajout d’un nouveau test physique',
+  },
+  {
+    path: '/batterie-tests/creer',
+    title: 'Créer une batterie de test physique',
+    subtitle: 'Ajout d’une nouvelle batterie de test physique',
+  },
+  {
+    path: '/batterie-tests',
+    title: 'Batterie de tests physiques',
+    subtitle: 'Suivir des batteries de tests physiques',
   },
   {
     path: '/resultats',
@@ -226,6 +240,15 @@ function App() {
       case '/tests-physiques/creer':
         return <CreatePhysicalTestPage />
 
+      case '/batterie-tests':
+        return <BatterieTestPageView />
+
+      case '/batterie-tests/creer':
+        return <CreateBatterieTestPage />
+
+      case '/batterie-tests/creer':
+        return <CreateBatterieTestPage />
+
       default:
         return <PageView />
     }
@@ -354,6 +377,23 @@ function App() {
               {...shellProps}
             >
               <PhysicalTestDetailsPage />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/batterie-tests/:id"
+        element={
+          <ProtectedRoute
+            currentUser={currentUser}
+          >
+            <AppShell
+              pageTitle="Fiche de la batterie de tests physiques"
+              pageSubtitle=""
+              {...shellProps}
+            >
+              <BatterieTestDetailsPage />
             </AppShell>
           </ProtectedRoute>
         }

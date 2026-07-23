@@ -38,6 +38,12 @@ const ALL_NAV_ITEMS = [
     roles: ['Coach', 'Administrateur'],
   },
   {
+    label: 'Batterie de tests physiques',
+    icon: PulseIcon,
+    to: '/batterie-tests',
+    roles: ['Coach', 'Administrateur'],
+  },
+  {
     label: 'Résultats',
     icon: ChartIcon,
     to: '/resultats',
