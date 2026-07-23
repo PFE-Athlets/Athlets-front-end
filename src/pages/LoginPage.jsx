@@ -1,11 +1,8 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAuthStore } from '../stores/authStore'
+import { authService } from '../api/authService'
 import '../styles/login.css'
 
 export default function LoginPage({ onLoginSuccess }) {
-
-  const loginStore = useAuthStore((state) => state.login)
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -19,10 +16,10 @@ export default function LoginPage({ onLoginSuccess }) {
     setLoading(true)
 
     try {
-      const result = await loginStore(username, password)
+      const result = await authService.login(username, password)
 
       if (result.success) {
-        navigate('/')
+        onLoginSuccess(result.data)
       } else {
         setError(result.error)
         console.error('Erreur login:', result.error)
