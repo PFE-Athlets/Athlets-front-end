@@ -19,14 +19,96 @@ const mapTeamDisplayItem = (item) => {
   }
 }
 
+const mapSportOption = (item) => ({
+  id: String(item?.sportId ?? ''),
+  name: item?.sportName ?? 'Sport',
+})
+
+const mapCoachOption = (item) => ({
+  id: String(item?.coachId ?? ''),
+  name: item?.coachName ?? 'Coach',
+})
+
+const mapSubcoachItem = (item) => ({
+  id: String(item?.coachId ?? ''),
+  name: item?.subcoachName ?? 'Coach',
+})
+
 export const teamService = {
+  getSportOptions: async () => {
+    try {
+      const response = await api.get('/api/sport/sports')
+      const rawList = Array.isArray(response.data) ? response.data : []
+      const options = rawList
+        .filter((item) => item?.sportId != null)
+        .map(mapSportOption)
+
+      return {
+        success: true,
+        data: options,
+      }
+    } catch (error) {
+      return {
+        success: false,
+        status: error.response?.status,
+        error: extractError(error, 'Impossible de charger la liste des sports.'),
+      }
+    }
+  },
+
+  getCoachOptions: async () => {
+    try {
+      const response = await api.get('/api/coach/coaches')
+      const rawList = Array.isArray(response.data) ? response.data : []
+      const options = rawList
+        .filter((item) => item?.coachId != null)
+        .map(mapCoachOption)
+
+      return {
+        success: true,
+        data: options,
+      }
+    } catch (error) {
+      return {
+        success: false,
+        status: error.response?.status,
+        error: extractError(error, 'Impossible de charger la liste des coachs.'),
+      }
+    }
+  },
+
+  getSubcoachesByTeamId: async (teamId) => {
+    try {
+      const response = await api.get(`/api/team/subcoaches/${teamId}`)
+      const rawList = Array.isArray(response.data) ? response.data : []
+      const subcoaches = rawList
+        .filter((item) => item?.coachId != null)
+        .map(mapSubcoachItem)
+
+      return {
+        success: true,
+        data: subcoaches,
+      }
+    } catch (error) {
+      return {
+        success: false,
+        status: error.response?.status,
+        error: extractError(error, 'Impossible de charger les coachs secondaires.'),
+      }
+    }
+  },
+
   getDisplayTeams: async () => {
     try {
       const response = await api.get('/api/team/teams')
       const rawList = Array.isArray(response.data) ? response.data : []
       return { success: true, data: rawList.map(mapTeamDisplayItem) }
     } catch (error) {
-      return { success: false, error: extractError(error, 'Erreur lors du chargement des équipes') }
+      return {
+        success: false,
+        status: error.response?.status,
+        error: extractError(error, 'Erreur lors du chargement des équipes'),
+      }
     }
   },
 
@@ -42,13 +124,48 @@ export const teamService = {
     if (!team) {
       return {
         success: false,
-        error: 'Equipe introuvable.',
+        status: 404,
+        error: 'Equipe introuvable ou inaccessible avec vos permissions.',
       }
     }
+
+
 
     return {
       success: true,
       data: team,
+    }
+  },
+
+  createTeam: async (payload) => {
+    try {
+      await api.post('/api/team', payload)
+
+      return {
+        success: true,
+      }
+    } catch (error) {
+      return {
+        success: false,
+        status: error.response?.status,
+        error: extractError(error, 'Impossible de créer cette équipe.'),
+      }
+    }
+  },
+
+  modifyTeam: async (teamId, payload) => {
+    try {
+      await api.patch(`/api/team/modify/${teamId}`, payload)
+
+      return {
+        success: true,
+      }
+    } catch (error) {
+      return {
+        success: false,
+        status: error.response?.status,
+        error: extractError(error, 'Impossible de modifier cette équipe.'),
+      }
     }
   },
 }

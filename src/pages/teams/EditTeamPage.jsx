@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import api from '../../api/config'
 import '../../styles/page-form.css'
 import '../../styles/create-team.css'
+import '../../styles/page-view.css'
+import '../../styles/team-details.css'
 import { kineService } from '../../api/kineService'
 import { teamService } from '../../api/teamService'
 
@@ -89,40 +90,31 @@ export default function EditTeamPage() {
       setCoachesLoading(true)
       setCoachesError(null)
 
-      try {
-        const response = await api.get('/api/coach/coaches')
-        const options = Array.isArray(response.data)
-          ? response.data
-              .filter((item) => item?.coachId != null)
-              .map((item) => ({
-                id: String(item.coachId),
-                name: item.coachName ?? 'Coach',
-              }))
-          : []
+      const result = await teamService.getCoachOptions()
 
-        if (!cancelled) {
-          setCoachOptions(options)
-          setSubcoachOptions(options)
-
-          if (team?.headCoachId) {
-            setHeadCoachId(String(team.headCoachId))
-          } else {
-            const matched = options.find((option) => option.name === team?.headCoach)
-            setHeadCoachId(matched?.id ?? '')
-          }
-        }
-      } catch {
-        if (!cancelled) {
-          setCoachOptions([])
-          setSubcoachOptions([])
-          setHeadCoachId('')
-          setCoachesError('Impossible de charger la liste des coachs.')
-        }
-      } finally {
-        if (!cancelled) {
-          setCoachesLoading(false)
-        }
+      if (cancelled) {
+        return
       }
+
+      if (result.success) {
+        const options = result.data
+        setCoachOptions(options)
+        setSubcoachOptions(options)
+
+        if (team?.headCoachId) {
+          setHeadCoachId(String(team.headCoachId))
+        } else {
+          const matched = options.find((option) => option.name === team?.headCoach)
+          setHeadCoachId(matched?.id ?? '')
+        }
+      } else {
+        setCoachOptions([])
+        setSubcoachOptions([])
+        setHeadCoachId('')
+        setCoachesError(result.error)
+      }
+
+      setCoachesLoading(false)
     }
 
     loadCoaches()
@@ -175,27 +167,21 @@ export default function EditTeamPage() {
       setSubcoachesLoading(true)
       setSubcoachesError(null)
 
-      try {
-        const response = await api.get(`/api/team/subcoaches/${team?.id}`)
-        const ids = Array.isArray(response.data)
-          ? response.data
-              .filter((item) => item?.coachId != null)
-              .map((item) => String(item.coachId))
-          : []
+      const result = await teamService.getSubcoachesByTeamId(team?.id)
 
-        if (!cancelled) {
-          setSelectedSubcoachIds(ids)
-        }
-      } catch {
-        if (!cancelled) {
-          setSelectedSubcoachIds([])
-          setSubcoachesError('Impossible de charger les coachs secondaires.')
-        }
-      } finally {
-        if (!cancelled) {
-          setSubcoachesLoading(false)
-        }
+      if (cancelled) {
+        return
       }
+
+      if (result.success) {
+        const ids = result.data.map((item) => String(item.id))
+        setSelectedSubcoachIds(ids)
+      } else {
+        setSelectedSubcoachIds([])
+        setSubcoachesError(result.error)
+      }
+
+      setSubcoachesLoading(false)
     }
 
     loadSubcoaches()
@@ -288,23 +274,21 @@ export default function EditTeamPage() {
 
     setSubmitting(true)
 
-    try {
-      await api.patch(`/api/team/modify/${team?.id ?? teamId}`, {
-        teamId: Number(team?.id ?? teamId),
-        newTeamName: teamName.trim(),
-        newCoachId: Number(headCoachId),
-        newSubcoachesIds: selectedSubcoachIds.map((id) => Number(id)),
-        newKinesiologistsIds: selectedKineIds.map((id) => Number(id)),
-      })
+    const result = await teamService.modifyTeam(team?.id ?? teamId, {
+      teamId: Number(team?.id ?? teamId),
+      newTeamName: teamName.trim(),
+      newCoachId: Number(headCoachId),
+      newSubcoachesIds: selectedSubcoachIds.map((id) => Number(id)),
+      newKinesiologistsIds: selectedKineIds.map((id) => Number(id)),
+    })
 
+    if (result.success) {
       setSubmitSuccess('Modifications enregistrées avec succès.')
-    } catch (error) {
-      const data = error.response?.data
-      const message = typeof data === 'string' ? data : data?.message
-      setSubmitError(message ?? 'Impossible de modifier cette équipe.')
-    } finally {
-      setSubmitting(false)
+    } else {
+      setSubmitError(result.error)
     }
+
+    setSubmitting(false)
   }
 
   if (teamLoading) {
@@ -313,14 +297,14 @@ export default function EditTeamPage() {
 
   if (teamError && !team) {
     return (
-      <div className="create-page create-team-page">
-        <p className="form-field__error">{teamError}</p>
-        <div className="form-actions">
+      <section className="team-details-page">
+        <div className="list-empty">{teamError}</div>
+        <div className="team-details-actions">
           <button type="button" className="btn-secondary" onClick={() => navigate('/equipes')}>
             Retour
           </button>
         </div>
-      </div>
+      </section>
     )
   }
 

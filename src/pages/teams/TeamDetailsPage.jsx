@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import api from '../../api/config'
 import { athleteService } from '../../api/athleteService'
 import { kineService } from '../../api/kineService'
 import { teamService } from '../../api/teamService'
@@ -44,10 +43,18 @@ export default function TeamDetailsPage() {
     let cancelled = false
 
     const loadKinesiologists = async () => {
+      const resolvedTeamId = team?.id ?? teamId
+      if (!resolvedTeamId) {
+        if (!cancelled) {
+          setKinesLoading(false)
+          setKineNames([])
+        }
+        return
+      }
+
       setKinesLoading(true)
       setKinesError(null)
 
-      const resolvedTeamId = team?.id ?? teamId
       const result = await kineService.getDisplayKinesiologistsByTeamId(resolvedTeamId)
 
       if (cancelled) {
@@ -64,12 +71,7 @@ export default function TeamDetailsPage() {
       setKinesLoading(false)
     }
 
-    if (team?.id || teamId) {
-      loadKinesiologists()
-    } else {
-      setKinesLoading(false)
-      setKineNames([])
-    }
+    loadKinesiologists()
 
     return () => {
       cancelled = true
@@ -87,6 +89,15 @@ export default function TeamDetailsPage() {
         return
       }
 
+      if (!teamId) {
+        if (!cancelled) {
+          setTeam(null)
+          setTeamError('Equipe introuvable ou inaccessible avec vos permissions.')
+          setTeamLoading(false)
+        }
+        return
+      }
+
       setTeamLoading(true)
       setTeamError(null)
 
@@ -100,15 +111,13 @@ export default function TeamDetailsPage() {
         setTeam(result.data)
       } else {
         setTeam(null)
-        setTeamError(result.error)
+        setTeamError(result.error ?? 'Equipe introuvable ou inaccessible avec vos permissions.')
       }
 
       setTeamLoading(false)
     }
 
-    if (teamId) {
-      loadTeam()
-    }
+    loadTeam()
 
     return () => {
       cancelled = true
@@ -119,38 +128,39 @@ export default function TeamDetailsPage() {
     let cancelled = false
 
     const loadSubcoaches = async () => {
+      const resolvedTeamId = team?.id ?? teamId
+      if (!resolvedTeamId) {
+        if (!cancelled) {
+          setSubcoachesLoading(false)
+          setSubcoachNames([])
+        }
+        return
+      }
+
       setSubcoachesLoading(true)
       setSubcoachesError(null)
 
-      try {
-        const response = await api.get(`/api/team/subcoaches/${team?.id ?? teamId}`)
-        const names = Array.isArray(response.data)
-          ? response.data
-            .map((item) => item?.subcoachName)
-            .filter((name) => typeof name === 'string' && name.trim() !== '')
-          : []
+      const result = await teamService.getSubcoachesByTeamId(resolvedTeamId)
 
-        if (!cancelled) {
-          setSubcoachNames(names)
-        }
-      } catch {
-        if (!cancelled) {
-          setSubcoachNames([])
-          setSubcoachesError('Impossible de charger les coachs secondaires.')
-        }
-      } finally {
-        if (!cancelled) {
-          setSubcoachesLoading(false)
-        }
+      if (cancelled) {
+        return
       }
+
+      if (result.success) {
+        const names = result.data
+          .map((item) => item?.name)
+          .filter((name) => typeof name === 'string' && name.trim() !== '')
+
+        setSubcoachNames(names)
+      } else {
+        setSubcoachNames([])
+        setSubcoachesError(result.error)
+      }
+
+      setSubcoachesLoading(false)
     }
 
-    if (team?.id || teamId) {
-      loadSubcoaches()
-    } else {
-      setSubcoachesLoading(false)
-      setSubcoachNames([])
-    }
+    loadSubcoaches()
 
     return () => {
       cancelled = true
@@ -161,10 +171,17 @@ export default function TeamDetailsPage() {
     let cancelled = false
 
     const loadAthletes = async () => {
+      const resolvedTeamId = team?.id ?? teamId
+      if (!resolvedTeamId) {
+        if (!cancelled) {
+          setAthletesLoading(false)
+          setAthletes([])
+        }
+        return
+      }
+
       setAthletesLoading(true)
       setAthletesError(null)
-
-      const resolvedTeamId = team?.id ?? teamId
 
 
       //get the acces level of the current user, if he is a coach call getDisplayAthleteAll, since the getDisplayAthletesByTeam is only for admins
@@ -179,11 +196,12 @@ export default function TeamDetailsPage() {
         result = await athleteService.getDisplayAthletesByTeam(resolvedTeamId)
       } else {
         result = await athleteService.getDisplayAthletes()
-        
-        if (result.success) {
-          result.data = result.data.filter((athlete) => athlete.teamId === resolvedTeamId)
-        }else{
 
+        if (result.success) {
+          result.data = result.data.filter((athlete) =>
+            Array.isArray(athlete.teamIds) &&
+            athlete.teamIds.map((id) => String(id)).includes(String(resolvedTeamId)),
+          )
         }
       }
 
@@ -211,17 +229,40 @@ export default function TeamDetailsPage() {
       setAthletesLoading(false)
     }
 
-    if (team?.id || teamId) {
-      loadAthletes()
-    } else {
-      setAthletesLoading(false)
-      setAthletes([])
-    }
+    loadAthletes()
 
     return () => {
       cancelled = true
     }
   }, [team?.id, teamId])
+
+  if (teamLoading) {
+    return (
+      <section className="team-details-page">
+        <div className="list-empty">Chargement de la fiche equipe...</div>
+      </section>
+    )
+  }
+
+  if (teamError && !team) {
+    return (
+      <section className="team-details-page">
+        <div className="list-empty">
+          {teamError}
+        </div>
+
+        <div className="team-details-actions">
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => navigate('/equipes')}
+          >
+            Retour
+          </button>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className="team-details-page">

@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import api from '../../api/config'
 import '../../styles/page-form.css'
 import '../../styles/create-team.css'
+import '../../styles/page-view.css'
+import '../../styles/team-details.css'
 import { kineService } from '../../api/kineService'
+import { teamService } from '../../api/teamService'
 
-export default function CreateTeamPage() {
+export default function CreateTeamPage({ canCreateTeam = false }) {
   const navigate = useNavigate()
   const [teamName, setTeamName] = useState('')
   const [sport, setSport] = useState('')
@@ -32,30 +34,20 @@ export default function CreateTeamPage() {
       setSportsLoading(true)
       setSportsError(null)
 
-      try {
-        const response = await api.get('/api/sport/sports')
-        const options = Array.isArray(response.data)
-          ? response.data
-              .filter((item) => item?.sportId != null)
-              .map((item) => ({
-                id: String(item.sportId),
-                name: item.sportName ?? 'Sport',
-              }))
-          : []
+      const result = await teamService.getSportOptions()
 
-        if (!cancelled) {
-          setSportOptions(options)
-        }
-      } catch {
-        if (!cancelled) {
-          setSportOptions([])
-          setSportsError('Impossible de charger la liste des sports.')
-        }
-      } finally {
-        if (!cancelled) {
-          setSportsLoading(false)
-        }
+      if (cancelled) {
+        return
       }
+
+      if (result.success) {
+        setSportOptions(result.data)
+      } else {
+        setSportOptions([])
+        setSportsError(result.error)
+      }
+
+      setSportsLoading(false)
     }
 
     loadSports()
@@ -102,30 +94,20 @@ export default function CreateTeamPage() {
       setCoachesLoading(true)
       setCoachesError(null)
 
-      try {
-        const response = await api.get('/api/coach/coaches')
-        const options = Array.isArray(response.data)
-          ? response.data
-              .filter((item) => item?.coachId != null)
-              .map((item) => ({
-                id: String(item.coachId),
-                name: item.coachName ?? 'Coach',
-              }))
-          : []
+      const result = await teamService.getCoachOptions()
 
-        if (!cancelled) {
-          setCoachOptions(options)
-        }
-      } catch {
-        if (!cancelled) {
-          setCoachOptions([])
-          setCoachesError('Impossible de charger la liste des coachs.')
-        }
-      } finally {
-        if (!cancelled) {
-          setCoachesLoading(false)
-        }
+      if (cancelled) {
+        return
       }
+
+      if (result.success) {
+        setCoachOptions(result.data)
+      } else {
+        setCoachOptions([])
+        setCoachesError(result.error)
+      }
+
+      setCoachesLoading(false)
     }
 
     loadCoaches()
@@ -134,14 +116,6 @@ export default function CreateTeamPage() {
       cancelled = true
     }
   }, [])
-
-  useEffect(() => {
-    if (!headCoachId) {
-      return
-    }
-
-    setSelectedSubcoachIds((prev) => prev.filter((id) => id !== headCoachId))
-  }, [headCoachId])
 
   const selectedSubcoaches = useMemo(
     () => coachOptions.filter((option) => selectedSubcoachIds.includes(option.id)),
@@ -198,22 +172,34 @@ export default function CreateTeamPage() {
 
     setSubmitting(true)
 
-    try {
-      await api.post('/api/team', {
-        teamName: trimmedTeamName,
-        sportId: Number(sport),
-        headCoachId: Number(headCoachId),
-        subcoachIds: selectedSubcoachIds.map((id) => Number(id)),
-        kineIds: selectedKineIds.map((id) => Number(id))
-      })
+    const result = await teamService.createTeam({
+      teamName: trimmedTeamName,
+      sportId: Number(sport),
+      headCoachId: Number(headCoachId),
+      subcoachIds: selectedSubcoachIds.map((id) => Number(id)),
+      kineIds: selectedKineIds.map((id) => Number(id)),
+    })
+
+    if (result.success) {
       setSubmitSuccess('Équipe créée avec succès.')
-    } catch (error) {
-      const data = error.response?.data
-      const message = typeof data === 'string' ? data : data?.message
-      setSubmitError(message ?? 'Impossible de créer cette équipe.')
-    } finally {
-      setSubmitting(false)
+    } else {
+      setSubmitError(result.error)
     }
+
+    setSubmitting(false)
+  }
+
+  if (!canCreateTeam) {
+    return (
+      <section className="team-details-page">
+        <div className="list-empty">Accès refusé. Vous ne pouvez pas créer d'équipe.</div>
+        <div className="team-details-actions">
+          <button type="button" className="btn-secondary" onClick={() => navigate('/equipes')}>
+            Retour
+          </button>
+        </div>
+      </section>
+    )
   }
 
   return (
@@ -258,7 +244,11 @@ export default function CreateTeamPage() {
               <label>Coach principal</label>
               <select
                 value={headCoachId}
-                onChange={(event) => setHeadCoachId(event.target.value)}
+                onChange={(event) => {
+                  const nextHeadCoachId = event.target.value
+                  setHeadCoachId(nextHeadCoachId)
+                  setSelectedSubcoachIds((prev) => prev.filter((id) => id !== nextHeadCoachId))
+                }}
                 disabled={coachesLoading || coachOptions.length === 0}
               >
                 <option value="">Sélectionner un coach principal</option>
