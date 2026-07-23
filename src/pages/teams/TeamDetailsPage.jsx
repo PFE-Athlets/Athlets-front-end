@@ -1,0 +1,284 @@
+import { useEffect, useState } from 'react'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import api from '../../api/config'
+import { athleteService } from '../../api/athleteService'
+import { teamService } from '../../api/teamService'
+import '../../styles/team-details.css'
+
+export default function TeamDetailsPage() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { teamId } = useParams()
+  const [team, setTeam] = useState(location.state?.team ?? null)
+  const [teamLoading, setTeamLoading] = useState(!location.state?.team)
+  const [teamError, setTeamError] = useState(null)
+  const [subcoachNames, setSubcoachNames] = useState([])
+  const [subcoachesLoading, setSubcoachesLoading] = useState(true)
+  const [subcoachesError, setSubcoachesError] = useState(null)
+  const [athletes, setAthletes] = useState([])
+  const [athletesLoading, setAthletesLoading] = useState(true)
+  const [athletesError, setAthletesError] = useState(null)
+
+  const athletesCount =
+    !athletesLoading && !athletesError
+      ? athletes.length
+      : team?.athletesCount ?? 0
+
+  const mapStatusLabel = (status) => {
+    if (status === 'active') {
+      return 'Actif'
+    }
+
+    if (status === 'pending') {
+      return 'À activer'
+    }
+
+    return 'Inactif'
+  }
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadTeam = async () => {
+      if (location.state?.team) {
+        setTeam(location.state.team)
+        setTeamLoading(false)
+        setTeamError(null)
+        return
+      }
+
+      setTeamLoading(true)
+      setTeamError(null)
+
+      const result = await teamService.getDisplayTeamById(teamId)
+
+      if (cancelled) {
+        return
+      }
+
+      if (result.success) {
+        setTeam(result.data)
+      } else {
+        setTeam(null)
+        setTeamError(result.error)
+      }
+
+      setTeamLoading(false)
+    }
+
+    if (teamId) {
+      loadTeam()
+    }
+
+    return () => {
+      cancelled = true
+    }
+  }, [teamId, location.state])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadSubcoaches = async () => {
+      setSubcoachesLoading(true)
+      setSubcoachesError(null)
+
+      try {
+        const response = await api.get(`/api/team/subcoaches/${team?.id ?? teamId}`)
+        const names = Array.isArray(response.data)
+          ? response.data
+              .map((item) => item?.subcoachName)
+              .filter((name) => typeof name === 'string' && name.trim() !== '')
+          : []
+
+        if (!cancelled) {
+          setSubcoachNames(names)
+        }
+      } catch {
+        if (!cancelled) {
+          setSubcoachNames([])
+          setSubcoachesError('Impossible de charger les coachs secondaires.')
+        }
+      } finally {
+        if (!cancelled) {
+          setSubcoachesLoading(false)
+        }
+      }
+    }
+
+    if (team?.id || teamId) {
+      loadSubcoaches()
+    } else {
+      setSubcoachesLoading(false)
+      setSubcoachNames([])
+    }
+
+    return () => {
+      cancelled = true
+    }
+  }, [team?.id, teamId])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadAthletes = async () => {
+      setAthletesLoading(true)
+      setAthletesError(null)
+
+      const resolvedTeamId = team?.id ?? teamId
+      const result = await athleteService.getDisplayAthletesByTeam(resolvedTeamId)
+
+      if (cancelled) {
+        return
+      }
+
+      if (result.success) {
+        const rows = result.data.map((athlete) => ({
+          id: athlete.id,
+          name: athlete.fullName || athlete.username || '—',
+          position:
+            Array.isArray(athlete.positions) && athlete.positions.length > 0
+              ? athlete.positions.join(', ')
+              : '—',
+          status: mapStatusLabel(athlete.status),
+        }))
+
+        setAthletes(rows)
+      } else {
+        setAthletes([])
+        setAthletesError(result.error)
+      }
+
+      setAthletesLoading(false)
+    }
+
+    if (team?.id || teamId) {
+      loadAthletes()
+    } else {
+      setAthletesLoading(false)
+      setAthletes([])
+    }
+
+    return () => {
+      cancelled = true
+    }
+  }, [team?.id, teamId])
+
+  return (
+    <section className="team-details-page">
+      <p className="team-details-page__subtitle">Consultez les informations de l&apos;équipe et les athlètes associés.</p>
+
+      <article className="team-details-card">
+        <section className="team-details-section">
+          <h2>Informations générales</h2>
+          <div className="team-details-grid team-details-grid--three">
+            <div>
+              <p className="team-details-label">Nom de l&apos;équipe</p>
+              <p className="team-details-value">{teamLoading ? 'Chargement...' : team?.name ?? '—'}</p>
+            </div>
+            <div>
+              <p className="team-details-label">Sport</p>
+              <p className="team-details-value">{teamLoading ? 'Chargement...' : team?.sport ?? '—'}</p>
+            </div>
+            <div>
+              <p className="team-details-label">Nombre d&apos;athlètes associés</p>
+              <p className="team-details-value">{athletesCount}</p>
+            </div>
+          </div>
+        </section>
+
+        <section className="team-details-section">
+          <h2>Encadrement</h2>
+          <div className="team-details-grid team-details-grid--three">
+            <div>
+              <p className="team-details-label">Coach principal</p>
+              <p className="team-details-value">{teamLoading ? 'Chargement...' : team?.headCoach ?? '—'}</p>
+            </div>
+            <div>
+              <p className="team-details-label">Coach(s) secondaire(s)</p>
+              <div className="team-details-chips">
+                {subcoachesLoading ? (
+                  <span className="team-details-value">Chargement...</span>
+                ) : subcoachesError ? (
+                  <span className="team-details-value">{subcoachesError}</span>
+                ) : subcoachNames.length > 0 ? (
+                  subcoachNames.map((name) => (
+                    <span key={name} className="team-details-chip">{name}</span>
+                  ))
+                ) : (
+                  <span className="team-details-value">—</span>
+                )}
+              </div>
+              {teamError ? <p className="team-details-value">{teamError}</p> : null}
+            </div>
+            <div>
+              <p className="team-details-label">Kiné(s)</p>
+              <div className="team-details-chips">
+                <span className="team-details-value">TODO: brancher la gestion des kinés</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="team-details-section team-details-section--last">
+          <h2>Athlètes associés</h2>
+
+          <div className="table-wrapper">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Athlète</th>
+                  <th>Position</th>
+                  <th>Statut</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {athletesLoading ? (
+                  <tr>
+                    <td colSpan="4" className="list-empty">Chargement des athlètes...</td>
+                  </tr>
+                ) : athletesError ? (
+                  <tr>
+                    <td colSpan="4" className="list-empty">{athletesError}</td>
+                  </tr>
+                ) : athletes.length > 0 ? (
+                  athletes.map((athlete) => (
+                    <tr key={athlete.id}>
+                      <td className="cell--name">{athlete.name}</td>
+                      <td>{athlete.position}</td>
+                      <td>
+                        <span className={`team-details-status ${athlete.status === 'Actif' ? 'team-details-status--active' : 'team-details-status--inactive'}`}>
+                          {athlete.status}
+                        </span>
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          className="team-details-profile-btn"
+                          onClick={() => navigate(`/athletes/${athlete.id}`)}
+                          disabled={!athlete.id}
+                        >
+                          Voir le profil
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="4" className="list-empty">Aucun athlète associé à cette équipe.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <div className="team-details-actions">
+          <button type="button" className="btn-secondary" onClick={() => navigate('/equipes')}>
+            Retour
+          </button>
+        </div>
+      </article>
+    </section>
+  )
+}
