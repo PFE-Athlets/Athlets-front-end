@@ -126,8 +126,8 @@ export default function TeamDetailsPage() {
         const response = await api.get(`/api/team/subcoaches/${team?.id ?? teamId}`)
         const names = Array.isArray(response.data)
           ? response.data
-              .map((item) => item?.subcoachName)
-              .filter((name) => typeof name === 'string' && name.trim() !== '')
+            .map((item) => item?.subcoachName)
+            .filter((name) => typeof name === 'string' && name.trim() !== '')
           : []
 
         if (!cancelled) {
@@ -165,7 +165,27 @@ export default function TeamDetailsPage() {
       setAthletesError(null)
 
       const resolvedTeamId = team?.id ?? teamId
-      const result = await athleteService.getDisplayAthletesByTeam(resolvedTeamId)
+
+
+      //get the acces level of the current user, if he is a coach call getDisplayAthleteAll, since the getDisplayAthletesByTeam is only for admins
+      const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null')
+      const userAccessLevel = Number(
+        currentUser?.accessLevel ?? currentUser?.access_level ?? 0
+      )
+      const isAdmin = userAccessLevel === 1
+
+      let result
+      if (isAdmin) {
+        result = await athleteService.getDisplayAthletesByTeam(resolvedTeamId)
+      } else {
+        result = await athleteService.getDisplayAthletes()
+        
+        if (result.success) {
+          result.data = result.data.filter((athlete) => athlete.teamId === resolvedTeamId)
+        }else{
+
+        }
+      }
 
       if (cancelled) {
         return
