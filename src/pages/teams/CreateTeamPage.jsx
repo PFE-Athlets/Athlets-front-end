@@ -204,6 +204,7 @@ export default function CreateTeamPage() {
         sportId: Number(sport),
         headCoachId: Number(headCoachId),
         subcoachIds: selectedSubcoachIds.map((id) => Number(id)),
+        kineIds: selectedKineIds.map((id) => Number(id))
       })
       setSubmitSuccess('Équipe créée avec succès.')
     } catch (error) {
