@@ -177,6 +177,9 @@ button.sidebar-nav__item {
 }
 
 .app-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
   padding: 24px 28px 18px;
   border-bottom: 1px solid var(--border);
   background:
@@ -243,6 +246,35 @@ button.sidebar-nav__item {
   gap: 10px;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.dev-role-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  min-height: 32px;
+  border-radius: 8px;
+  background: #fff3cd;
+  border: 1px dashed #f59e0b;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.dev-role-toggle span {
+  font-weight: 800;
+  color: #92400e;
+  letter-spacing: 0.05em;
+}
+
+.dev-role-toggle select {
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.8rem;
+  color: #92400e;
+  cursor: pointer;
+  outline: none;
 }
 
 .date-filter,
@@ -476,14 +508,6 @@ button.sidebar-nav__item {
 
   .hamburger-btn {
     display: grid;
-  }
-
-  .app-header {
-    padding-inline: 16px;
-  }
-
-  .app-header h1 {
-    font-size: 26px;
   }
 
   .app-shell__content {

@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { useAuthStore } from '../stores/authStore'
 import logo from '../assets/283808481.png'
 import {
   HomeIcon,
@@ -12,6 +13,7 @@ import {
   XIcon,
 } from './Icons'
 
+// Admin (1), Coach/Kin (2), Athlete (3)
 const ALL_NAV_ITEMS = [
   {
     label: 'Tableau de bord',

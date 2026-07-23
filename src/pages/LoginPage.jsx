@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import '../styles/login.css'
-import athleteImage from '../assets/283808481.png'
 import { authService } from '../api/authService'
+import '../styles/login.css'
 
 export default function LoginPage({ onLoginSuccess }) {
 
@@ -22,7 +21,6 @@ export default function LoginPage({ onLoginSuccess }) {
       if (result.success) {
         onLoginSuccess(result.data)
       } else {
-        // Erreur de login
         setError(result.error)
         console.error('Erreur login:', result.error)
       }
@@ -81,9 +79,11 @@ export default function LoginPage({ onLoginSuccess }) {
             <form onSubmit={handleSubmit}>
               {error && <div className="error-message">{error}</div>}
 
-              <label>Nom d'utilisateur ou courriel</label>
+              <label htmlFor="username-input">Nom d'utilisateur ou courriel</label>
               <input
+                id="username-input"
                 type="text"
+                name="username"
                 placeholder="Entrez votre nom d'utilisateur ou courriel"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -91,10 +91,12 @@ export default function LoginPage({ onLoginSuccess }) {
                 disabled={loading}
               />
 
-              <label>Mot de passe</label>
+              <label htmlFor="password-input">Mot de passe</label>
               <div className="password-field">
                 <input
+                  id="password-input"
                   type={showPassword ? 'text' : 'password'}
+                  name="password"
                   placeholder="Entrez votre mot de passe"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
