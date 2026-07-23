@@ -51,7 +51,7 @@ export const physicalTestService = {
 
   getPhysicalQualities: async () => {
     try {
-      const response = await api.get('/api/physical_tests')
+      const response = await api.get('/api/physicalTest/qualities')
 
       return {
         success: true,
@@ -70,7 +70,7 @@ export const physicalTestService = {
 
   getEquipments: async () => {
     try {
-      const response = await api.get('/api/equipments')
+      const response = await api.get('/api/physicalTest/equipments')
 
       return {
         success: true,
@@ -89,7 +89,7 @@ export const physicalTestService = {
 
   getUnits: async () => {
     try {
-      const response = await api.get('/api/units')
+      const response = await api.get('/api/physicalTest/units')
 
       return {
         success: true,

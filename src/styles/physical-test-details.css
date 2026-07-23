@@ -241,13 +241,12 @@
 }
 
 .physical-test-details-result {
-  padding: 14px 16px;
+  padding: 16px 18px;
   display: grid;
   grid-template-columns:
-    minmax(200px, 1.4fr)
-    minmax(160px, 0.9fr)
-    minmax(160px, 0.9fr);
-  gap: 20px;
+    minmax(220px, 1.4fr)
+    minmax(180px, 1fr);
+  gap: 24px;
   align-items: center;
   background: #f8fafc;
   border: 1px solid #e5e7eb;
@@ -465,8 +464,9 @@
    ========================================================= */
 
 @media (max-width: 900px) {
-  .physical-test-details-card {
-    padding: 22px;
+  .physical-test-details-result {
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .physical-test-details-grid--two,
