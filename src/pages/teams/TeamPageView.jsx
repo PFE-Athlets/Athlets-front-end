@@ -8,7 +8,7 @@ import { teamService } from '../../api/teamService'
 const PAGE_SIZE_OPTIONS = [10, 20, 50]
 const INITIAL_FILTERS = { search: '', sport: 'all' }
 
-export default function TeamPageView({ canCreateTeam = false }) {
+export default function TeamPageView({ canCreateTeam = false, canModifyTeam = false }) {
   const navigate = useNavigate()
   const [teams, setTeams] = useState([])
   const [loading, setLoading] = useState(true)
@@ -141,13 +141,15 @@ export default function TeamPageView({ canCreateTeam = false }) {
                     <td>{team.headCoach}</td>
                     <td>
                       <div className="team-table__actions">
-                        <button
-                          type="button"
-                          className="team-table__edit-btn"
-                          onClick={() => navigate(`/equipes/${team.id}/modifier`, { state: { team } })}
-                        >
-                          Modifier
-                        </button>
+                        {canModifyTeam ? (
+                          <button
+                            type="button"
+                            className="team-table__edit-btn"
+                            onClick={() => navigate(`/equipes/${team.id}/modifier`, { state: { team } })}
+                          >
+                            Modifier
+                          </button>
+                        ) : null}
                         <button type="button" className="team-table__menu-btn" aria-label={`Plus d'actions pour ${team.name}`}>
                           <span aria-hidden="true">⋮</span>
                         </button>
