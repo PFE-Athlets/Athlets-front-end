@@ -35,8 +35,8 @@ export const ResultsDashboard = () => {
     console.log('Rendering ResultsDashboard with results:', results),
     <Container sx={{ py: 4 }}>
       <Box sx={{ mb: 3 }}>
-  <ResultFilters />
-</Box>
+        <ResultFilters />
+      </Box>
       
       {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
