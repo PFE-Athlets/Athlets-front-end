@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import api from '../../api/config'
 import { athleteService } from '../../api/athleteService'
+import { kineService } from '../../api/kineService'
 import { teamService } from '../../api/teamService'
 import '../../styles/team-details.css'
 
@@ -15,6 +15,9 @@ export default function TeamDetailsPage() {
   const [subcoachNames, setSubcoachNames] = useState([])
   const [subcoachesLoading, setSubcoachesLoading] = useState(true)
   const [subcoachesError, setSubcoachesError] = useState(null)
+  const [kineNames, setKineNames] = useState([])
+  const [kinesLoading, setKinesLoading] = useState(true)
+  const [kinesError, setKinesError] = useState(null)
   const [athletes, setAthletes] = useState([])
   const [athletesLoading, setAthletesLoading] = useState(true)
   const [athletesError, setAthletesError] = useState(null)
@@ -39,11 +42,59 @@ export default function TeamDetailsPage() {
   useEffect(() => {
     let cancelled = false
 
+    const loadKinesiologists = async () => {
+      const resolvedTeamId = team?.id ?? teamId
+      if (!resolvedTeamId) {
+        if (!cancelled) {
+          setKinesLoading(false)
+          setKineNames([])
+        }
+        return
+      }
+
+      setKinesLoading(true)
+      setKinesError(null)
+
+      const result = await kineService.getDisplayKinesiologistsByTeamId(resolvedTeamId)
+
+      if (cancelled) {
+        return
+      }
+
+      if (result.success) {
+        setKineNames(result.data.map((item) => item.name))
+      } else {
+        setKineNames([])
+        setKinesError(result.error)
+      }
+
+      setKinesLoading(false)
+    }
+
+    loadKinesiologists()
+
+    return () => {
+      cancelled = true
+    }
+  }, [team?.id, teamId])
+
+  useEffect(() => {
+    let cancelled = false
+
     const loadTeam = async () => {
       if (location.state?.team) {
         setTeam(location.state.team)
         setTeamLoading(false)
         setTeamError(null)
+        return
+      }
+
+      if (!teamId) {
+        if (!cancelled) {
+          setTeam(null)
+          setTeamError('Equipe introuvable ou inaccessible avec vos permissions.')
+          setTeamLoading(false)
+        }
         return
       }
 
@@ -60,15 +111,13 @@ export default function TeamDetailsPage() {
         setTeam(result.data)
       } else {
         setTeam(null)
-        setTeamError(result.error)
+        setTeamError(result.error ?? 'Equipe introuvable ou inaccessible avec vos permissions.')
       }
 
       setTeamLoading(false)
     }
 
-    if (teamId) {
-      loadTeam()
-    }
+    loadTeam()
 
     return () => {
       cancelled = true
@@ -79,38 +128,39 @@ export default function TeamDetailsPage() {
     let cancelled = false
 
     const loadSubcoaches = async () => {
+      const resolvedTeamId = team?.id ?? teamId
+      if (!resolvedTeamId) {
+        if (!cancelled) {
+          setSubcoachesLoading(false)
+          setSubcoachNames([])
+        }
+        return
+      }
+
       setSubcoachesLoading(true)
       setSubcoachesError(null)
 
-      try {
-        const response = await api.get(`/api/team/subcoaches/${team?.id ?? teamId}`)
-        const names = Array.isArray(response.data)
-          ? response.data
-              .map((item) => item?.subcoachName)
-              .filter((name) => typeof name === 'string' && name.trim() !== '')
-          : []
+      const result = await teamService.getSubcoachesByTeamId(resolvedTeamId)
 
-        if (!cancelled) {
-          setSubcoachNames(names)
-        }
-      } catch {
-        if (!cancelled) {
-          setSubcoachNames([])
-          setSubcoachesError('Impossible de charger les coachs secondaires.')
-        }
-      } finally {
-        if (!cancelled) {
-          setSubcoachesLoading(false)
-        }
+      if (cancelled) {
+        return
       }
+
+      if (result.success) {
+        const names = result.data
+          .map((item) => item?.name)
+          .filter((name) => typeof name === 'string' && name.trim() !== '')
+
+        setSubcoachNames(names)
+      } else {
+        setSubcoachNames([])
+        setSubcoachesError(result.error)
+      }
+
+      setSubcoachesLoading(false)
     }
 
-    if (team?.id || teamId) {
-      loadSubcoaches()
-    } else {
-      setSubcoachesLoading(false)
-      setSubcoachNames([])
-    }
+    loadSubcoaches()
 
     return () => {
       cancelled = true
@@ -121,11 +171,39 @@ export default function TeamDetailsPage() {
     let cancelled = false
 
     const loadAthletes = async () => {
+      const resolvedTeamId = team?.id ?? teamId
+      if (!resolvedTeamId) {
+        if (!cancelled) {
+          setAthletesLoading(false)
+          setAthletes([])
+        }
+        return
+      }
+
       setAthletesLoading(true)
       setAthletesError(null)
 
-      const resolvedTeamId = team?.id ?? teamId
-      const result = await athleteService.getDisplayAthletesByTeam(resolvedTeamId)
+
+      //get the acces level of the current user, if he is a coach call getDisplayAthleteAll, since the getDisplayAthletesByTeam is only for admins
+      const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null')
+      const userAccessLevel = Number(
+        currentUser?.accessLevel ?? currentUser?.access_level ?? 0
+      )
+      const isAdmin = userAccessLevel === 1
+
+      let result
+      if (isAdmin) {
+        result = await athleteService.getDisplayAthletesByTeam(resolvedTeamId)
+      } else {
+        result = await athleteService.getDisplayAthletes()
+
+        if (result.success) {
+          result.data = result.data.filter((athlete) =>
+            Array.isArray(athlete.teamIds) &&
+            athlete.teamIds.map((id) => String(id)).includes(String(resolvedTeamId)),
+          )
+        }
+      }
 
       if (cancelled) {
         return
@@ -151,17 +229,40 @@ export default function TeamDetailsPage() {
       setAthletesLoading(false)
     }
 
-    if (team?.id || teamId) {
-      loadAthletes()
-    } else {
-      setAthletesLoading(false)
-      setAthletes([])
-    }
+    loadAthletes()
 
     return () => {
       cancelled = true
     }
   }, [team?.id, teamId])
+
+  if (teamLoading) {
+    return (
+      <section className="team-details-page">
+        <div className="list-empty">Chargement de la fiche equipe...</div>
+      </section>
+    )
+  }
+
+  if (teamError && !team) {
+    return (
+      <section className="team-details-page">
+        <div className="list-empty">
+          {teamError}
+        </div>
+
+        <div className="team-details-actions">
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => navigate('/equipes')}
+          >
+            Retour
+          </button>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className="team-details-page">
@@ -213,7 +314,17 @@ export default function TeamDetailsPage() {
             <div>
               <p className="team-details-label">Kiné(s)</p>
               <div className="team-details-chips">
-                <span className="team-details-value">TODO: brancher la gestion des kinés</span>
+                {kinesLoading ? (
+                  <span className="team-details-value">Chargement...</span>
+                ) : kinesError ? (
+                  <span className="team-details-value">{kinesError}</span>
+                ) : kineNames.length > 0 ? (
+                  kineNames.map((name) => (
+                    <span key={name} className="team-details-chip">{name}</span>
+                  ))
+                ) : (
+                  <span className="team-details-value">—</span>
+                )}
               </div>
             </div>
           </div>

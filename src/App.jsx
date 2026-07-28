@@ -39,27 +39,17 @@ const pages = [
   {
     path: '/equipes',
     title: 'Équipes',
-    subtitle: '',
+    subtitle: 'Gestion de la liste des équipes',
   },
   {
     path: '/equipes/creer',
     title: 'Créer une équipe',
-    subtitle: '',
+    subtitle: 'Création d’une nouvelle équipe',
   },
   {
     path: '/athletes/creer',
     title: 'Créer un athlète',
     subtitle: 'Ajout d’un nouvel athlète',
-  },
-  {
-    path: '/equipes',
-    title: 'Équipes',
-    subtitle: '',
-  },
-  {
-    path: '/equipes/creer',
-    title: 'Créer une équipe',
-    subtitle: '',
   },
   {
     path: '/tests-physiques',
@@ -113,12 +103,14 @@ const HOME_BY_ROLE = {
   Administrateur: '/tableau-de-bord',
   Coach: '/athletes',
   Athlète: '/resultats',
+  Kiné: '/equipes',
 }
 
 const ROLE_BY_ACCESS_LEVEL = {
   1: 'Administrateur',
   2: 'Coach',
   3: 'Athlète',
+  4: 'Kiné',
 }
 
 function App() {
@@ -137,9 +129,10 @@ function App() {
   const activeUserRole = currentUser
     ? ROLE_BY_ACCESS_LEVEL[
         currentUser.accessLevel
-      ] ?? 'Coach'
-    : 'Coach'
+      ] ?? 'Athlète'
+    : 'Athlète'
   const canCreateTeam = activeUserRole === 'Administrateur'
+  const canModifyTeam = activeUserRole === 'Administrateur' || activeUserRole === 'Coach'
 
   const handleLoginSuccess = (user) => {
     sessionStorage.setItem(
@@ -152,7 +145,7 @@ function App() {
     const role =
       ROLE_BY_ACCESS_LEVEL[
         user.accessLevel
-      ] ?? 'Coach'
+      ] ?? 'Athlète'
 
     navigate(
       HOME_BY_ROLE[role] ??
@@ -206,16 +199,14 @@ function App() {
         return (
           <TeamPageView
             canCreateTeam={canCreateTeam}
+            canModifyTeam={canModifyTeam}
           />
         )
 
       case '/equipes/creer':
-        return canCreateTeam ? (
-          <CreateTeamPage />
-        ) : (
-          <Navigate
-            to="/equipes"
-            replace
+        return (
+          <CreateTeamPage
+            canCreateTeam={canCreateTeam}
           />
         )
 
@@ -330,13 +321,20 @@ function App() {
           <ProtectedRoute
             currentUser={currentUser}
           >
-            <AppShell
-              pageTitle="Modifier une équipe"
-              pageSubtitle=""
-              {...shellProps}
-            >
-              <EditTeamPage />
-            </AppShell>
+            {canModifyTeam ? (
+              <AppShell
+                pageTitle="Modifier une équipe"
+                pageSubtitle=""
+                {...shellProps}
+              >
+                <EditTeamPage />
+              </AppShell>
+            ) : (
+              <Navigate
+                to="/equipes"
+                replace
+              />
+            )}
           </ProtectedRoute>
         }
       />
