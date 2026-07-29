@@ -31,11 +31,8 @@ const EMPTY_FORM = {
 }
 
 const STATUS_LABELS = {
-  ACTIVE: 'Actif',
-  A_ACTIVER: 'En attente',
-  INACTIVE: 'Non actif',
-
   Active: 'Actif',
+  Pending: 'En attente',
   Inactive: 'Non actif',
 }
 

@@ -23,7 +23,7 @@ const INITIAL_FORM = {
   username: '',
   injuryHistory: '',
 
-  accountStatus: 'A_ACTIVER',
+  accountStatus: 'Pending',
 }
 
 export default function CreateAthletePage() {
