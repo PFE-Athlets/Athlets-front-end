@@ -12,6 +12,8 @@ const INITIAL_FORM = {
   email: '',
 
   athleteTeamName: '',
+  athletePositionName: '',
+  athleteDisciplineName: '',
 
   heightMeters: '',
   weightKg: '',
@@ -29,10 +31,14 @@ export default function CreateAthletePage() {
 
   const [form, setForm] = useState(INITIAL_FORM)
   const [teams, setTeams] = useState([])
+  const [positions] = useState([])
+  const [disciplines] = useState([])
 
   const [loadingTeams, setLoadingTeams] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+
+  const teamSelected = form.athleteTeamName !== ''
 
   useEffect(() => {
     const fetchTeams = async () => {
@@ -239,12 +245,20 @@ export default function CreateAthletePage() {
               <select
                 id="athleteTeamName"
                 value={form.athleteTeamName}
-                onChange={(event) =>
+                onChange={(event) => {
                   updateField(
                     'athleteTeamName',
                     event.target.value,
                   )
-                }
+                  updateField(
+                    'athletePositionName',
+                    '',
+                  )
+                  updateField(
+                    'athleteDisciplineName',
+                    '',
+                  )
+                }}
                 disabled={loadingTeams}
                 required
               >
@@ -260,6 +274,72 @@ export default function CreateAthletePage() {
                     value={team.name}
                   >
                     {team.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-field">
+              <label htmlFor="athletePositionName">
+                Position
+              </label>
+
+              <select
+                id="athletePositionName"
+                value={form.athletePositionName}
+                onChange={(event) =>
+                  updateField(
+                    'athletePositionName',
+                    event.target.value,
+                  )
+                }
+                disabled={!teamSelected}
+              >
+                <option value="" disabled>
+                  {teamSelected
+                    ? 'En attente des positions backend'
+                    : 'Sélectionner une équipe d’abord'}
+                </option>
+
+                {positions.map((position) => (
+                  <option
+                    key={position}
+                    value={position}
+                  >
+                    {position}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-field">
+              <label htmlFor="athleteDisciplineName">
+                Discipline
+              </label>
+
+              <select
+                id="athleteDisciplineName"
+                value={form.athleteDisciplineName}
+                onChange={(event) =>
+                  updateField(
+                    'athleteDisciplineName',
+                    event.target.value,
+                  )
+                }
+                disabled={!teamSelected}
+              >
+                <option value="" disabled>
+                  {teamSelected
+                    ? 'En attente des disciplines backend'
+                    : 'Sélectionner une équipe d’abord'}
+                </option>
+
+                {disciplines.map((discipline) => (
+                  <option
+                    key={discipline}
+                    value={discipline}
+                  >
+                    {discipline}
                   </option>
                 ))}
               </select>
