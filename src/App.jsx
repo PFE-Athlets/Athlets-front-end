@@ -112,7 +112,7 @@ function ProtectedRoute({
 }
 
 const HOME_BY_ROLE = {
-  Administrateur: '/tableau-de-bord',
+  Administrateur: '/athletes',
   Coach: '/athletes',
   Athlète: '/resultats',
 }
