@@ -11,9 +11,10 @@ const INITIAL_FORM = {
   gender: '',
   email: '',
 
+  athleteTeamId: '',
   athleteTeamName: '',
-  athletePositionName: '',
-  athleteDisciplineName: '',
+  athletePositionId: '',
+  athleteDisciplineId: '',
 
   heightMeters: '',
   weightKg: '',
@@ -38,7 +39,7 @@ export default function CreateAthletePage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
-  const teamSelected = form.athleteTeamName !== ''
+  const teamSelected = form.athleteTeamId !== ''
 
   useEffect(() => {
     const fetchTeams = async () => {
@@ -244,18 +245,29 @@ export default function CreateAthletePage() {
 
               <select
                 id="athleteTeamName"
-                value={form.athleteTeamName}
+                value={form.athleteTeamId}
                 onChange={(event) => {
+                  const selectedTeamId = event.target.value
+                  const selectedTeam = teams.find(
+                    (team) =>
+                      String(team.id) ===
+                      String(selectedTeamId),
+                  )
+
                   updateField(
-                    'athleteTeamName',
-                    event.target.value,
+                    'athleteTeamId',
+                    selectedTeamId,
                   )
                   updateField(
-                    'athletePositionName',
+                    'athleteTeamName',
+                    selectedTeam?.name || '',
+                  )
+                  updateField(
+                    'athletePositionId',
                     '',
                   )
                   updateField(
-                    'athleteDisciplineName',
+                    'athleteDisciplineId',
                     '',
                   )
                 }}
@@ -271,7 +283,7 @@ export default function CreateAthletePage() {
                 {teams.map((team) => (
                   <option
                     key={team.id}
-                    value={team.name}
+                    value={team.id}
                   >
                     {team.name}
                   </option>
@@ -280,16 +292,16 @@ export default function CreateAthletePage() {
             </div>
 
             <div className="form-field">
-              <label htmlFor="athletePositionName">
+              <label htmlFor="athletePositionId">
                 Position
               </label>
 
               <select
-                id="athletePositionName"
-                value={form.athletePositionName}
+                id="athletePositionId"
+                value={form.athletePositionId}
                 onChange={(event) =>
                   updateField(
-                    'athletePositionName',
+                    'athletePositionId',
                     event.target.value,
                   )
                 }
@@ -303,26 +315,26 @@ export default function CreateAthletePage() {
 
                 {positions.map((position) => (
                   <option
-                    key={position}
-                    value={position}
+                    key={position.id ?? position}
+                    value={position.id ?? position}
                   >
-                    {position}
+                    {position.name ?? position}
                   </option>
                 ))}
               </select>
             </div>
 
             <div className="form-field">
-              <label htmlFor="athleteDisciplineName">
+              <label htmlFor="athleteDisciplineId">
                 Discipline
               </label>
 
               <select
-                id="athleteDisciplineName"
-                value={form.athleteDisciplineName}
+                id="athleteDisciplineId"
+                value={form.athleteDisciplineId}
                 onChange={(event) =>
                   updateField(
-                    'athleteDisciplineName',
+                    'athleteDisciplineId',
                     event.target.value,
                   )
                 }
@@ -336,10 +348,10 @@ export default function CreateAthletePage() {
 
                 {disciplines.map((discipline) => (
                   <option
-                    key={discipline}
-                    value={discipline}
+                    key={discipline.id ?? discipline}
+                    value={discipline.id ?? discipline}
                   >
-                    {discipline}
+                    {discipline.name ?? discipline}
                   </option>
                 ))}
               </select>

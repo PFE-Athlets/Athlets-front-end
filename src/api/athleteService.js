@@ -20,6 +20,39 @@ const normalizeText = (value) =>
     .trim()
     .toLowerCase()
 
+const toNullableNumber = (value) => {
+  if (value == null || value === '') {
+    return null
+  }
+
+  const numericValue = Number(value)
+  return Number.isFinite(numericValue)
+    ? numericValue
+    : null
+}
+
+const buildTeamsInfo = (form) => {
+  const teamId = toNullableNumber(
+    form.athleteTeamId,
+  )
+
+  if (teamId == null) {
+    return []
+  }
+
+  return [
+    {
+      teamId,
+      disciplineId: toNullableNumber(
+        form.athleteDisciplineId,
+      ),
+      positionId: toNullableNumber(
+        form.athletePositionId,
+      ),
+    },
+  ]
+}
+
 const getAthleteStatus = (athlete) => {
   const rawStatus = athlete?.authUser?.accountStatus
     ?.trim()
@@ -153,7 +186,7 @@ const findAthleteById = (athletes, athleteId) =>
 export const athleteService = {
   createAthlete: async (form) => {
     try {
-      await api.post('/api/athlete/create', {
+      const payload = {
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
         birthDate: form.birthDate,
@@ -180,7 +213,13 @@ export const athleteService = {
           form.injuryHistory?.trim() || null,
 
         athleteTeamName: form.athleteTeamName,
-      })
+        position: form.athletePositionId || null,
+        discipline:
+          form.athleteDisciplineId || null,
+        teamsInfo: buildTeamsInfo(form),
+      }
+
+      await api.post('/api/athlete/create', payload)
 
       return {
         success: true,
