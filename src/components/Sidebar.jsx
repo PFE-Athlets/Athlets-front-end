@@ -13,12 +13,12 @@ import {
 } from './Icons'
 
 const ALL_NAV_ITEMS = [
-  {
+  /**{
     label: 'Tableau de bord',
     icon: HomeIcon,
     to: '/tableau-de-bord',
     roles: ['Coach', 'Administrateur'],
-  },
+  },*/
   {
     label: 'Athlètes',
     icon: UsersIcon,
@@ -49,7 +49,7 @@ const ALL_NAV_ITEMS = [
     to: '/resultats',
     roles: ['Coach', 'Administrateur', 'Athlète'],
   },
-  {
+  /**{
     label: 'Séances',
     icon: CalendarIcon,
     to: '/seances',
@@ -60,7 +60,7 @@ const ALL_NAV_ITEMS = [
     icon: FileIcon,
     to: '/rapports',
     roles: ['Coach', 'Administrateur', 'Athlète'],
-  },
+  },*/
 ]
 
 export function Sidebar({
