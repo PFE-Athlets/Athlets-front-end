@@ -8,6 +8,9 @@ const UNIT_LABELS = { s: 'Secondes', kg: 'Kilogrammes', m: 'Mètres', reps: 'Ré
 
 const INITIAL_FILTERS = { search: '', sport: 'all' }
 
+// Le back ne sérialise pas toujours la relation `sports` : on garantit un tableau.
+const normalizeTest = (test) => ({ ...test, sports: test.sports ?? [] })
+
 export default function PhysicalTestPageView() {
   const [physicalTests, setPhysicalTests] = useState([])
   const [loading, setLoading] = useState(true)
@@ -17,7 +20,8 @@ export default function PhysicalTestPageView() {
   useEffect(() => {
     physicalTestService.getAll().then((result) => {
       if (result.success) {
-        setPhysicalTests(result.data)
+        const rawTests = result.data?.content || result.data || []
+        setPhysicalTests(rawTests.map(normalizeTest))
       } else {
         setError(result.error)
       }
