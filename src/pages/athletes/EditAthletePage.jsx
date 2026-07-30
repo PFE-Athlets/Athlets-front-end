@@ -117,7 +117,7 @@ export default function EditAthletePage() {
         username: athlete.authUser?.username ?? '',
         accountStatus:
           athlete.authUser?.accountStatus ?? '',
-        phone: athlete.phone ?? '',
+        phone: athlete.authUser?.phone ?? '',
         weightKg: athlete.weightKg ?? '',
         heightMeters: athlete.heightMeters ?? '',
         dominantArm: athlete.dominantArm ?? '',
