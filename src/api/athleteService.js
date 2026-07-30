@@ -212,38 +212,10 @@ const mapAthleteDisplayItem = (athlete) => {
 }
 
 const mapAthleteUpdatePayload = (form) => {
-  const selectedTeamId = toNullableNumber(
-    form.athleteTeamId,
-  )
-
-  const selectedPositionId = toNullableNumber(
-    form.athletePositionId,
-  )
-
-  const selectedDisciplineId = toNullableNumber(
-    form.athleteDisciplineId,
-  )
-
-  const fallbackTeamIds = Array.isArray(form.teamIds)
-    ? form.teamIds
-    : []
-
   return {
     phone: form.phone?.trim() || null,
     weightKg: Number(form.weightKg),
     injuryHistory: form.injuryHistory?.trim() || null,
-    teamIds:
-      selectedTeamId != null
-        ? [selectedTeamId]
-        : fallbackTeamIds,
-    positionIds:
-      selectedPositionId != null
-        ? [selectedPositionId]
-        : [],
-    disciplineIds:
-      selectedDisciplineId != null
-        ? [selectedDisciplineId]
-        : [],
     teamsInfo: buildUpdateTeamsInfo(form),
   }
 }
