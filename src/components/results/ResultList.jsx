@@ -1,5 +1,4 @@
-import { useState, useMemo } from 'react'
-import { useResultStore } from '@/stores/resultStore'
+import { useState } from 'react'
 import { ResultDetailModal } from './ResultDetailModal'
 
 const STATUS_CONFIG = {
@@ -21,29 +20,10 @@ const UNIT_SUFFIXES = {
   'REPETITIONS': ' reps'
 }
 
-export const ResultList = ({ onCancelResult }) => {
-  const results = useResultStore((state) => state.results)
-  const filters = useResultStore((state) => state.filters)
-  
+export const ResultList = ({ results = [], onCancelResult }) => {
   const [selectedResult, setSelectedResult] = useState(null)
 
-  const filteredResults = useMemo(() => {
-    const search = (filters.search || '').trim().toLowerCase()
-    const status = filters.status || ''
-    const category = filters.category || ''
- 
-    return results.filter((result) => {
-      if (status && result.status !== status) return false
-      if (category && result.category !== category) return false
-      if (search) {
-        const name = (result.physicalTestName || '').toLowerCase()
-        if (!name.includes(search)) return false
-      }
-      return true
-    })
-  }, [results, filters])
-
-  if (filteredResults.length === 0) {
+  if (results.length === 0) {
     return <p className="list-empty">Aucun résultat trouvé pour ces critères.</p>
   }
 
@@ -66,7 +46,7 @@ export const ResultList = ({ onCancelResult }) => {
           </tr>
         </thead>
         <tbody>
-          {filteredResults.map((result) => {
+          {results.map((result) => {
             const statusInfo = STATUS_CONFIG[result.status] || STATUS_CONFIG['Assigned']
             
             return (

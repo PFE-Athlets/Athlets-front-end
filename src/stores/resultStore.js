@@ -15,6 +15,22 @@ const normalizeResult = (result) => {
   }
 }
 
+export const filterResults = (results, filters) => {
+  const search = (filters.search || '').trim().toLowerCase()
+  const status = filters.status || ''
+  const category = filters.category || ''
+
+  return results.filter((result) => {
+    if (status && result.status !== status) return false
+    if (category && result.category !== category) return false
+    if (search) {
+      const name = (result.physicalTestName || '').toLowerCase()
+      if (!name.includes(search)) return false
+    }
+    return true
+  })
+}
+
 export const useResultStore = create((set, get) => ({
   results: [],
   isLoading: false,
@@ -41,19 +57,7 @@ export const useResultStore = create((set, get) => ({
 
   getFilteredResults: () => {
     const { results, filters } = get()
-    const search = (filters.search || '').trim().toLowerCase()
-    const status = filters.status || ''
-    const category = filters.category || ''
- 
-    return results.filter((result) => {
-      if (status && result.status !== status) return false
-      if (category && result.category !== category) return false
-      if (search) {
-        const name = (result.physicalTestName || '').toLowerCase()
-        if (!name.includes(search)) return false
-      }
-      return true
-    })
+    return filterResults(results, filters)
   },
 
   fetchResults: async () => {
