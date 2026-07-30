@@ -40,17 +40,61 @@ const buildTeamsInfo = (form) => {
     return []
   }
 
-  return [
-    {
-      teamId,
-      disciplineId: toNullableNumber(
-        form.athleteDisciplineId,
-      ),
-      positionId: toNullableNumber(
-        form.athletePositionId,
-      ),
-    },
-  ]
+  const disciplineId = toNullableNumber(
+    form.athleteDisciplineId,
+  )
+
+  const positionId = toNullableNumber(
+    form.athletePositionId,
+  )
+
+  const teamInfo = {
+    teamId,
+    disciplineId:
+      disciplineId != null ? disciplineId : '',
+    positionId:
+      positionId != null ? positionId : '',
+  }
+
+  return [teamInfo]
+}
+
+const buildUpdateTeamsInfo = (form) => {
+  const selectedTeamId = toNullableNumber(
+    form.athleteTeamId,
+  )
+
+  const teamIdFromArray = Array.isArray(form.teamIds)
+    ? toNullableNumber(form.teamIds[0])
+    : null
+
+  const teamId = selectedTeamId ?? teamIdFromArray
+
+  if (teamId == null) {
+    return []
+  }
+
+  const selectedDisciplineId = toNullableNumber(
+    form.athleteDisciplineId,
+  )
+
+  const selectedPositionId = toNullableNumber(
+    form.athletePositionId,
+  )
+
+  const teamInfo = {
+    teamId,
+    disciplineId:
+      selectedDisciplineId != null
+        ? selectedDisciplineId
+        : '',
+    positionId:
+      selectedPositionId != null
+        ? selectedPositionId
+        : '',
+  }
+
+  return [teamInfo]
 }
 
 const getAthleteStatus = (athlete) => {
@@ -167,14 +211,42 @@ const mapAthleteDisplayItem = (athlete) => {
   }
 }
 
-const mapAthleteUpdatePayload = (form) => ({
-  phone: form.phone?.trim() || null,
-  weightKg: Number(form.weightKg),
-  injuryHistory: form.injuryHistory?.trim() || null,
-  teamIds: form.teamIds ?? [],
-  positionIds: form.positionIds ?? [],
-  disciplineIds: form.disciplineIds ?? [],
-})
+const mapAthleteUpdatePayload = (form) => {
+  const selectedTeamId = toNullableNumber(
+    form.athleteTeamId,
+  )
+
+  const selectedPositionId = toNullableNumber(
+    form.athletePositionId,
+  )
+
+  const selectedDisciplineId = toNullableNumber(
+    form.athleteDisciplineId,
+  )
+
+  const fallbackTeamIds = Array.isArray(form.teamIds)
+    ? form.teamIds
+    : []
+
+  return {
+    phone: form.phone?.trim() || null,
+    weightKg: Number(form.weightKg),
+    injuryHistory: form.injuryHistory?.trim() || null,
+    teamIds:
+      selectedTeamId != null
+        ? [selectedTeamId]
+        : fallbackTeamIds,
+    positionIds:
+      selectedPositionId != null
+        ? [selectedPositionId]
+        : [],
+    disciplineIds:
+      selectedDisciplineId != null
+        ? [selectedDisciplineId]
+        : [],
+    teamsInfo: buildUpdateTeamsInfo(form),
+  }
+}
 
 const findAthleteById = (athletes, athleteId) =>
   athletes.find(
@@ -196,16 +268,6 @@ export const athleteService = {
 
         accountStatus: form.accountStatus,
 
-        heightMeters:
-          form.heightMeters !== ''
-            ? Number(form.heightMeters)
-            : null,
-
-        weightKg:
-          form.weightKg !== ''
-            ? Number(form.weightKg)
-            : null,
-
         dominantArm: form.dominantArm || null,
         dominantLeg: form.dominantLeg || null,
 
@@ -213,11 +275,28 @@ export const athleteService = {
           form.injuryHistory?.trim() || null,
 
         athleteTeamName: form.athleteTeamName,
-        position: form.athletePositionId || null,
-        discipline:
-          form.athleteDisciplineId || null,
-        teamsInfo: buildTeamsInfo(form),
       }
+
+      if (form.heightMeters !== '') {
+        payload.heightMeters = Number(
+          form.heightMeters,
+        )
+      }
+
+      if (form.weightKg !== '') {
+        payload.weightKg = Number(form.weightKg)
+      }
+
+      if (form.athletePositionId) {
+        payload.position = form.athletePositionId
+      }
+
+      if (form.athleteDisciplineId) {
+        payload.discipline =
+          form.athleteDisciplineId
+      }
+
+      payload.teamsInfo = buildTeamsInfo(form)
 
       await api.post('/api/athlete/create', payload)
 

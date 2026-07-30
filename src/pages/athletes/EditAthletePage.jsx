@@ -25,6 +25,9 @@ const EMPTY_FORM = {
   dominantArm: '',
   dominantLeg: '',
   injuryHistory: '',
+  athleteTeamId: '',
+  athletePositionId: '',
+  athleteDisciplineId: '',
   teamIds: [],
   positionIds: [],
   disciplineIds: [],
@@ -90,13 +93,9 @@ export default function EditAthletePage() {
         ? athlete.positions
         : []
 
-      const currentDisciplines = Array.isArray(athlete.disciplines)
-        ? athlete.disciplines
-        : []
-
       setAthleteTeams(currentTeams)
       setAthletePositions(currentPositions)
-      setAthleteDisciplines(currentDisciplines)
+      setAthleteDisciplines([])
 
       if (teamsResult.success) {
         setTeams(teamsResult.data)
@@ -125,6 +124,19 @@ export default function EditAthletePage() {
         dominantLeg: athlete.dominantLeg ?? '',
         injuryHistory: athlete.injuryHistory ?? '',
 
+        athleteTeamId:
+          currentTeams.length > 0
+            ? String(currentTeams[0].id)
+            : '',
+
+        athletePositionId:
+          currentPositions.length > 0
+            ? String(currentPositions[0].id)
+            : '',
+
+        athleteDisciplineId:
+          '',
+
         teamIds: currentTeams
           .map((team) => Number(team.id))
           .filter((teamId) => !Number.isNaN(teamId)),
@@ -135,12 +147,7 @@ export default function EditAthletePage() {
             (positionId) => !Number.isNaN(positionId),
           ),
 
-        disciplineIds: currentDisciplines
-          .map((discipline) => Number(discipline.id))
-          .filter(
-            (disciplineId) =>
-              !Number.isNaN(disciplineId),
-          ),
+        disciplineIds: [],
       })
 
       setLoading(false)
@@ -153,12 +160,29 @@ export default function EditAthletePage() {
     const teamSource =
       teams.length > 0 ? teams : athleteTeams
 
+    if (form.athleteTeamId) {
+      const selectedTeam = teamSource.find(
+        (team) =>
+          String(team.id) ===
+          String(form.athleteTeamId),
+      )
+
+      return selectedTeam
+        ? [selectedTeam.name]
+        : []
+    }
+
     return teamSource
       .filter((team) =>
         form.teamIds.includes(Number(team.id)),
       )
       .map((team) => team.name)
-  }, [athleteTeams, form.teamIds, teams])
+  }, [
+    athleteTeams,
+    form.athleteTeamId,
+    form.teamIds,
+    teams,
+  ])
 
   const normalizedStatus =
     form.accountStatus?.trim().toUpperCase()
@@ -200,7 +224,7 @@ export default function EditAthletePage() {
         'Le poids doit être un nombre supérieur à 0 et inférieur ou égal à 500 kg.'
     }
 
-    if (form.teamIds.length === 0) {
+    if (!form.athleteTeamId && form.teamIds.length === 0) {
       errors.teamIds =
         'L’athlète doit être associé à au moins une équipe.'
     }
@@ -438,15 +462,43 @@ export default function EditAthletePage() {
               {teams.length > 0 ? (
                 <select
                   id="athlete-teams"
-                  value={form.teamIds[0] ? String(form.teamIds[0]) : ''}
-                  onChange={(event) =>
+                  value={form.athleteTeamId}
+                  onChange={(event) => {
+                    const selectedTeamId =
+                      event.target.value
+
+                    updateField(
+                      'athleteTeamId',
+                      selectedTeamId,
+                    )
+
                     updateField(
                       'teamIds',
-                      event.target.value
-                        ? [Number(event.target.value)]
+                      selectedTeamId
+                        ? [Number(selectedTeamId)]
                         : [],
                     )
-                  }
+
+                    updateField(
+                      'athletePositionId',
+                      '',
+                    )
+
+                    updateField(
+                      'positionIds',
+                      [],
+                    )
+
+                    updateField(
+                      'athleteDisciplineId',
+                      '',
+                    )
+
+                    updateField(
+                      'disciplineIds',
+                      [],
+                    )
+                  }}
                   aria-invalid={Boolean(fieldErrors.teamIds)}
                 >
                   <option value="" disabled>
@@ -481,21 +533,91 @@ export default function EditAthletePage() {
               )}
             </div>
 
-            <ReadOnlyField
-              label="Position / Discipline"
-              value={
-                [
-                  ...athletePositions.map(
-                    (position) => position.name,
-                  ),
-                  ...athleteDisciplines.map(
-                    (discipline) => discipline.name,
-                  ),
-                ]
-                  .filter(Boolean)
-                  .join(', ') || 'Non spécifié'
-              }
-            />
+            <div className="form-field">
+              <label htmlFor="athlete-position-id">
+                Position
+              </label>
+
+              <select
+                id="athlete-position-id"
+                value={form.athletePositionId}
+                onChange={(event) => {
+                  const selectedPositionId =
+                    event.target.value
+
+                  updateField(
+                    'athletePositionId',
+                    selectedPositionId,
+                  )
+
+                  updateField(
+                    'positionIds',
+                    selectedPositionId
+                      ? [Number(selectedPositionId)]
+                      : [],
+                  )
+                }}
+                disabled={!form.athleteTeamId}
+              >
+                <option value="">
+                  {form.athleteTeamId
+                    ? 'En attente des positions backend'
+                    : 'Sélectionner une équipe d’abord'}
+                </option>
+
+                {athletePositions.map((position) => (
+                  <option
+                    key={position.id}
+                    value={position.id}
+                  >
+                    {position.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-field">
+              <label htmlFor="athlete-discipline-id">
+                Discipline
+              </label>
+
+              <select
+                id="athlete-discipline-id"
+                value={form.athleteDisciplineId}
+                onChange={(event) => {
+                  const selectedDisciplineId =
+                    event.target.value
+
+                  updateField(
+                    'athleteDisciplineId',
+                    selectedDisciplineId,
+                  )
+
+                  updateField(
+                    'disciplineIds',
+                    selectedDisciplineId
+                      ? [Number(selectedDisciplineId)]
+                      : [],
+                  )
+                }}
+                disabled={!form.athleteTeamId}
+              >
+                <option value="">
+                  {form.athleteTeamId
+                    ? 'En attente des disciplines backend'
+                    : 'Sélectionner une équipe d’abord'}
+                </option>
+
+                {athleteDisciplines.map((discipline) => (
+                  <option
+                    key={discipline.id}
+                    value={discipline.id}
+                  >
+                    {discipline.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             <ReadOnlyField
               label="Taille"
