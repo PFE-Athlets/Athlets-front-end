@@ -1,6 +1,20 @@
 import { create } from 'zustand'
 import { resultService } from '@/api/resultService'
 
+// L'API renvoie le test physique dans un objet imbriqué (result.test).
+// On l'aplatit ici pour que les composants lisent des champs simples.
+const normalizeResult = (result) => {
+  const test = result.test || {}
+  return {
+    ...result,
+    physicalTestName: result.physicalTestName ?? test.name ?? '',
+    unit: result.unit ?? test.unit ?? '',
+    protocol: result.protocol ?? test.protocol ?? '',
+    proofNeeded: result.proofNeeded ?? test.proof ?? '',
+    category: result.category ?? test.category ?? '',
+  }
+}
+
 export const useResultStore = create((set, get) => ({
   results: [],
   isLoading: false,
@@ -49,7 +63,8 @@ export const useResultStore = create((set, get) => ({
     const response = await resultService.getAllForUser(currentFilters)
 
     if (response.success) {
-      set({ results: response.data.content || response.data || [] })
+      const rawResults = response.data?.content || response.data || []
+      set({ results: rawResults.map(normalizeResult) })
     } else {
       set({ error: response.error })
     }
