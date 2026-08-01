@@ -15,15 +15,6 @@ const MEASUREMENT_UNITS = [
   { value: 'REPETITIONS', label: 'Répétitions / Séries' },
 ]
 
-const SPORTS = [
-  'Rugby',
-  'Athlétisme',
-  'Soccer',
-  'Basketball',
-  'Volleyball',
-  'Cross-country',
-]
-
 const BOOLEAN_OPTIONS = [
   { value: 'non', label: 'Non' },
   { value: 'oui', label: 'Oui' },

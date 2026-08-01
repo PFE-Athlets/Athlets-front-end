@@ -25,6 +25,8 @@ import EditTeamPage from './pages/teams/EditTeamPage.jsx'
 import TeamPageView from './pages/teams/TeamPageView.jsx'
 import TeamDetailsPage from './pages/teams/TeamDetailsPage.jsx'
 
+import { ResultsDashboard } from './pages/ResultPage.jsx'
+
 const pages = [
   {
     path: '/tableau-de-bord',
@@ -100,7 +102,7 @@ function ProtectedRoute({
 }
 
 const HOME_BY_ROLE = {
-  Administrateur: '/tableau-de-bord',
+  Administrateur: '/athletes',
   Coach: '/athletes',
   Athlète: '/resultats',
   Kiné: '/equipes',
@@ -215,6 +217,9 @@ function App() {
 
       case '/tests-physiques/creer':
         return <CreatePhysicalTestPage />
+
+      case '/resultats':
+        return <ResultsDashboard />
 
       default:
         return <PageView />
