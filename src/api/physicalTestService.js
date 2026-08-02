@@ -28,6 +28,27 @@ export const physicalTestService = {
     }
   },
 
+  getByAllBatteries: async () => {
+    try {
+      const response = await api.get(
+        `/api/physicalTest/battery`,
+      )
+
+      return {
+        success: true,
+        data: response.data,
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: extractError(
+          error,
+          'Erreur lors du chargement du test physique',
+        ),
+      }
+    }
+  },
+
   getById: async (id) => {
     try {
       const response = await api.get(

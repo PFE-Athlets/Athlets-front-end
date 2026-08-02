@@ -7,7 +7,7 @@ import {
   ResetIcon,
   SearchIcon,
 } from '../../components/Icons'
-import { batterieTestsService } from '../../api/batterieTestsService'
+import { physicalTestService } from '../../api/physicalTestService'
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50]
 
@@ -162,7 +162,7 @@ export default function BatterieTestsPageView({
       setError(null)
 
       try {
-        const result = await batterieTestsService.getAll()
+        const result = await physicalTestService.getByAllBatteries()
 
         if (cancelled) {
           return
