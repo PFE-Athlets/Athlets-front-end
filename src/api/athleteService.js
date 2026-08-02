@@ -20,16 +20,93 @@ const normalizeText = (value) =>
     .trim()
     .toLowerCase()
 
+const toNullableNumber = (value) => {
+  if (value == null || value === '') {
+    return null
+  }
+
+  const numericValue = Number(value)
+  return Number.isFinite(numericValue)
+    ? numericValue
+    : null
+}
+
+const buildTeamsInfo = (form) => {
+  const teamId = toNullableNumber(
+    form.athleteTeamId,
+  )
+
+  if (teamId == null) {
+    return []
+  }
+
+  const disciplineId = toNullableNumber(
+    form.athleteDisciplineId,
+  )
+
+  const positionId = toNullableNumber(
+    form.athletePositionId,
+  )
+
+  const teamInfo = {
+    teamId,
+    disciplineId:
+      disciplineId != null ? disciplineId : '',
+    positionId:
+      positionId != null ? positionId : '',
+  }
+
+  return [teamInfo]
+}
+
+const buildUpdateTeamsInfo = (form) => {
+  const selectedTeamId = toNullableNumber(
+    form.athleteTeamId,
+  )
+
+  const teamIdFromArray = Array.isArray(form.teamIds)
+    ? toNullableNumber(form.teamIds[0])
+    : null
+
+  const teamId = selectedTeamId ?? teamIdFromArray
+
+  if (teamId == null) {
+    return []
+  }
+
+  const selectedDisciplineId = toNullableNumber(
+    form.athleteDisciplineId,
+  )
+
+  const selectedPositionId = toNullableNumber(
+    form.athletePositionId,
+  )
+
+  const teamInfo = {
+    teamId,
+    disciplineId:
+      selectedDisciplineId != null
+        ? selectedDisciplineId
+        : '',
+    positionId:
+      selectedPositionId != null
+        ? selectedPositionId
+        : '',
+  }
+
+  return [teamInfo]
+}
+
 const getAthleteStatus = (athlete) => {
   const rawStatus = athlete?.authUser?.accountStatus
     ?.trim()
     .toUpperCase()
 
-  if (rawStatus === 'ACTIVE') {
+  if (rawStatus === 'Active') {
     return 'active'
   }
 
-  if (rawStatus === 'A_ACTIVER') {
+  if (rawStatus === 'Pending') {
     return 'pending'
   }
 
@@ -134,14 +211,14 @@ const mapAthleteDisplayItem = (athlete) => {
   }
 }
 
-const mapAthleteUpdatePayload = (form) => ({
-  phone: form.phone?.trim() || null,
-  weightKg: Number(form.weightKg),
-  injuryHistory: form.injuryHistory?.trim() || null,
-  teamIds: form.teamIds ?? [],
-  positionIds: form.positionIds ?? [],
-  disciplineIds: form.disciplineIds ?? [],
-})
+const mapAthleteUpdatePayload = (form) => {
+  return {
+    phone: form.phone?.trim() || null,
+    weightKg: Number(form.weightKg),
+    injuryHistory: form.injuryHistory?.trim() || null,
+    teamsInfo: buildUpdateTeamsInfo(form),
+  }
+}
 
 const findAthleteById = (athletes, athleteId) =>
   athletes.find(
@@ -153,7 +230,7 @@ const findAthleteById = (athletes, athleteId) =>
 export const athleteService = {
   createAthlete: async (form) => {
     try {
-      await api.post('/api/athlete/create', {
+      const payload = {
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
         birthDate: form.birthDate,
@@ -163,16 +240,6 @@ export const athleteService = {
 
         accountStatus: form.accountStatus,
 
-        heightMeters:
-          form.heightMeters !== ''
-            ? Number(form.heightMeters)
-            : null,
-
-        weightKg:
-          form.weightKg !== ''
-            ? Number(form.weightKg)
-            : null,
-
         dominantArm: form.dominantArm || null,
         dominantLeg: form.dominantLeg || null,
 
@@ -180,7 +247,30 @@ export const athleteService = {
           form.injuryHistory?.trim() || null,
 
         athleteTeamName: form.athleteTeamName,
-      })
+      }
+
+      if (form.heightMeters !== '') {
+        payload.heightMeters = Number(
+          form.heightMeters,
+        )
+      }
+
+      if (form.weightKg !== '') {
+        payload.weightKg = Number(form.weightKg)
+      }
+
+      if (form.athletePositionId) {
+        payload.position = form.athletePositionId
+      }
+
+      if (form.athleteDisciplineId) {
+        payload.discipline =
+          form.athleteDisciplineId
+      }
+
+      payload.teamsInfo = buildTeamsInfo(form)
+
+      await api.post('/api/athlete/create', payload)
 
       return {
         success: true,

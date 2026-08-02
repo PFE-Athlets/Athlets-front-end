@@ -26,15 +26,15 @@ import {
 } from '../../utils/athleteFormatters'
 
 const STATUS_CONFIG = {
-  ACTIVE: {
+  Active: {
     label: 'Actif',
     className: 'athlete-profile-status--active',
   },
-  A_ACTIVER: {
+  Pending: {
     label: 'En attente',
     className: 'athlete-profile-status--pending',
   },
-  INACTIVE: {
+  Inactive: {
     label: 'Non actif',
     className: 'athlete-profile-status--inactive',
   },
@@ -98,7 +98,7 @@ export default function AthleteDetailsPage() {
     [athlete],
   )
 
-  const statusKey = user.accountStatus?.trim().toUpperCase()
+  const statusKey = user.accountStatus?.trim()
   const statusConfig = STATUS_CONFIG[statusKey] ?? {
     label: user.accountStatus || 'Non spécifié',
     className: 'athlete-profile-status--inactive',
