@@ -32,10 +32,11 @@ export default function CreateAthletePage() {
 
   const [form, setForm] = useState(INITIAL_FORM)
   const [teams, setTeams] = useState([])
-  const [positions] = useState([])
-  const [disciplines] = useState([])
+  const [positions, setPositions] = useState([])
+  const [disciplines, setDisciplines] = useState([])
 
   const [loadingTeams, setLoadingTeams] = useState(true)
+  const [loadingSportExtras, setLoadingSportExtras] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
@@ -69,6 +70,70 @@ export default function CreateAthletePage() {
 
     fetchTeams()
   }, [])
+
+  useEffect(() => {
+    const selectedTeamId = form.athleteTeamId
+
+    if (!selectedTeamId) {
+      setPositions([])
+      setDisciplines([])
+      return
+    }
+
+    const selectedTeam = teams.find(
+      (team) => String(team.id) === String(selectedTeamId),
+    )
+
+    const selectedSportId = selectedTeam?.sportId
+
+    if (!selectedSportId) {
+      setPositions([])
+      setDisciplines([])
+      return
+    }
+
+    let isActive = true
+
+    const fetchSportExtras = async () => {
+      setLoadingSportExtras(true)
+
+      const result =
+        await teamService.getDisciplinesAndPositionsBySportId(
+          selectedSportId,
+        )
+
+      if (!isActive) {
+        return
+      }
+
+      if (!result.success) {
+        console.error(
+          'Erreur lors du chargement des positions/disciplines :',
+          result.error,
+        )
+
+        setError(
+          result.error ||
+            'Impossible de charger les positions et disciplines pour cette équipe.',
+        )
+        setPositions([])
+        setDisciplines([])
+        setLoadingSportExtras(false)
+        return
+      }
+
+      setError('')
+      setPositions(result.data.positions)
+      setDisciplines(result.data.disciplines)
+      setLoadingSportExtras(false)
+    }
+
+    fetchSportExtras()
+
+    return () => {
+      isActive = false
+    }
+  }, [form.athleteTeamId, teams])
 
   const updateField = (field, value) => {
     setForm((currentForm) => ({
@@ -309,7 +374,9 @@ export default function CreateAthletePage() {
               >
                 <option value="" disabled>
                   {teamSelected
-                    ? 'En attente des positions backend'
+                    ? loadingSportExtras
+                      ? 'Chargement...'
+                      : 'Sélectionner'
                     : 'Sélectionner une équipe d’abord'}
                 </option>
 
@@ -342,7 +409,9 @@ export default function CreateAthletePage() {
               >
                 <option value="" disabled>
                   {teamSelected
-                    ? 'En attente des disciplines backend'
+                    ? loadingSportExtras
+                      ? 'Chargement...'
+                      : 'Sélectionner'
                     : 'Sélectionner une équipe d’abord'}
                 </option>
 

@@ -12,12 +12,18 @@ const mapTeamDisplayItem = (item) => {
   return {
     id: String(team?.id ?? ''),
     name: team?.name ?? 'Équipe sans nom',
+    sportId: sport?.id != null ? String(sport.id) : '',
     sport: sport?.name ?? '—',
     athletesCount: item?.numberOfAthletes ?? 0,
     headCoach: item?.headCoachName ?? '—',
     headCoachId: item?.headCoachId ? String(item.headCoachId) : '',
   }
 }
+
+const mapSportExtraInfoOption = (item) => ({
+  id: String(item?.id ?? ''),
+  name: item?.name ?? '—',
+})
 
 const mapSportOption = (item) => ({
   id: String(item?.sportId ?? ''),
@@ -134,6 +140,48 @@ export const teamService = {
     return {
       success: true,
       data: team,
+    }
+  },
+
+  getDisciplinesAndPositionsBySportId: async (sportId) => {
+    try {
+      const response = await api.get(
+        `/api/sport/disciplines-positions/${sportId}`,
+        {
+          params: { sportId },
+        },
+      )
+
+      const data = response.data ?? {}
+
+      const disciplines = Array.isArray(data.disciplines)
+        ? data.disciplines
+            .filter((item) => item?.id != null)
+            .map(mapSportExtraInfoOption)
+        : []
+
+      const positions = Array.isArray(data.positions)
+        ? data.positions
+            .filter((item) => item?.id != null)
+            .map(mapSportExtraInfoOption)
+        : []
+
+      return {
+        success: true,
+        data: {
+          disciplines,
+          positions,
+        },
+      }
+    } catch (error) {
+      return {
+        success: false,
+        status: error.response?.status,
+        error: extractError(
+          error,
+          'Impossible de charger les positions et disciplines.',
+        ),
+      }
     }
   },
 
