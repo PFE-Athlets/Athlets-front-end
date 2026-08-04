@@ -39,7 +39,7 @@ export default function PhysicalTestDetailsPage() {
 
       try {
         const result =
-          await physicalTestService.getById(id)
+          await physicalTestService.getPhysicalTestById(id)
 
         if (cancelled) {
           return

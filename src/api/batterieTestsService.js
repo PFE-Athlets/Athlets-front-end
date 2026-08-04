@@ -75,28 +75,6 @@ export const batterieTestsService = {
     }
   },
 
-  create: async (payload) => {
-    try {
-      const response = await api.post(
-        '/api/batterieTests/create',
-        payload,
-      )
-
-      return {
-        success: true,
-        data: response.data,
-      }
-    } catch (error) {
-      return {
-        success: false,
-        error: extractError(
-          error,
-          'Impossible de créer la batterie de tests.',
-        ),
-      }
-    }
-  },
-
   update: async (id, payload) => {
     try {
       const response = await api.put(

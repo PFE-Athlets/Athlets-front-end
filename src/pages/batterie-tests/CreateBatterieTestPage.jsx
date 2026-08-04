@@ -4,15 +4,14 @@ import '../../styles/page-form.css'
 import { PlusIcon } from '../../components/Icons'
 import { teamService } from '../../api/teamService'
 import { physicalTestService } from '../../api/physicalTestService'
-import { batterieTestsService } from '../../api/batterieTestsService'
 
 const STATUS_OPTIONS = [
   {
-    value: 'ACTIVE',
+    value: 'true',
     label: 'Active',
   },
   {
-    value: 'INACTIVE',
+    value: 'false',
     label: 'Inactive',
   },
 ]
@@ -87,7 +86,7 @@ export default function CreateBatterieTestPage() {
 
   const [name, setName] = useState('')
   const [teamId, setTeamId] = useState('')
-  const [status, setStatus] = useState('ACTIVE')
+  const [status, setStatus] = useState('true')
 
   const [teams, setTeams] = useState([])
   const [physicalTests, setPhysicalTests] = useState([])
@@ -301,7 +300,7 @@ export default function CreateBatterieTestPage() {
 
     try {
       const result =
-        await batterieTestsService.create({
+        await physicalTestService.create({
           name: trimmedName,
           teamId: Number(teamId),
           status,

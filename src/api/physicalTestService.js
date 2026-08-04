@@ -28,45 +28,25 @@ export const physicalTestService = {
     }
   },
 
-  getByAllBatteries: async () => {
-    try {
-      const response = await api.get(
-        `/api/physicalTest/battery`,
-      )
+  getPhysicalTestById: async (physicalTestId) => {
+    const result = await physicalTestService.getAll()
 
-      return {
-        success: true,
-        data: response.data,
-      }
-    } catch (error) {
+    if (!result.success) {
+      return result
+    }
+
+    const testPhysique = result.data.find((item) => String(item.id) === String(physicalTestId))
+
+    if (!testPhysique) {
       return {
         success: false,
-        error: extractError(
-          error,
-          'Erreur lors du chargement du test physique',
-        ),
+        error: 'Test physique introuvable.',
       }
     }
-  },
 
-  getById: async (id) => {
-    try {
-      const response = await api.get(
-        `/api/physicalTest/${id}`,
-      )
-
-      return {
-        success: true,
-        data: response.data,
-      }
-    } catch (error) {
-      return {
-        success: false,
-        error: extractError(
-          error,
-          'Erreur lors du chargement du test physique',
-        ),
-      }
+    return {
+      success: true,
+      data: testPhysique,
     }
   },
 
@@ -144,6 +124,72 @@ export const physicalTestService = {
         error: extractError(
           error,
           'Erreur lors de la création du test physique',
+        ),
+      }
+    }
+  },
+
+
+  getByAllBatteries: async () => {
+    try {
+      const response = await api.get(
+        `/api/physicalTest/battery`,
+      )
+
+      return {
+        success: true,
+        data: response.data,
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: extractError(
+          error,
+          'Erreur lors du chargement du test physique',
+        ),
+      }
+    }
+  },
+
+  getDisplayBatterieById: async (batterieId) => {
+    const result = await physicalTestService.getByAllBatteries()
+
+    if (!result.success) {
+      return result
+    }
+
+    const batterie = result.data.find((item) => String(item.id) === String(batterieId))
+
+    if (!batterie) {
+      return {
+        success: false,
+        error: 'Batterie introuvable.',
+      }
+    }
+
+    return {
+      success: true,
+      data: batterie,
+    }
+  },
+
+  create: async (payload) => {
+    try {
+      const response = await api.post(
+        `/api/physicalTest/battery/create`,
+        payload,
+      )
+
+      return {
+        success: true,
+        data: response.data,
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: extractError(
+          error,
+          'Impossible de créer la batterie de tests.',
         ),
       }
     }
