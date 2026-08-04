@@ -1,15 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+
 import '../../styles/page-view.css'
-import '../../styles/team-page.css'
+import '../../styles/batterie-tests-page.css'
+
 import {
   PlusIcon,
   ResetIcon,
   SearchIcon,
 } from '../../components/Icons'
+
 import { physicalTestService } from '../../api/physicalTestService'
 
-const PAGE_SIZE_OPTIONS = [10, 20, 50]
+const PAGE_SIZE = 8
 
 const INITIAL_FILTERS = {
   search: '',
@@ -24,11 +27,11 @@ const STATUS_OPTIONS = [
   },
   {
     value: 'ACTIVE',
-    label: 'Active',
+    label: 'Actives',
   },
   {
     value: 'INACTIVE',
-    label: 'Inactive',
+    label: 'Inactives',
   },
 ]
 
@@ -76,6 +79,18 @@ const getBatterieName = (battery) => {
   )
 }
 
+const getBatterieDescription = (battery) => {
+  return (
+    battery?.description ??
+    battery?.informations ??
+    battery?.information ??
+    battery?.details ??
+    battery?.batteryDescription ??
+    battery?.batterieDescription ??
+    ''
+  )
+}
+
 const getTeamName = (battery) => {
   return (
     battery?.team?.name ??
@@ -95,7 +110,7 @@ const getStatus = (battery) => {
     battery?.accountStatus ??
     ''
 
-  return String(status).toUpperCase()
+  return String(status).trim().toUpperCase()
 }
 
 const getPhysicalTests = (battery) => {
@@ -121,8 +136,12 @@ const getPhysicalTestsCount = (battery) => {
     battery?.numberOfTests ??
     battery?.nombreTests
 
-  if (explicitCount != null) {
-    return Number(explicitCount)
+  if (explicitCount !== null && explicitCount !== undefined) {
+    const parsedCount = Number(explicitCount)
+
+    return Number.isNaN(parsedCount)
+      ? getPhysicalTests(battery).length
+      : parsedCount
   }
 
   return getPhysicalTests(battery).length
@@ -141,17 +160,51 @@ const getStatusLabel = (status) => {
   }
 }
 
+function SortIndicator() {
+  return (
+    <span
+      className="batterie-tests-table__sort"
+      aria-hidden="true"
+    >
+      <span>⌃</span>
+      <span>⌄</span>
+    </span>
+  )
+}
+
+function StatusBadge({ status }) {
+  const normalizedStatus = String(status)
+    .trim()
+    .toUpperCase()
+
+  const isActive = normalizedStatus === 'ACTIVE'
+  const isInactive = normalizedStatus === 'INACTIVE'
+
+  return (
+    <span
+      className={[
+        'batterie-tests-status',
+        isActive
+          ? 'batterie-tests-status--active'
+          : isInactive
+            ? 'batterie-tests-status--inactive'
+            : 'batterie-tests-status--unknown',
+      ].join(' ')}
+    >
+      {getStatusLabel(normalizedStatus)}
+    </span>
+  )
+}
+
 export default function BatterieTestsPageView({
   canCreateBatterieTests = true,
+  canEditBatterieTests = true,
 }) {
   const [batterieTests, setBatterieTests] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   const [filters, setFilters] = useState(INITIAL_FILTERS)
-  const [pageSize, setPageSize] = useState(
-    PAGE_SIZE_OPTIONS[0],
-  )
   const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
@@ -162,7 +215,8 @@ export default function BatterieTestsPageView({
       setError(null)
 
       try {
-        const result = await physicalTestService.getByAllBatteries()
+        const result =
+          await physicalTestService.getByAllBatteries()
 
         if (cancelled) {
           return
@@ -248,15 +302,20 @@ export default function BatterieTestsPageView({
       .toLowerCase()
 
     return batterieTests.filter((battery) => {
-      const batteryName = getBatterieName(battery)
+      const batteryName =
+        getBatterieName(battery).toLowerCase()
+
+      const batteryDescription =
+        getBatterieDescription(battery).toLowerCase()
+
       const teamName = getTeamName(battery)
       const status = getStatus(battery)
 
       const matchesSearch =
         normalizedSearch === '' ||
-        batteryName
-          .toLowerCase()
-          .includes(normalizedSearch)
+        batteryName.includes(normalizedSearch) ||
+        batteryDescription.includes(normalizedSearch) ||
+        teamName.toLowerCase().includes(normalizedSearch)
 
       const matchesTeam =
         filters.team === 'all' ||
@@ -276,34 +335,61 @@ export default function BatterieTestsPageView({
 
   const totalPages = Math.max(
     1,
-    Math.ceil(filteredBatteries.length / pageSize),
+    Math.ceil(filteredBatteries.length / PAGE_SIZE),
   )
 
-  const safePage = Math.min(currentPage, totalPages)
+  const safePage = Math.min(
+    currentPage,
+    totalPages,
+  )
 
   const startIndex =
     filteredBatteries.length === 0
       ? 0
-      : (safePage - 1) * pageSize
+      : (safePage - 1) * PAGE_SIZE
 
   const endIndex = Math.min(
-    startIndex + pageSize,
+    startIndex + PAGE_SIZE,
     filteredBatteries.length,
   )
 
-  const visibleBatteries = filteredBatteries.slice(
-    startIndex,
-    endIndex,
-  )
+  const visibleBatteries =
+    filteredBatteries.slice(
+      startIndex,
+      endIndex,
+    )
 
   return (
-    <section className="list-page team-page">
-      <div className="team-page__toolbar">
-        <div className="team-page__filters">
-          <label className="list-search team-page__search">
+    <section className="batterie-tests-page">
+      <header className="batterie-tests-page__header">
+        <div>
+          <h1>Batteries de tests</h1>
+
+          <p>
+            Consultez les batteries de tests associées à
+            vos équipes.
+          </p>
+        </div>
+
+        {canCreateBatterieTests ? (
+          <Link
+            to="/batterie-tests/creer"
+            className="batterie-tests-page__create"
+          >
+            <PlusIcon />
+            <span>Créer une batterie</span>
+          </Link>
+        ) : null}
+      </header>
+
+      <div className="batterie-tests-card">
+        <div className="batterie-tests-filters">
+          <label className="batterie-tests-search">
+            <SearchIcon />
+
             <input
               type="search"
-              placeholder="Rechercher une batterie de tests..."
+              placeholder="Rechercher une batterie..."
               value={filters.search}
               onChange={(event) =>
                 updateFilter(
@@ -312,11 +398,9 @@ export default function BatterieTestsPageView({
                 )
               }
             />
-
-            <SearchIcon />
           </label>
 
-          <label className="list-filter team-page__sport-filter">
+          <label className="batterie-tests-filter">
             <span>Équipe</span>
 
             <select
@@ -339,7 +423,7 @@ export default function BatterieTestsPageView({
             </select>
           </label>
 
-          <label className="list-filter team-page__sport-filter">
+          <label className="batterie-tests-filter">
             <span>Statut</span>
 
             <select
@@ -364,7 +448,7 @@ export default function BatterieTestsPageView({
 
           <button
             type="button"
-            className="list-reset-btn"
+            className="batterie-tests-reset"
             onClick={resetFilters}
           >
             <ResetIcon />
@@ -372,26 +456,39 @@ export default function BatterieTestsPageView({
           </button>
         </div>
 
-        {canCreateBatterieTests ? (
-          <Link
-            to="/batterie-tests/creer"
-            className="create-btn"
-          >
-            <PlusIcon />
-            <span>Créer une batterie</span>
-          </Link>
-        ) : null}
-      </div>
-
-      <div className="team-table-card">
-        <div className="table-wrapper">
-          <table className="data-table team-table">
+        <div className="batterie-tests-table-wrapper">
+          <table className="batterie-tests-table">
             <thead>
               <tr>
-                <th>Nom de la batterie</th>
-                <th>Équipe</th>
-                <th>Nombre de tests</th>
-                <th>Statut</th>
+                <th>
+                  <span>
+                    Nom de la batterie
+                    <SortIndicator />
+                  </span>
+                </th>
+
+                <th>
+                  <span>
+                    Équipe
+                    <SortIndicator />
+                  </span>
+                </th>
+
+                <th>
+                  <span>
+                    Nombre de tests
+                    <SortIndicator />
+                  </span>
+                </th>
+
+                <th>
+                  <span>
+                    Statut
+                    <SortIndicator />
+                  </span>
+                </th>
+
+                <th>Actions</th>
               </tr>
             </thead>
 
@@ -404,50 +501,75 @@ export default function BatterieTestsPageView({
                   const batteryName =
                     getBatterieName(battery)
 
+                  const batteryDescription =
+                    getBatterieDescription(battery)
+
                   const teamName =
                     getTeamName(battery)
 
-                  const status = getStatus(battery)
+                  const status =
+                    getStatus(battery)
 
                   const testsCount =
                     getPhysicalTestsCount(battery)
 
                   return (
                     <tr key={batteryId}>
-                      <td className="cell--name">
-                        <Link
-                          className="team-table__team-link"
-                          to={`/batterie-tests/${batteryId}`}
-                          state={{
-                            batterieTests: battery,
-                          }}
-                        >
-                          {batteryName}
-                        </Link>
+                      <td>
+                        <div className="batterie-tests-table__name">
+                          <Link
+                            to={`/batterie-tests/${batteryId}`}
+                            state={{
+                              batterieTests: battery,
+                            }}
+                          >
+                            {batteryName}
+                          </Link>
+
+                          {batteryDescription ? (
+                            <p>
+                              {batteryDescription}
+                            </p>
+                          ) : null}
+                        </div>
                       </td>
 
                       <td>
-                        {teamName || (
-                          <span className="cell--muted">
-                            Non spécifiée
-                          </span>
-                        )}
+                        <span className="batterie-tests-table__team">
+                          {teamName ||
+                            'Non spécifiée'}
+                        </span>
                       </td>
 
-                      <td>{testsCount}</td>
+                      <td>
+                        <span className="batterie-tests-table__count">
+                          {testsCount}{' '}
+                          {testsCount > 1
+                            ? 'tests'
+                            : 'test'}
+                        </span>
+                      </td>
 
                       <td>
-                        {status === 'ACTIVE' ? (
-                          <span className="badge badge--blue">
-                            {getStatusLabel(status)}
-                          </span>
-                        ) : status === 'INACTIVE' ? (
-                          <span className="cell--muted">
-                            {getStatusLabel(status)}
-                          </span>
+                        <StatusBadge
+                          status={status}
+                        />
+                      </td>
+
+                      <td>
+                        {canEditBatterieTests ? (
+                          <Link
+                            to={`/batterie-tests/${batteryId}/modifier`}
+                            state={{
+                              batterieTests: battery,
+                            }}
+                            className="batterie-tests-table__edit"
+                          >
+                            Modifier
+                          </Link>
                         ) : (
-                          <span className="cell--muted">
-                            {getStatusLabel(status)}
+                          <span className="batterie-tests-table__no-action">
+                            —
                           </span>
                         )}
                       </td>
@@ -457,14 +579,13 @@ export default function BatterieTestsPageView({
               ) : (
                 <tr>
                   <td
-                    colSpan="4"
-                    className="list-empty"
+                    colSpan="5"
+                    className="batterie-tests-table__empty"
                   >
                     {loading
                       ? 'Chargement des batteries de tests...'
-                      : error
-                        ? error
-                        : 'Aucune batterie de tests ne correspond aux filtres.'}
+                      : error ??
+                        'Aucune batterie de tests ne correspond aux filtres.'}
                   </td>
                 </tr>
               )}
@@ -472,40 +593,18 @@ export default function BatterieTestsPageView({
           </table>
         </div>
 
-        <div className="team-table__footer">
-          <p className="team-table__count">
+        <footer className="batterie-tests-footer">
+          <p>
             {loading
               ? 'Chargement en cours...'
               : filteredBatteries.length === 0
-                ? 'Aucune batterie de tests à afficher'
-                : `Affichage de ${startIndex + 1} à ${endIndex} sur ${filteredBatteries.length} batteries de tests`}
+                ? 'Aucune batterie à afficher'
+                : `Affichage de ${startIndex + 1} à ${endIndex} sur ${filteredBatteries.length} batteries`}
           </p>
 
-          <div className="team-table__pagination">
-            <label className="team-table__page-size">
-              <select
-                value={pageSize}
-                onChange={(event) => {
-                  setPageSize(
-                    Number(event.target.value),
-                  )
-                  setCurrentPage(1)
-                }}
-              >
-                {PAGE_SIZE_OPTIONS.map((option) => (
-                  <option
-                    key={option}
-                    value={option}
-                  >
-                    {option} par page
-                  </option>
-                ))}
-              </select>
-            </label>
-
+          <div className="batterie-tests-pagination">
             <button
               type="button"
-              className="team-table__nav-btn"
               onClick={() =>
                 setCurrentPage((page) =>
                   Math.max(1, page - 1),
@@ -517,16 +616,18 @@ export default function BatterieTestsPageView({
               <span aria-hidden="true">‹</span>
             </button>
 
-            <span className="team-table__page-indicator">
+            <span className="batterie-tests-pagination__current">
               {safePage}
             </span>
 
             <button
               type="button"
-              className="team-table__nav-btn"
               onClick={() =>
                 setCurrentPage((page) =>
-                  Math.min(totalPages, page + 1),
+                  Math.min(
+                    totalPages,
+                    page + 1,
+                  ),
                 )
               }
               disabled={
@@ -538,7 +639,7 @@ export default function BatterieTestsPageView({
               <span aria-hidden="true">›</span>
             </button>
           </div>
-        </div>
+        </footer>
       </div>
     </section>
   )

@@ -1,15 +1,23 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+
 import '../../styles/page-view.css'
-import '../../styles/team-page.css'
-import { PlusIcon, ResetIcon, SearchIcon } from '../../components/Icons'
+import '../../styles/physical-test-page.css'
+
+import {
+  PlusIcon,
+  ResetIcon,
+  SearchIcon,
+} from '../../components/Icons'
+
 import { physicalTestService } from '../../api/physicalTestService'
 
-const PAGE_SIZE_OPTIONS = [10, 20, 50]
+const PAGE_SIZE = 8
 
 const INITIAL_FILTERS = {
   search: '',
   physicalQuality: 'all',
+  supervision: 'all',
 }
 
 const getPhysicalQualityName = (test) => {
@@ -20,6 +28,33 @@ const getPhysicalQualityName = (test) => {
     test?.qualityName ??
     ''
   )
+}
+
+const getTestDescription = (test) => {
+  return (
+    test?.informations ??
+    test?.description ??
+    test?.protocol ??
+    ''
+  )
+}
+
+const normalizeBoolean = (value) => {
+  if (typeof value === 'boolean') {
+    return value
+  }
+
+  if (typeof value === 'number') {
+    return value === 1
+  }
+
+  if (typeof value === 'string') {
+    return ['true', '1', 'oui', 'yes'].includes(
+      value.trim().toLowerCase(),
+    )
+  }
+
+  return false
 }
 
 const normalizePhysicalTests = (data) => {
@@ -38,14 +73,42 @@ const normalizePhysicalTests = (data) => {
   return []
 }
 
+function BooleanBadge({ value }) {
+  const isActive = normalizeBoolean(value)
+
+  return (
+    <span
+      className={
+        isActive
+          ? 'physical-test-badge physical-test-badge--yes'
+          : 'physical-test-badge physical-test-badge--no'
+      }
+    >
+      {isActive ? 'Oui' : 'Non'}
+    </span>
+  )
+}
+
+function SortIndicator() {
+  return (
+    <span
+      className="physical-test-table__sort"
+      aria-hidden="true"
+    >
+      <span>⌃</span>
+      <span>⌄</span>
+    </span>
+  )
+}
+
 export default function PhysicalTestPageView({
   canCreatePhysicalTest = true,
 }) {
   const [physicalTests, setPhysicalTests] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+
   const [filters, setFilters] = useState(INITIAL_FILTERS)
-  const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[0])
   const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
@@ -63,10 +126,15 @@ export default function PhysicalTestPageView({
         }
 
         if (result.success) {
-          setPhysicalTests(normalizePhysicalTests(result.data))
+          setPhysicalTests(
+            normalizePhysicalTests(result.data),
+          )
         } else {
           setPhysicalTests([])
-          setError(result.error)
+          setError(
+            result.error ??
+              'Impossible de charger les tests physiques.',
+          )
         }
       } catch (loadError) {
         if (!cancelled) {
@@ -76,7 +144,9 @@ export default function PhysicalTestPageView({
           )
 
           setPhysicalTests([])
-          setError('Impossible de charger les tests physiques.')
+          setError(
+            'Impossible de charger les tests physiques.',
+          )
         }
       } finally {
         if (!cancelled) {
@@ -114,7 +184,10 @@ export default function PhysicalTestPageView({
           .filter(Boolean),
       ),
     ].sort((firstQuality, secondQuality) =>
-      firstQuality.localeCompare(secondQuality, 'fr'),
+      firstQuality.localeCompare(
+        secondQuality,
+        'fr',
+      ),
     )
 
     return [
@@ -130,38 +203,63 @@ export default function PhysicalTestPageView({
   }, [physicalTests])
 
   const filteredTests = useMemo(() => {
-    const normalizedSearch = filters.search.trim().toLowerCase()
+    const normalizedSearch = filters.search
+      .trim()
+      .toLowerCase()
 
     return physicalTests.filter((test) => {
       const testName = test?.name ?? ''
-      const physicalQualityName = getPhysicalQualityName(test)
+      const physicalQualityName =
+        getPhysicalQualityName(test)
+
+      const supervised = normalizeBoolean(
+        test?.supervised,
+      )
 
       const matchesSearch =
         normalizedSearch === '' ||
-        testName.toLowerCase().includes(normalizedSearch)
+        testName
+          .toLowerCase()
+          .includes(normalizedSearch) ||
+        physicalQualityName
+          .toLowerCase()
+          .includes(normalizedSearch)
 
       const matchesPhysicalQuality =
         filters.physicalQuality === 'all' ||
-        physicalQualityName === filters.physicalQuality
+        physicalQualityName ===
+          filters.physicalQuality
 
-      return matchesSearch && matchesPhysicalQuality
+      const matchesSupervision =
+        filters.supervision === 'all' ||
+        String(supervised) ===
+          filters.supervision
+
+      return (
+        matchesSearch &&
+        matchesPhysicalQuality &&
+        matchesSupervision
+      )
     })
   }, [physicalTests, filters])
 
   const totalPages = Math.max(
     1,
-    Math.ceil(filteredTests.length / pageSize),
+    Math.ceil(filteredTests.length / PAGE_SIZE),
   )
 
-  const safePage = Math.min(currentPage, totalPages)
+  const safePage = Math.min(
+    currentPage,
+    totalPages,
+  )
 
   const startIndex =
     filteredTests.length === 0
       ? 0
-      : (safePage - 1) * pageSize
+      : (safePage - 1) * PAGE_SIZE
 
   const endIndex = Math.min(
-    startIndex + pageSize,
+    startIndex + PAGE_SIZE,
     filteredTests.length,
   )
 
@@ -171,23 +269,47 @@ export default function PhysicalTestPageView({
   )
 
   return (
-    <section className="list-page team-page">
-      <div className="team-page__toolbar">
-        <div className="team-page__filters">
-          <label className="list-search team-page__search">
+    <section className="physical-test-page">
+      <header className="physical-test-page__header">
+        <div>
+          <h1>Tests</h1>
+
+          <p>
+            Gérez les tests physiques disponibles dans
+            la plateforme.
+          </p>
+        </div>
+
+        {canCreatePhysicalTest ? (
+          <Link
+            to="/tests-physiques/creer"
+            className="physical-test-page__create"
+          >
+            <PlusIcon />
+            <span>Créer un test</span>
+          </Link>
+        ) : null}
+      </header>
+
+      <div className="physical-test-card">
+        <div className="physical-test-filters">
+          <label className="physical-test-search">
+            <SearchIcon />
+
             <input
               type="search"
-              placeholder="Rechercher un test physique..."
+              placeholder="Rechercher un test..."
               value={filters.search}
               onChange={(event) =>
-                updateFilter('search', event.target.value)
+                updateFilter(
+                  'search',
+                  event.target.value,
+                )
               }
             />
-
-            <SearchIcon />
           </label>
 
-          <label className="list-filter team-page__sport-filter">
+          <label className="physical-test-filter">
             <span>Qualité physique</span>
 
             <select
@@ -199,20 +321,42 @@ export default function PhysicalTestPageView({
                 )
               }
             >
-              {physicalQualityOptions.map((option) => (
-                <option
-                  key={option.value}
-                  value={option.value}
-                >
-                  {option.label}
-                </option>
-              ))}
+              {physicalQualityOptions.map(
+                (option) => (
+                  <option
+                    key={option.value}
+                    value={option.value}
+                  >
+                    {option.label}
+                  </option>
+                ),
+              )}
+            </select>
+          </label>
+
+          <label className="physical-test-filter">
+            <span>Supervision</span>
+
+            <select
+              value={filters.supervision}
+              onChange={(event) =>
+                updateFilter(
+                  'supervision',
+                  event.target.value,
+                )
+              }
+            >
+              <option value="all">Toutes</option>
+              <option value="true">Supervisés</option>
+              <option value="false">
+                Non supervisés
+              </option>
             </select>
           </label>
 
           <button
             type="button"
-            className="list-reset-btn"
+            className="physical-test-reset"
             onClick={resetFilters}
           >
             <ResetIcon />
@@ -220,26 +364,37 @@ export default function PhysicalTestPageView({
           </button>
         </div>
 
-        {canCreatePhysicalTest ? (
-          <Link
-            to="/tests-physiques/creer"
-            className="create-btn"
-          >
-            <PlusIcon />
-            <span>Créer un test physique</span>
-          </Link>
-        ) : null}
-      </div>
-
-      <div className="team-table-card">
-        <div className="table-wrapper">
-          <table className="data-table team-table">
+        <div className="physical-test-table-wrapper">
+          <table className="physical-test-table">
             <thead>
               <tr>
-                <th>Nom du test</th>
-                <th>Qualité physique évaluée</th>
-                <th>Supervisé</th>
-                <th>Preuve requise</th>
+                <th>
+                  <span>
+                    Nom du test
+                    <SortIndicator />
+                  </span>
+                </th>
+
+                <th>
+                  <span>
+                    Qualité physique évaluée
+                    <SortIndicator />
+                  </span>
+                </th>
+
+                <th>
+                  <span>
+                    Supervisé
+                    <SortIndicator />
+                  </span>
+                </th>
+
+                <th>
+                  <span>
+                    Preuve requise
+                    <SortIndicator />
+                  </span>
+                </th>
               </tr>
             </thead>
 
@@ -249,48 +404,46 @@ export default function PhysicalTestPageView({
                   const physicalQualityName =
                     getPhysicalQualityName(test)
 
+                  const description =
+                    getTestDescription(test)
+
                   return (
                     <tr key={test.id}>
-                      <td className="cell--name">
-                        <Link
-                          className="team-table__team-link"
-                          to={`/tests-physiques/${test.id}`}
-                          state={{ physicalTest: test }}
-                        >
-                          {test.name}
-                        </Link>
+                      <td>
+                        <div className="physical-test-table__name">
+                          <Link
+                            to={`/tests-physiques/${test.id}`}
+                            state={{
+                              physicalTest: test,
+                            }}
+                          >
+                            {test.name ??
+                              'Test sans nom'}
+                          </Link>
+
+                          {description ? (
+                            <p>{description}</p>
+                          ) : null}
+                        </div>
                       </td>
 
                       <td>
-                        {physicalQualityName || (
-                          <span className="cell--muted">
-                            Non spécifiée
-                          </span>
-                        )}
+                        <span className="physical-test-table__quality">
+                          {physicalQualityName ||
+                            'Non spécifiée'}
+                        </span>
                       </td>
 
                       <td>
-                        {test.supervised ? (
-                          <span className="badge badge--blue">
-                            Oui
-                          </span>
-                        ) : (
-                          <span className="cell--muted">
-                            Non
-                          </span>
-                        )}
+                        <BooleanBadge
+                          value={test.supervised}
+                        />
                       </td>
 
                       <td>
-                        {test.proofRequired ? (
-                          <span className="badge badge--blue">
-                            Oui
-                          </span>
-                        ) : (
-                          <span className="cell--muted">
-                            Non
-                          </span>
-                        )}
+                        <BooleanBadge
+                          value={test.proofRequired}
+                        />
                       </td>
                     </tr>
                   )
@@ -299,13 +452,12 @@ export default function PhysicalTestPageView({
                 <tr>
                   <td
                     colSpan="4"
-                    className="list-empty"
+                    className="physical-test-table__empty"
                   >
                     {loading
                       ? 'Chargement des tests physiques...'
-                      : error
-                        ? error
-                        : 'Aucun test physique ne correspond aux filtres.'}
+                      : error ??
+                        'Aucun test physique ne correspond aux filtres.'}
                   </td>
                 </tr>
               )}
@@ -313,38 +465,18 @@ export default function PhysicalTestPageView({
           </table>
         </div>
 
-        <div className="team-table__footer">
-          <p className="team-table__count">
+        <footer className="physical-test-footer">
+          <p>
             {loading
               ? 'Chargement en cours...'
               : filteredTests.length === 0
-                ? 'Aucun test physique à afficher'
-                : `Affichage de ${startIndex + 1} à ${endIndex} sur ${filteredTests.length} tests physiques`}
+                ? 'Aucun test à afficher'
+                : `Affichage de ${startIndex + 1} à ${endIndex} sur ${filteredTests.length} tests`}
           </p>
 
-          <div className="team-table__pagination">
-            <label className="team-table__page-size">
-              <select
-                value={pageSize}
-                onChange={(event) => {
-                  setPageSize(Number(event.target.value))
-                  setCurrentPage(1)
-                }}
-              >
-                {PAGE_SIZE_OPTIONS.map((option) => (
-                  <option
-                    key={option}
-                    value={option}
-                  >
-                    {option} par page
-                  </option>
-                ))}
-              </select>
-            </label>
-
+          <div className="physical-test-pagination">
             <button
               type="button"
-              className="team-table__nav-btn"
               onClick={() =>
                 setCurrentPage((page) =>
                   Math.max(1, page - 1),
@@ -356,16 +488,18 @@ export default function PhysicalTestPageView({
               <span aria-hidden="true">‹</span>
             </button>
 
-            <span className="team-table__page-indicator">
+            <span className="physical-test-pagination__current">
               {safePage}
             </span>
 
             <button
               type="button"
-              className="team-table__nav-btn"
               onClick={() =>
                 setCurrentPage((page) =>
-                  Math.min(totalPages, page + 1),
+                  Math.min(
+                    totalPages,
+                    page + 1,
+                  ),
                 )
               }
               disabled={
@@ -377,7 +511,7 @@ export default function PhysicalTestPageView({
               <span aria-hidden="true">›</span>
             </button>
           </div>
-        </div>
+        </footer>
       </div>
     </section>
   )

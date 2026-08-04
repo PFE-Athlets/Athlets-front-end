@@ -1,19 +1,21 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import {
+  Link,
+  useNavigate,
+  useParams,
+} from 'react-router-dom'
+
 import { physicalTestService } from '../../api/physicalTestService'
 import '../../styles/physical-test-details.css'
 
-import {
-  CalendarDateIcon,
-  TargetIcon,
-  TrophyIcon,
-  ShieldIcon,
-} from '../../components/Icons'
-
 const DATA_TYPE_LABELS = {
   INTEGER: 'Nombre entier',
+  INT: 'Nombre entier',
   DECIMAL: 'Nombre décimal',
+  DOUBLE: 'Nombre décimal',
+  FLOAT: 'Nombre décimal',
   TEXT: 'Texte',
+  STRING: 'Texte',
   BOOLEAN: 'Oui / Non',
   DATE: 'Date',
   TIME: 'Heure',
@@ -29,26 +31,54 @@ export default function PhysicalTestDetailsPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    let cancelled = false
+
     const fetchPhysicalTest = async () => {
       setLoading(true)
       setError('')
 
-      const result = await physicalTestService.getById(id)
+      try {
+        const result =
+          await physicalTestService.getById(id)
 
-      if (!result.success) {
-        setError(
-          result.error ||
+        if (cancelled) {
+          return
+        }
+
+        if (!result.success) {
+          setPhysicalTest(null)
+          setError(
+            result.error ||
+              'Une erreur est survenue lors du chargement du test physique.',
+          )
+          return
+        }
+
+        setPhysicalTest(result.data)
+      } catch (fetchError) {
+        if (!cancelled) {
+          console.error(
+            'Erreur lors du chargement du test physique :',
+            fetchError,
+          )
+
+          setPhysicalTest(null)
+          setError(
             'Une erreur est survenue lors du chargement du test physique.',
-        )
-        setLoading(false)
-        return
+          )
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false)
+        }
       }
-
-      setPhysicalTest(result.data)
-      setLoading(false)
     }
 
     fetchPhysicalTest()
+
+    return () => {
+      cancelled = true
+    }
   }, [id])
 
   if (loading) {
@@ -68,13 +98,16 @@ export default function PhysicalTestDetailsPage() {
           {error}
         </div>
 
-        <div className="physical-test-details-actions">
+        <div className="physical-test-details-error-actions">
           <button
             type="button"
-            className="physical-test-details-btn physical-test-details-btn--secondary"
-            onClick={() => navigate('/tests-physiques')}
+            className="physical-test-details-back-btn"
+            onClick={() =>
+              navigate('/tests-physiques')
+            }
           >
-            Retour
+            <BackArrowIcon />
+            <span>Retour à la liste</span>
           </button>
         </div>
       </section>
@@ -91,272 +124,332 @@ export default function PhysicalTestDetailsPage() {
     )
   }
 
+  const testName = getTestName(physicalTest)
   const physicalQuality =
-    physicalTest.physicalQuality?.name ??
-    physicalTest.physicalQualityName ??
-    physicalTest.quality?.name ??
-    'Non spécifiée'
+    getPhysicalQualityName(physicalTest)
 
-  const resultTypes = Array.isArray(physicalTest.resultTypes)
-    ? physicalTest.resultTypes
-    : []
+  const informations =
+    getAdditionalInformation(physicalTest)
 
-  const equipments = Array.isArray(physicalTest.equipments)
-    ? physicalTest.equipments
-    : []
+  const protocol = getProtocol(physicalTest)
+
+  const resultTypes = getResultTypes(physicalTest)
+  const equipments = getEquipments(physicalTest)
 
   return (
     <section className="physical-test-details-page">
-      <div className="physical-test-details-card">
-        <section className="physical-test-details-section">
+      <header className="physical-test-details-header">
+        <h1>Détail du test</h1>
+
+        <nav
+          className="physical-test-details-breadcrumb"
+          aria-label="Fil d’Ariane"
+        >
+          <Link to="/tests-physiques">
+            Tests
+          </Link>
+
+          <span aria-hidden="true">›</span>
+
+          <span>Détail du test</span>
+        </nav>
+      </header>
+
+      <section className="physical-test-details-card physical-test-details-card--general">
+        <div className="physical-test-details-card__heading">
           <h2>Informations générales</h2>
 
-          <div className="physical-test-details-grid physical-test-details-grid--two">
-            <InfoItem
-              icon={<TrophyIcon />}
+          <button
+            type="button"
+            className="physical-test-details-back-btn"
+            onClick={() =>
+              navigate('/tests-physiques')
+            }
+          >
+            <BackArrowIcon />
+            <span>Retour à la liste</span>
+          </button>
+        </div>
+
+        <div className="physical-test-details-general-grid">
+          <div className="physical-test-details-main-info">
+            <DetailsRow
               label="Nom du test"
-              value={physicalTest.testName}
+              value={testName}
             />
 
-            <InfoItem
-              icon={<TargetIcon />}
+            <DetailsRow
               label="Qualité physique évaluée"
               value={physicalQuality}
             />
+          </div>
 
-            <InfoItem
-              icon={<ShieldIcon />}
-              label="Test supervisé"
-              value={
-                <BooleanBadge
-                  value={physicalTest.supervised}
-                  trueLabel="Oui"
-                  falseLabel="Non"
-                />
-              }
+          <div className="physical-test-details-boolean-info">
+            <BooleanRow
+              label="Supervisé"
+              value={physicalTest.supervised}
             />
 
-            <InfoItem
-              icon={<ShieldIcon />}
+            <BooleanRow
               label="Preuve requise"
-              value={
-                <BooleanBadge
-                  value={physicalTest.proofRequired}
-                  trueLabel="Photo ou vidéo requise"
-                  falseLabel="Aucune preuve requise"
-                />
-              }
+              value={physicalTest.proofRequired}
             />
-
-            {physicalTest.createdAt && (
-              <InfoItem
-                icon={<CalendarDateIcon />}
-                label="Date de création"
-                value={formatDateTime(physicalTest.createdAt)}
-              />
-            )}
-
-            {physicalTest.updatedAt && (
-              <InfoItem
-                icon={<CalendarDateIcon />}
-                label="Dernière modification"
-                value={formatDateTime(physicalTest.updatedAt)}
-              />
-            )}
           </div>
-        </section>
-
-        <section className="physical-test-details-section">
-          <h2>Protocole</h2>
-
-          <div className="physical-test-details-text-block">
-            {physicalTest.protocol?.trim() ||
-              'Aucun protocole n’a été précisé.'}
-          </div>
-        </section>
-
-        <section className="physical-test-details-section">
-          <h2>Informations supplémentaires</h2>
-
-          <div
-            className={`physical-test-details-text-block ${
-              !physicalTest.informationsSup?.trim()
-                ? 'physical-test-details-text-block--empty'
-                : ''
-            }`}
-          >
-            {physicalTest.informationsSup?.trim() ||
-              'Aucune information supplémentaire.'}
-          </div>
-        </section>
-
-        <section className="physical-test-details-section">
-          <div className="physical-test-details-section__header">
-            <div>
-              <h2>Types de résultats à mesurer</h2>
-
-              <p className="physical-test-details-section__description">
-                Valeurs qui doivent être saisies lors de la réalisation du
-                test.
-              </p>
-            </div>
-          </div>
-
-          {resultTypes.length > 0 ? (
-            <div className="physical-test-details-results">
-              {resultTypes.map((resultType, index) => (
-                <article
-                  key={resultType.id ?? `${resultType.name}-${index}`}
-                  className="physical-test-details-result"
-                >
-                  <ResultField
-                    label="Nom du résultat"
-                    value={resultType.name}
-                  />
-
-                  <ResultField
-                    label="Unité de mesure"
-                    value={formatUnit(resultType)}
-                  />
-
-                  <ResultField
-                    label="Type de donnée"
-                    value={formatDataType(resultType.dataType)}
-                  />
-                </article>
-              ))}
-            </div>
-          ) : (
-            <div className="physical-test-details-empty">
-              Aucun type de résultat n’est associé à ce test.
-            </div>
-          )}
-        </section>
-
-        <section className="physical-test-details-section">
-          <div className="physical-test-details-section__header">
-            <div>
-              <h2>Équipements requis</h2>
-
-              <p className="physical-test-details-section__description">
-                Matériel nécessaire pour réaliser le test.
-              </p>
-            </div>
-          </div>
-
-          {equipments.length > 0 ? (
-            <div className="physical-test-details-equipment-list">
-              {equipments.map((equipment, index) => (
-                <article
-                  key={equipment.id ?? index}
-                  className="physical-test-details-equipment"
-                >
-                  <div
-                    className="physical-test-details-equipment__icon"
-                    aria-hidden="true"
-                  >
-                    <EquipmentIcon />
-                  </div>
-
-                  <div className="physical-test-details-equipment__content">
-                    <p className="physical-test-details-equipment__name">
-                      {getEquipmentName(equipment)}
-                    </p>
-
-                    <p className="physical-test-details-equipment__quantity">
-                      Quantité requise
-                    </p>
-                  </div>
-
-                  <span className="physical-test-details-equipment__badge">
-                    {equipment.quantity ?? 1}
-                  </span>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <div className="physical-test-details-empty">
-              Aucun équipement requis pour ce test.
-            </div>
-          )}
-        </section>
-
-        <div className="physical-test-details-actions">
-          <button
-            type="button"
-            className="physical-test-details-btn physical-test-details-btn--secondary"
-            onClick={() => navigate(-1)}
-          >
-            Retour
-          </button>
-
-          <button
-            type="button"
-            className="physical-test-details-btn physical-test-details-btn--primary"
-            onClick={() =>
-              navigate(`/tests-physiques/${id}/modifier`)
-            }
-          >
-            Modifier le test
-          </button>
         </div>
-      </div>
+
+        <div className="physical-test-details-description-block">
+          <h3>Informations supplémentaires</h3>
+
+          <p>
+            {informations ||
+              'Aucune information supplémentaire.'}
+          </p>
+        </div>
+
+        <div className="physical-test-details-description-block physical-test-details-description-block--last">
+          <h3>Protocole</h3>
+
+          <p>
+            {protocol ||
+              'Aucun protocole n’a été précisé.'}
+          </p>
+        </div>
+      </section>
+
+      <section className="physical-test-details-card">
+        <h2>Types de résultats à mesurer</h2>
+
+        {resultTypes.length > 0 ? (
+          <div className="physical-test-details-table-wrapper">
+            <table className="physical-test-details-table">
+              <thead>
+                <tr>
+                  <th>Nom du résultat</th>
+                  <th>Unité de mesure</th>
+                  <th>Type de donnée</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {resultTypes.map(
+                  (resultType, index) => (
+                    <tr
+                      key={
+                        resultType.id ??
+                        `${getResultTypeName(resultType)}-${index}`
+                      }
+                    >
+                      <td>
+                        {getResultTypeName(
+                          resultType,
+                        )}
+                      </td>
+
+                      <td>
+                        {formatUnit(resultType)}
+                      </td>
+
+                      <td>
+                        {formatDataType(
+                          getResultDataType(
+                            resultType,
+                          ),
+                        )}
+                      </td>
+                    </tr>
+                  ),
+                )}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="physical-test-details-empty">
+            Aucun type de résultat n’est associé à ce
+            test.
+          </div>
+        )}
+      </section>
+
+      <section className="physical-test-details-card">
+        <h2>Équipements requis</h2>
+
+        {equipments.length > 0 ? (
+          <div className="physical-test-details-table-wrapper">
+            <table className="physical-test-details-table physical-test-details-equipment-table">
+              <thead>
+                <tr>
+                  <th>Équipement</th>
+                  <th>Quantité requise</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {equipments.map(
+                  (equipment, index) => (
+                    <tr
+                      key={
+                        equipment.id ??
+                        equipment.equipmentId ??
+                        index
+                      }
+                    >
+                      <td>
+                        {getEquipmentName(
+                          equipment,
+                        )}
+                      </td>
+
+                      <td>
+                        {getEquipmentQuantity(
+                          equipment,
+                        )}
+                      </td>
+                    </tr>
+                  ),
+                )}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="physical-test-details-empty">
+            Aucun équipement requis pour ce test.
+          </div>
+        )}
+      </section>
     </section>
   )
 }
 
-function InfoItem({ icon, label, value }) {
+function DetailsRow({ label, value }) {
   return (
-    <article className="physical-test-details-info">
-      <div
-        className="physical-test-details-info__icon"
-        aria-hidden="true"
-      >
-        {icon}
-      </div>
-
-      <div>
-        <p className="physical-test-details-info__label">
-          {label}
-        </p>
-
-        <div className="physical-test-details-info__value">
-          {value || 'Non spécifié'}
-        </div>
-      </div>
-    </article>
-  )
-}
-
-function ResultField({ label, value }) {
-  return (
-    <div className="physical-test-details-result__field">
-      <p className="physical-test-details-result__label">
+    <div className="physical-test-details-row">
+      <span className="physical-test-details-row__label">
         {label}
-      </p>
+      </span>
 
-      <p className="physical-test-details-result__value">
+      <span className="physical-test-details-row__value">
         {value || 'Non spécifié'}
-      </p>
+      </span>
     </div>
   )
 }
 
-function BooleanBadge({
-  value,
-  trueLabel,
-  falseLabel,
-}) {
+function BooleanRow({ label, value }) {
+  const active = normalizeBoolean(value)
+
   return (
-    <span
-      className={`physical-test-details-badge ${
-        value
-          ? 'physical-test-details-badge--success'
-          : 'physical-test-details-badge--neutral'
-      }`}
-    >
-      {value ? trueLabel : falseLabel}
-    </span>
+    <div className="physical-test-details-boolean-row">
+      <span className="physical-test-details-boolean-row__label">
+        {label}
+      </span>
+
+      <span
+        className={
+          active
+            ? 'physical-test-details-status physical-test-details-status--yes'
+            : 'physical-test-details-status physical-test-details-status--no'
+        }
+      >
+        {active ? 'Oui' : 'Non'}
+      </span>
+    </div>
+  )
+}
+
+function normalizeBoolean(value) {
+  if (typeof value === 'boolean') {
+    return value
+  }
+
+  if (typeof value === 'number') {
+    return value === 1
+  }
+
+  if (typeof value === 'string') {
+    return [
+      'true',
+      '1',
+      'oui',
+      'yes',
+    ].includes(value.trim().toLowerCase())
+  }
+
+  return false
+}
+
+function getTestName(test) {
+  return (
+    test?.name ??
+    test?.testName ??
+    test?.nomTest ??
+    'Test sans nom'
+  )
+}
+
+function getPhysicalQualityName(test) {
+  return (
+    test?.physicalQuality?.name ??
+    test?.physicalQuality?.physicalQualityName ??
+    test?.physicalQualityName ??
+    test?.quality?.name ??
+    test?.qualityName ??
+    'Non spécifiée'
+  )
+}
+
+function getAdditionalInformation(test) {
+  return (
+    test?.informations ??
+    test?.informationsSup ??
+    test?.additionalInformation ??
+    test?.description ??
+    ''
+  )?.trim()
+}
+
+function getProtocol(test) {
+  return (
+    test?.protocol ??
+    test?.protocole ??
+    ''
+  )?.trim()
+}
+
+function getResultTypes(test) {
+  const values =
+    test?.resultTypes ??
+    test?.typesResultat ??
+    test?.resultTypeList ??
+    []
+
+  return Array.isArray(values) ? values : []
+}
+
+function getEquipments(test) {
+  const values =
+    test?.equipments ??
+    test?.equipmentList ??
+    test?.testEquipments ??
+    []
+
+  return Array.isArray(values) ? values : []
+}
+
+function getResultTypeName(resultType) {
+  return (
+    resultType?.name ??
+    resultType?.resultName ??
+    resultType?.nom ??
+    'Résultat non spécifié'
+  )
+}
+
+function getResultDataType(resultType) {
+  return (
+    resultType?.dataType ??
+    resultType?.typeData ??
+    resultType?.typeDonnee ??
+    resultType?.type
   )
 }
 
@@ -365,23 +458,34 @@ function formatDataType(value) {
     return 'Non spécifié'
   }
 
-  const normalizedValue = String(value).trim().toUpperCase()
+  const normalizedValue = String(value)
+    .trim()
+    .toUpperCase()
 
-  return DATA_TYPE_LABELS[normalizedValue] ?? value
+  return (
+    DATA_TYPE_LABELS[normalizedValue] ??
+    value
+  )
 }
 
 function formatUnit(resultType) {
-  const unit = resultType.unit ?? {}
+  const unit =
+    resultType?.unit ??
+    resultType?.unitMeasure ??
+    resultType?.measurementUnit ??
+    {}
 
   const name =
-    unit.name ??
-    resultType.unitName ??
-    resultType.measurementUnit?.name
+    unit?.name ??
+    unit?.nom ??
+    resultType?.unitName ??
+    resultType?.measurementUnitName
 
   const symbol =
-    unit.symbol ??
-    resultType.unitSymbol ??
-    resultType.measurementUnit?.symbol
+    unit?.symbol ??
+    unit?.symbole ??
+    resultType?.unitSymbol ??
+    resultType?.measurementUnitSymbol
 
   if (name && symbol) {
     return `${name} (${symbol})`
@@ -392,35 +496,29 @@ function formatUnit(resultType) {
 
 function getEquipmentName(equipment) {
   return (
-    equipment.name ??
-    equipment.equipmentName ??
-    equipment.equipment?.name ??
+    equipment?.name ??
+    equipment?.equipmentName ??
+    equipment?.nomEquipement ??
+    equipment?.equipment?.name ??
+    equipment?.equipment?.equipmentName ??
+    equipment?.equipment?.nomEquipement ??
     'Équipement non spécifié'
   )
 }
 
-function formatDateTime(value) {
-  if (!value) {
-    return 'Non spécifiée'
-  }
-
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  return new Intl.DateTimeFormat('fr-CA', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  }).format(date)
+function getEquipmentQuantity(equipment) {
+  return (
+    equipment?.quantity ??
+    equipment?.quantityRequired ??
+    equipment?.quantiteRequise ??
+    equipment?.testEquipment?.quantityRequired ??
+    1
+  )
 }
 
-function EquipmentIcon() {
+function BackArrowIcon() {
   return (
     <svg
-      className="physical-test-details-svg-icon"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -429,11 +527,8 @@ function EquipmentIcon() {
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <path d="M6 7v10" />
-      <path d="M18 7v10" />
-      <path d="M3 9v6" />
-      <path d="M21 9v6" />
-      <path d="M6 12h12" />
+      <path d="M19 12H5" />
+      <path d="m12 19-7-7 7-7" />
     </svg>
   )
 }
