@@ -300,7 +300,7 @@ export default function CreateBatterieTestPage() {
 
     try {
       const result =
-        await physicalTestService.create({
+        await physicalTestService.createTestBattery({
           name: trimmedName,
           teamId: Number(teamId),
           status,

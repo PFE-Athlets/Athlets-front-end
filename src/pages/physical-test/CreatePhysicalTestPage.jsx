@@ -234,7 +234,7 @@ export default function CreatePhysicalTestPage() {
       })),
     }
 
-    const result = await physicalTestService.create(payload)
+    const result = await physicalTestService.createPhysicalTest(payload)
 
     if (result.success) {
       navigate('/tests-physiques')

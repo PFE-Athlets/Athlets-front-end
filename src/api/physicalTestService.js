@@ -107,7 +107,7 @@ export const physicalTestService = {
     }
   },
 
-  create: async (payload) => {
+  createPhysicalTest: async (payload) => {
     try {
       const response = await api.post(
         '/api/physicalTest/create',
@@ -173,7 +173,7 @@ export const physicalTestService = {
     }
   },
 
-  create: async (payload) => {
+  createTestBattery: async (payload) => {
     try {
       const response = await api.post(
         `/api/physicalTest/battery/create`,
