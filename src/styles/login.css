@@ -277,3 +277,35 @@ footer {
     max-width: 600px;
   }
 }
+.success-message {
+  background-color: #e9f8ef;
+  border: 1px solid #1fb45c;
+  color: #166534;
+  padding: 14px 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.secondary-login-button {
+  width: 100%;
+  height: 54px;
+  border: 1px solid #d8e1f0;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #081f58;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 16px;
+}
+
+.secondary-login-button:hover:not(:disabled) {
+  background: #f3f6fb;
+}
+
+.secondary-login-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}

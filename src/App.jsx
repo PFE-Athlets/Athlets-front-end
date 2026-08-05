@@ -11,6 +11,7 @@ import './App.css'
 import { AppShell } from './components/AppShell.jsx'
 import { PageView } from './pages/PageView.jsx'
 import LoginPage from './pages/LoginPage.jsx'
+import ActivateAccountPage from './pages/ActivateAccountPage.jsx'
 
 import AthletePageView from './pages/athletes/AthletePageView.jsx'
 import CreateAthletePage from './pages/athletes/CreateAthletePage.jsx'
@@ -29,6 +30,8 @@ import CreateTeamPage from './pages/teams/CreateTeamPage.jsx'
 import EditTeamPage from './pages/teams/EditTeamPage.jsx'
 import TeamPageView from './pages/teams/TeamPageView.jsx'
 import TeamDetailsPage from './pages/teams/TeamDetailsPage.jsx'
+import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx'
+import ResetPasswordPage from './pages/ResetPasswordPage.jsx'
 
 const pages = [
   {
@@ -275,6 +278,21 @@ function App() {
             }
           />
         }
+      />
+
+      <Route 
+        path="/activation-compte" 
+        element={<ActivateAccountPage />} 
+      />
+
+      <Route
+        path="/mot-de-passe-oublie"
+        element={<ForgotPasswordPage />}
+      />
+
+      <Route
+        path="/reinitialisation-mot-de-passe"
+        element={<ResetPasswordPage />}
       />
 
       {pages.map((page) => (

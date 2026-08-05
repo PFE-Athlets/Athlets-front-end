@@ -51,6 +51,71 @@ export const authService = {
     }
   },
 
+  async activateAccount({ token, newPassword, confirmPassword }) {
+    try {
+      const response = await api.post('/api/auth/activate', {
+        token,
+        newPassword,
+        confirmPassword,
+      })
+
+      return {
+        success: true,
+        data: response.data,
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error:
+          error.response?.data?.erreur ||
+          error.response?.data?.message ||
+          'Impossible d’activer le compte.',
+      }
+    }
+  },
+
+  requestPasswordReset: async (payload) => {
+    try {
+      await api.post(
+        '/api/auth/password-reset/request',
+        payload,
+      )
+
+      return {
+        success: true,
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: extractError(
+          error,
+          'Impossible d’envoyer le lien de réinitialisation.',
+        ),
+      }
+    }
+  },
+
+  resetPassword: async (payload) => {
+    try {
+      await api.post(
+        '/api/auth/password-reset/confirm',
+        payload,
+      )
+
+      return {
+        success: true,
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: extractError(
+          error,
+          'Impossible de réinitialiser le mot de passe.',
+        ),
+      }
+    }
+  },
+
   deactivateAthlete: async (userId) => {
     try {
       await api.put(

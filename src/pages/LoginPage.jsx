@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import '../styles/login.css'
 import athleteImage from '../assets/283808481.png'
 import { authService } from '../api/authService'
@@ -111,9 +112,9 @@ export default function LoginPage({ onLoginSuccess }) {
                 </button>
               </div>
 
-              <a href="/" className="forgot-password">
-                Mot de passe oublié ?
-              </a>
+              <Link to="/mot-de-passe-oublie">
+                Mot de passe oublié?
+              </Link>
 
               <button type="submit" className="login-button" disabled={loading}>
                 {loading ? 'Connexion en cours...' : 'Se connecter'}
