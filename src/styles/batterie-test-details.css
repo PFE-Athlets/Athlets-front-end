@@ -1,0 +1,347 @@
+.battery-details-page,
+.battery-details-page *,
+.battery-details-page *::before,
+.battery-details-page *::after {
+  box-sizing: border-box;
+}
+
+.battery-details-page {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-x: hidden;
+}
+
+.battery-details-title {
+  margin: 0 0 4px;
+  color: #111827;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.battery-details-card {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: 28px 30px;
+  background: #ffffff;
+  border: 1px solid #dce2ea;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.battery-details-card__title {
+  margin: 0 0 22px;
+  color: #0d2b72;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.battery-details-info {
+  width: 100%;
+  min-width: 0;
+}
+
+.battery-details-info-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 280px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: center;
+  min-height: 52px;
+  padding: 12px 6px;
+  border-bottom: 1px solid #e3e7ee;
+}
+
+.battery-details-info-row--last {
+  border-bottom: 0;
+}
+
+.battery-details-info-row__label {
+  min-width: 0;
+  color: #0b276b;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.battery-details-info-row__value {
+  min-width: 0;
+  color: #10296d;
+  font-size: 16px;
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+
+.battery-details-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 68px;
+  padding: 4px 13px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.battery-details-status--active {
+  color: #15803d;
+  background: #dcfce7;
+}
+
+.battery-details-status--inactive {
+  color: #475569;
+  background: #eef2f7;
+}
+
+.battery-details-table-wrapper {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  border: 1px solid #dce2ea;
+  border-radius: 10px;
+}
+
+.battery-details-table {
+  width: 100%;
+  max-width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.battery-details-table th,
+.battery-details-table td {
+  min-width: 0;
+  padding: 14px 16px;
+  color: #0b276b;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid #e3e7ee;
+  overflow-wrap: anywhere;
+}
+
+.battery-details-table th {
+  background: #fbfcfe;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.battery-details-table td {
+  background: #ffffff;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.battery-details-table th:nth-child(1),
+.battery-details-table td:nth-child(1) {
+  width: 31%;
+}
+
+.battery-details-table th:nth-child(2),
+.battery-details-table td:nth-child(2) {
+  width: 29%;
+}
+
+.battery-details-table th:nth-child(3),
+.battery-details-table td:nth-child(3),
+.battery-details-table th:nth-child(4),
+.battery-details-table td:nth-child(4) {
+  width: 20%;
+  text-align: center;
+}
+
+.battery-details-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.battery-details-test-link {
+  max-width: 100%;
+  padding: 0;
+  color: #0b276b;
+  font: inherit;
+  text-align: left;
+  overflow-wrap: anywhere;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.battery-details-test-link:hover {
+  color: #0057e7;
+  text-decoration: underline;
+}
+
+.battery-details-test-link:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.battery-details-boolean {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.battery-details-boolean--yes {
+  color: #15803d;
+  background: #dcfce7;
+}
+
+.battery-details-boolean--no {
+  color: #334155;
+  background: #f1f5f9;
+}
+
+.battery-details-empty {
+  width: 100%;
+  max-width: 100%;
+  padding: 28px;
+  color: #64748b;
+  text-align: center;
+  background: #f8fafc;
+  border: 1px solid #dce2ea;
+  border-radius: 10px;
+}
+
+.battery-details-actions {
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 14px;
+}
+
+.battery-details-button {
+  min-width: 180px;
+  min-height: 52px;
+  padding: 12px 24px;
+  border-radius: 9px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.battery-details-button:hover {
+  transform: translateY(-1px);
+}
+
+.battery-details-button--secondary {
+  color: #0057e7;
+  background: #ffffff;
+  border: 1px solid #0057e7;
+}
+
+.battery-details-button--secondary:hover {
+  color: #0047be;
+  background: #f5f9ff;
+  border-color: #0047be;
+}
+
+.battery-details-button--primary {
+  color: #ffffff;
+  background: #0758df;
+  border: 1px solid #0758df;
+}
+
+.battery-details-button--primary:hover {
+  background: #064bc0;
+  border-color: #064bc0;
+}
+
+.battery-details-button:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.25);
+  outline-offset: 2px;
+}
+
+.battery-details-message {
+  width: 100%;
+  max-width: 100%;
+  padding: 24px;
+  color: #334155;
+  text-align: center;
+  background: #ffffff;
+  border: 1px solid #dce2ea;
+  border-radius: 12px;
+}
+
+.battery-details-message--error {
+  color: #b42318;
+  background: #fff5f5;
+  border-color: #fecaca;
+}
+
+@media (max-width: 900px) {
+  .battery-details-card {
+    padding: 22px;
+  }
+
+  .battery-details-info-row {
+    grid-template-columns: 180px minmax(0, 1fr);
+  }
+
+  .battery-details-table th,
+  .battery-details-table td {
+    padding: 12px 10px;
+  }
+}
+
+@media (max-width: 700px) {
+  .battery-details-table {
+    table-layout: auto;
+  }
+
+  .battery-details-table th:nth-child(1),
+  .battery-details-table td:nth-child(1),
+  .battery-details-table th:nth-child(2),
+  .battery-details-table td:nth-child(2),
+  .battery-details-table th:nth-child(3),
+  .battery-details-table td:nth-child(3),
+  .battery-details-table th:nth-child(4),
+  .battery-details-table td:nth-child(4) {
+    width: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .battery-details-title {
+    font-size: 26px;
+  }
+
+  .battery-details-card {
+    padding: 20px 16px;
+  }
+
+  .battery-details-info-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 14px 2px;
+  }
+
+  .battery-details-actions {
+    flex-direction: column-reverse;
+  }
+
+  .battery-details-button {
+    width: 100%;
+    min-width: 0;
+  }
+}

@@ -1,36 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { batterieTestsService } from '../../api/batterieTestsService'
-import '../../styles/athlete-details.css'
-
 import {
-  CalendarDateIcon,
-  TeamIcon,
-  TrophyIcon,
-  TargetIcon,
-  ShieldIcon,
-} from '../../components/Icons'
-
-const STATUS_CONFIG = {
-  ACTIVE: {
-    label: 'Active',
-    className: 'athlete-profile-status--active',
-  },
-  INACTIVE: {
-    label: 'Inactive',
-    className: 'athlete-profile-status--inactive',
-  },
-}
-
-const getBatterieId = (battery) => {
-  return String(
-    battery?.id ??
-      battery?.batteryId ??
-      battery?.batterieId ??
-      battery?.testBatteryId ??
-      '',
-  )
-}
+  useNavigate,
+  useParams,
+} from 'react-router-dom'
+import { physicalTestService } from '../../api/physicalTestService'
+import '../../styles/batterie-test-details.css'
 
 const getBatterieName = (battery) => {
   return (
@@ -53,24 +27,40 @@ const getTeamName = (battery) => {
   )
 }
 
-const getStatus = (battery) => {
+const getBatteryStatus = (battery) => {
   const status =
     battery?.status ??
     battery?.batteryStatus ??
-    battery?.batterieStatus ??
-    ''
+    battery?.batterieStatus
 
-  return String(status).trim().toUpperCase()
-}
+  if (
+    status === true ||
+    status === 1 ||
+    String(status).toLowerCase() === 'true' ||
+    String(status).toUpperCase() === 'ACTIVE'
+  ) {
+    return {
+      label: 'Active',
+      active: true,
+    }
+  }
 
-const getCreatedDate = (battery) => {
-  return (
-    battery?.createdAt ??
-    battery?.creationDate ??
-    battery?.createdDate ??
-    battery?.dateCreation ??
-    ''
-  )
+  if (
+    status === false ||
+    status === 0 ||
+    String(status).toLowerCase() === 'false' ||
+    String(status).toUpperCase() === 'INACTIVE'
+  ) {
+    return {
+      label: 'Inactive',
+      active: false,
+    }
+  }
+
+  return {
+    label: 'Non spécifié',
+    active: false,
+  }
 }
 
 const getPhysicalTests = (battery) => {
@@ -122,38 +112,45 @@ const getPhysicalQualityName = (test) => {
   )
 }
 
+const getBooleanValue = (...values) => {
+  const value = values.find(
+    (candidate) =>
+      candidate !== undefined &&
+      candidate !== null,
+  )
+
+  if (typeof value === 'boolean') {
+    return value
+  }
+
+  if (typeof value === 'number') {
+    return value === 1
+  }
+
+  if (typeof value === 'string') {
+    return (
+      value.toLowerCase() === 'true' ||
+      value === '1'
+    )
+  }
+
+  return false
+}
+
 const getSupervisedValue = (test) => {
-  return Boolean(
-    test?.supervised ??
-      test?.isSupervised ??
-      test?.supervise,
+  return getBooleanValue(
+    test?.supervised,
+    test?.isSupervised,
+    test?.supervise,
   )
 }
 
 const getProofRequiredValue = (test) => {
-  return Boolean(
-    test?.proofRequired ??
-      test?.isProofRequired ??
-      test?.preuveRequise,
+  return getBooleanValue(
+    test?.proofRequired,
+    test?.isProofRequired,
+    test?.preuveRequise,
   )
-}
-
-const formatDate = (value) => {
-  if (!value) {
-    return 'Non spécifiée'
-  }
-
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  return new Intl.DateTimeFormat('fr-CA', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  }).format(date)
 }
 
 export default function BatterieTestDetailsPage() {
@@ -173,21 +170,18 @@ export default function BatterieTestDetailsPage() {
 
       try {
         const result =
-          await batterieTestsService.getById(id)
+          await physicalTestService.getDisplayBatterieById(
+            id,
+          )
 
         if (cancelled) {
           return
         }
 
         if (!result.success) {
-          console.error(
-            'Erreur lors du chargement de la batterie de tests :',
-            result.error,
-          )
-
           setBattery(null)
           setError(
-            result.error ||
+            result.error ??
               'Une erreur est survenue lors du chargement de la batterie.',
           )
           return
@@ -197,7 +191,7 @@ export default function BatterieTestDetailsPage() {
       } catch (loadError) {
         if (!cancelled) {
           console.error(
-            'Erreur lors du chargement de la batterie de tests :',
+            'Erreur lors du chargement de la batterie :',
             loadError,
           )
 
@@ -225,138 +219,104 @@ export default function BatterieTestDetailsPage() {
     [battery],
   )
 
-  const batteryName = getBatterieName(battery)
-  const teamName = getTeamName(battery)
-  const statusKey = getStatus(battery)
-  const creationDate = getCreatedDate(battery)
-
-  const statusConfig = STATUS_CONFIG[statusKey] ?? {
-    label: statusKey || 'Non spécifié',
-    className: 'athlete-profile-status--inactive',
-  }
-
   if (loading) {
     return (
-      <section className="athlete-profile-page">
-        <div className="athlete-profile-message">
+      <section className="battery-details-page">
+        <div className="battery-details-message">
           Chargement de la batterie de tests...
         </div>
       </section>
     )
   }
 
-  if (error) {
+  if (error || !battery) {
     return (
-      <section className="athlete-profile-page">
-        <div className="athlete-profile-message athlete-profile-message--error">
-          {error}
+      <section className="battery-details-page">
+        <div className="battery-details-message battery-details-message--error">
+          {error || 'Batterie de tests introuvable.'}
         </div>
 
-        <div className="athlete-profile-actions">
+        <div className="battery-details-actions">
           <button
             type="button"
-            className="athlete-profile-btn athlete-profile-btn--secondary"
-            onClick={() => navigate('/batterie-tests')}
+            className="battery-details-button battery-details-button--secondary"
+            onClick={() =>
+              navigate('/batterie-tests')
+            }
           >
-            Retour
+            Retour à la liste
           </button>
         </div>
       </section>
     )
   }
 
-  if (!battery) {
-    return (
-      <section className="athlete-profile-page">
-        <div className="athlete-profile-message athlete-profile-message--error">
-          Batterie de tests introuvable.
-        </div>
-
-        <div className="athlete-profile-actions">
-          <button
-            type="button"
-            className="athlete-profile-btn athlete-profile-btn--secondary"
-            onClick={() => navigate('/batterie-tests')}
-          >
-            Retour
-          </button>
-        </div>
-      </section>
-    )
-  }
+  const batteryName = getBatterieName(battery)
+  const teamName = getTeamName(battery)
+  const status = getBatteryStatus(battery)
 
   return (
-    <section className="athlete-profile-page">
-      <div className="athlete-profile-card">
-        <section className="athlete-profile-section">
-          <h2>Informations générales</h2>
+    <section className="battery-details-page">
+      <h1 className="battery-details-title">
+        Détail de la batterie
+      </h1>
 
-          <div className="athlete-profile-grid athlete-profile-grid--two">
-            <InfoItem
-              icon={<TrophyIcon />}
-              label="Nom de la batterie"
-              value={batteryName}
-            />
+      <section className="battery-details-card">
+        <h2 className="battery-details-card__title">
+          Informations générales
+        </h2>
 
-            <InfoItem
-              icon={<TeamIcon />}
-              label="Équipe associée"
-              value={teamName || 'Aucune équipe'}
-            />
+        <div className="battery-details-info">
+          <InfoRow
+            label="Nom de la batterie"
+            value={batteryName}
+          />
 
-            <InfoItem
-              icon={<ShieldIcon />}
-              label="Statut"
-              value={
-                <span
-                  className={`athlete-profile-status ${statusConfig.className}`}
-                >
-                  {statusConfig.label}
-                </span>
-              }
-            />
+          <InfoRow
+            label="Équipe"
+            value={teamName || 'Aucune équipe'}
+          />
 
-            <InfoItem
-              icon={<TargetIcon />}
-              label="Nombre de tests"
-              value={`${physicalTests.length} test(s)`}
-            />
+          <InfoRow
+            label="Statut"
+            value={
+              <span
+                className={
+                  status.active
+                    ? 'battery-details-status battery-details-status--active'
+                    : 'battery-details-status battery-details-status--inactive'
+                }
+              >
+                {status.label}
+              </span>
+            }
+            last
+          />
+        </div>
+      </section>
 
-            {creationDate ? (
-              <InfoItem
-                icon={<CalendarDateIcon />}
-                label="Date de création"
-                value={formatDate(creationDate)}
-              />
-            ) : null}
-          </div>
-        </section>
+      <section className="battery-details-card">
+        <h2 className="battery-details-card__title">
+          Tests associés
+        </h2>
 
-        <section className="athlete-profile-section">
-          <h2>Tests physiques associés</h2>
+        {physicalTests.length > 0 ? (
+          <div className="battery-details-table-wrapper">
+            <table className="battery-details-table">
+              <thead>
+                <tr>
+                  <th>Nom du test</th>
+                  <th>Qualité physique</th>
+                  <th>Supervisé</th>
+                  <th>Preuve requise</th>
+                </tr>
+              </thead>
 
-          {physicalTests.length > 0 ? (
-            <div className="table-wrapper">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Nom du test</th>
-                    <th>Qualité physique</th>
-                    <th>Supervisé</th>
-                    <th>Preuve requise</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {physicalTests.map((test, index) => {
+              <tbody>
+                {physicalTests.map(
+                  (test, index) => {
                     const testId =
                       getPhysicalTestId(test)
-
-                    const supervised =
-                      getSupervisedValue(test)
-
-                    const proofRequired =
-                      getProofRequiredValue(test)
 
                     return (
                       <tr
@@ -365,11 +325,11 @@ export default function BatterieTestDetailsPage() {
                           `${getPhysicalTestName(test)}-${index}`
                         }
                       >
-                        <td className="cell--name">
+                        <td>
                           {testId ? (
                             <button
                               type="button"
-                              className="athlete-profile-table-link"
+                              className="battery-details-test-link"
                               onClick={() =>
                                 navigate(
                                   `/tests-physiques/${testId}`,
@@ -384,77 +344,98 @@ export default function BatterieTestDetailsPage() {
                         </td>
 
                         <td>
-                          {getPhysicalQualityName(test)}
-                        </td>
-
-                        <td>
-                          <BooleanBadge value={supervised} />
+                          {getPhysicalQualityName(
+                            test,
+                          )}
                         </td>
 
                         <td>
                           <BooleanBadge
-                            value={proofRequired}
+                            value={getSupervisedValue(
+                              test,
+                            )}
+                          />
+                        </td>
+
+                        <td>
+                          <BooleanBadge
+                            value={getProofRequiredValue(
+                              test,
+                            )}
                           />
                         </td>
                       </tr>
                     )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="athlete-profile-notes">
-              Aucun test physique n’est associé à cette
-              batterie.
-            </div>
-          )}
-        </section>
+                  },
+                )}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="battery-details-empty">
+            Aucun test physique n’est associé à cette
+            batterie.
+          </div>
+        )}
+      </section>
 
-        <div className="athlete-profile-actions">
-          <button
-            type="button"
-            className="athlete-profile-btn athlete-profile-btn--secondary"
-            onClick={() => navigate(-1)}
-          >
-            Retour
-          </button>
-        </div>
+      <div className="battery-details-actions">
+        <button
+          type="button"
+          className="battery-details-button battery-details-button--secondary"
+          onClick={() =>
+            navigate('/batterie-tests')
+          }
+        >
+          Retour à la liste
+        </button>
+
+        <button
+          type="button"
+          className="battery-details-button battery-details-button--primary"
+          onClick={() =>
+            navigate(
+              `/batterie-tests/${id}/modifier`,
+            )
+          }
+        >
+          Modifier
+        </button>
       </div>
     </section>
   )
 }
 
-function InfoItem({ icon, label, value }) {
+function InfoRow({ label, value, last = false }) {
   return (
-    <article className="athlete-profile-info">
-      <div
-        className="athlete-profile-info__icon"
-        aria-hidden="true"
-      >
-        {icon}
+    <div
+      className={`battery-details-info-row${
+        last
+          ? ' battery-details-info-row--last'
+          : ''
+      }`}
+    >
+      <div className="battery-details-info-row__label">
+        {label}
       </div>
 
-      <div>
-        <p className="athlete-profile-info__label">
-          {label}
-        </p>
-
-        <div className="athlete-profile-info__value">
-          {value || 'Non spécifié'}
-        </div>
+      <div className="battery-details-info-row__value">
+        {value || 'Non spécifié'}
       </div>
-    </article>
+    </div>
   )
 }
 
 function BooleanBadge({ value }) {
-  return value ? (
-    <span className="badge badge--blue">
-      Oui
-    </span>
-  ) : (
-    <span className="cell--muted">
-      Non
+  return (
+    <span
+      className={
+        value
+          ? 'battery-details-boolean battery-details-boolean--yes'
+          : 'battery-details-boolean battery-details-boolean--no'
+      }
+    >
+      {value ? 'Oui' : 'Non'}
     </span>
   )
 }
