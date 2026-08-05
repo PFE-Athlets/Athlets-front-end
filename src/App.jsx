@@ -10,8 +10,11 @@ import './App.css'
 
 import { AppShell } from './components/AppShell.jsx'
 import { PageView } from './pages/PageView.jsx'
+
 import LoginPage from './pages/LoginPage.jsx'
 import ActivateAccountPage from './pages/ActivateAccountPage.jsx'
+import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx'
+import ResetPasswordPage from './pages/ResetPasswordPage.jsx'
 
 import AthletePageView from './pages/athletes/AthletePageView.jsx'
 import CreateAthletePage from './pages/athletes/CreateAthletePage.jsx'
@@ -25,13 +28,12 @@ import PhysicalTestDetailsPage from './pages/physical-test/PhysicalTestDetailsPa
 import BatterieTestPageView from './pages/batterie-tests/BatterieTestPageView.jsx'
 import CreateBatterieTestPage from './pages/batterie-tests/CreateBatterieTestPage.jsx'
 import BatterieTestDetailsPage from './pages/batterie-tests/BatterieTestDetailsPage.jsx'
+import EditBatterieTestPage from './pages/batterie-tests/EditBatterieTestPage.jsx'
 
 import CreateTeamPage from './pages/teams/CreateTeamPage.jsx'
 import EditTeamPage from './pages/teams/EditTeamPage.jsx'
 import TeamPageView from './pages/teams/TeamPageView.jsx'
 import TeamDetailsPage from './pages/teams/TeamDetailsPage.jsx'
-import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx'
-import ResetPasswordPage from './pages/ResetPasswordPage.jsx'
 
 const pages = [
   {
@@ -43,16 +45,6 @@ const pages = [
     path: '/athletes',
     title: 'Athlètes',
     subtitle: 'Gestion de la liste des athlètes',
-  },
-  {
-    path: '/equipes',
-    title: 'Équipes',
-    subtitle: '',
-  },
-  {
-    path: '/equipes/creer',
-    title: 'Créer une équipe',
-    subtitle: '',
   },
   {
     path: '/athletes/creer',
@@ -80,14 +72,14 @@ const pages = [
     subtitle: 'Ajout d’un nouveau test physique',
   },
   {
-    path: '/batterie-tests/creer',
-    title: 'Créer une batterie de test physique',
-    subtitle: 'Ajout d’une nouvelle batterie de test physique',
+    path: '/batterie-tests',
+    title: 'Batteries de tests physiques',
+    subtitle: 'Suivi des batteries de tests physiques',
   },
   {
-    path: '/batterie-tests',
-    title: 'Batterie de tests physiques',
-    subtitle: 'Suivir des batteries de tests physiques',
+    path: '/batterie-tests/creer',
+    title: 'Créer une batterie de tests physiques',
+    subtitle: 'Ajout d’une nouvelle batterie de tests physiques',
   },
   {
     path: '/resultats',
@@ -157,7 +149,9 @@ function App() {
         currentUser.accessLevel
       ] ?? 'Coach'
     : 'Coach'
-  const canCreateTeam = activeUserRole === 'Administrateur'
+
+  const canCreateTeam =
+    activeUserRole === 'Administrateur'
 
   const handleLoginSuccess = (user) => {
     sessionStorage.setItem(
@@ -249,9 +243,6 @@ function App() {
       case '/batterie-tests/creer':
         return <CreateBatterieTestPage />
 
-      case '/batterie-tests/creer':
-        return <CreateBatterieTestPage />
-
       default:
         return <PageView />
     }
@@ -280,9 +271,9 @@ function App() {
         }
       />
 
-      <Route 
-        path="/activation-compte" 
-        element={<ActivateAccountPage />} 
+      <Route
+        path="/activation-compte"
+        element={<ActivateAccountPage />}
       />
 
       <Route
@@ -337,7 +328,9 @@ function App() {
       <Route
         path="/athletes/:id"
         element={
-          <ProtectedRoute currentUser={currentUser}>
+          <ProtectedRoute
+            currentUser={currentUser}
+          >
             <AppShell
               pageTitle="Profil de l’athlète"
               pageSubtitle=""
@@ -356,7 +349,7 @@ function App() {
             currentUser={currentUser}
           >
             <AppShell
-              pageTitle="Fiche de l'équipe"
+              pageTitle="Fiche de l’équipe"
               pageSubtitle=""
               {...shellProps}
             >
@@ -390,7 +383,7 @@ function App() {
             currentUser={currentUser}
           >
             <AppShell
-              pageTitle="Fiche du test physqique"
+              pageTitle="Fiche du test physique"
               pageSubtitle=""
               {...shellProps}
             >
@@ -407,11 +400,28 @@ function App() {
             currentUser={currentUser}
           >
             <AppShell
-              pageTitle="Fiche de la batterie de tests physiques"
+              pageTitle="Détail de la batterie"
               pageSubtitle=""
               {...shellProps}
             >
               <BatterieTestDetailsPage />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/batterie-tests/:id/modifier"
+        element={
+          <ProtectedRoute
+            currentUser={currentUser}
+          >
+            <AppShell
+              pageTitle="Modifier une batterie de tests"
+              pageSubtitle="Modifiez les informations de la batterie et ajoutez de nouveaux tests si nécessaire."
+              {...shellProps}
+            >
+              <EditBatterieTestPage />
             </AppShell>
           </ProtectedRoute>
         }

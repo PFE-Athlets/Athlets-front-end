@@ -194,4 +194,26 @@ export const physicalTestService = {
       }
     }
   },
+
+  updateBattery: async (batteryId, payload) => {
+    try {
+      const response = await api.put(
+        `/api/physicalTest/battery/${batteryId}`,
+        payload,
+      )
+
+      return {
+        success: true,
+        data: response.data,
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: extractError(
+          error,
+          'Impossible de modifier la batterie de tests.',
+        ),
+      }
+    }
+  },
 }
