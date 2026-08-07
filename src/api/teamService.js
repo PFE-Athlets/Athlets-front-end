@@ -14,32 +14,99 @@ const mapTeamDisplayItem = (item) => {
 
   return {
     id: String(team?.id ?? ''),
-
-    name:
-      team?.name ?? 'Équipe sans nom',
-
-    sport:
-      sport?.name ?? '—',
-
-    sportId:
-      sport?.id != null
-        ? String(sport.id)
-        : '',
-
-    athletesCount:
-      item?.numberOfAthletes ?? 0,
-
-    headCoach:
-      item?.headCoachName ?? '—',
-
-    headCoachId:
-      item?.headCoachId != null
-        ? String(item.headCoachId)
-        : '',
+    name: team?.name ?? 'Équipe sans nom',
+    sportId: sport?.id != null ? String(sport.id) : '',
+    sport: sport?.name ?? '—',
+    athletesCount: item?.numberOfAthletes ?? 0,
+    headCoach: item?.headCoachName ?? '—',
+    headCoachId: item?.headCoachId ? String(item.headCoachId) : '',
   }
 }
 
+const mapSportExtraInfoOption = (item) => ({
+  id: String(item?.id ?? ''),
+  name: item?.name ?? '—',
+})
+
+const mapSportOption = (item) => ({
+  id: String(item?.sportId ?? ''),
+  name: item?.sportName ?? 'Sport',
+})
+
+const mapCoachOption = (item) => ({
+  id: String(item?.coachId ?? ''),
+  name: item?.coachName ?? 'Coach',
+})
+
+const mapSubcoachItem = (item) => ({
+  id: String(item?.coachId ?? ''),
+  name: item?.subcoachName ?? 'Coach',
+})
+
 export const teamService = {
+  getSportOptions: async () => {
+    try {
+      const response = await api.get('/api/sport/sports')
+      const rawList = Array.isArray(response.data) ? response.data : []
+      const options = rawList
+        .filter((item) => item?.sportId != null)
+        .map(mapSportOption)
+
+      return {
+        success: true,
+        data: options,
+      }
+    } catch (error) {
+      return {
+        success: false,
+        status: error.response?.status,
+        error: extractError(error, 'Impossible de charger la liste des sports.'),
+      }
+    }
+  },
+
+  getCoachOptions: async () => {
+    try {
+      const response = await api.get('/api/coach/coaches')
+      const rawList = Array.isArray(response.data) ? response.data : []
+      const options = rawList
+        .filter((item) => item?.coachId != null)
+        .map(mapCoachOption)
+
+      return {
+        success: true,
+        data: options,
+      }
+    } catch (error) {
+      return {
+        success: false,
+        status: error.response?.status,
+        error: extractError(error, 'Impossible de charger la liste des coachs.'),
+      }
+    }
+  },
+
+  getSubcoachesByTeamId: async (teamId) => {
+    try {
+      const response = await api.get(`/api/team/subcoaches/${teamId}`)
+      const rawList = Array.isArray(response.data) ? response.data : []
+      const subcoaches = rawList
+        .filter((item) => item?.coachId != null)
+        .map(mapSubcoachItem)
+
+      return {
+        success: true,
+        data: subcoaches,
+      }
+    } catch (error) {
+      return {
+        success: false,
+        status: error.response?.status,
+        error: extractError(error, 'Impossible de charger les coachs secondaires.'),
+      }
+    }
+  },
+
   getDisplayTeams: async () => {
     try {
       const response = await api.get(
@@ -62,10 +129,7 @@ export const teamService = {
       return {
         success: false,
         status: error.response?.status,
-        error: extractError(
-          error,
-          'Erreur lors du chargement des équipes',
-        ),
+        error: extractError(error, 'Erreur lors du chargement des équipes'),
       }
     }
   },
@@ -87,9 +151,12 @@ export const teamService = {
     if (!team) {
       return {
         success: false,
-        error: 'Équipe introuvable.',
+        status: 404,
+        error: 'Equipe introuvable ou inaccessible avec vos permissions.',
       }
     }
+
+
 
     return {
       success: true,
@@ -97,42 +164,77 @@ export const teamService = {
     }
   },
 
-  getDisciplinesAndPositionsBySportId:
-    async (sportId) => {
-      try {
-        const response = await api.get(
-          `/api/sport/disciplines-positions/${sportId}`,
-        )
+  getDisciplinesAndPositionsBySportId: async (sportId) => {
+    try {
+      const response = await api.get(
+        `/api/sport/disciplines-positions/${sportId}`,
+        {
+          params: { sportId },
+        },
+      )
 
-        return {
-          success: true,
-          data: {
-            disciplines:
-              Array.isArray(
-                response.data?.disciplines,
-              )
-                ? response.data.disciplines
-                : [],
+      const data = response.data ?? {}
 
-            positions:
-              Array.isArray(
-                response.data?.positions,
-              )
-                ? response.data.positions
-                : [],
-          },
-        }
-      } catch (error) {
-        return {
-          success: false,
-          status:
-            error.response?.status,
+      const disciplines = Array.isArray(data.disciplines)
+        ? data.disciplines
+            .filter((item) => item?.id != null)
+            .map(mapSportExtraInfoOption)
+        : []
 
-          error: extractError(
-            error,
-            'Impossible de charger les positions et disciplines.',
-          ),
-        }
+      const positions = Array.isArray(data.positions)
+        ? data.positions
+            .filter((item) => item?.id != null)
+            .map(mapSportExtraInfoOption)
+        : []
+
+      return {
+        success: true,
+        data: {
+          disciplines,
+          positions,
+        },
       }
-    },
+    } catch (error) {
+      return {
+        success: false,
+        status: error.response?.status,
+        error: extractError(
+          error,
+          'Impossible de charger les positions et disciplines.',
+        ),
+      }
+    }
+  },
+
+  createTeam: async (payload) => {
+    try {
+      await api.post('/api/team', payload)
+
+      return {
+        success: true,
+      }
+    } catch (error) {
+      return {
+        success: false,
+        status: error.response?.status,
+        error: extractError(error, 'Impossible de créer cette équipe.'),
+      }
+    }
+  },
+
+  modifyTeam: async (teamId, payload) => {
+    try {
+      await api.patch(`/api/team/modify/${teamId}`, payload)
+
+      return {
+        success: true,
+      }
+    } catch (error) {
+      return {
+        success: false,
+        status: error.response?.status,
+        error: extractError(error, 'Impossible de modifier cette équipe.'),
+      }
+    }
+  },
 }

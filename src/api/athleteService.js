@@ -26,23 +26,15 @@ const toNullableNumber = (value) => {
   }
 
   const numericValue = Number(value)
-
   return Number.isFinite(numericValue)
     ? numericValue
     : null
 }
 
-const buildUpdateTeamsInfo = (form) => {
-  const selectedTeamId = toNullableNumber(
+const buildTeamsInfo = (form) => {
+  const teamId = toNullableNumber(
     form.athleteTeamId,
   )
-
-  const teamIdFromArray = Array.isArray(form.teamIds)
-    ? toNullableNumber(form.teamIds[0])
-    : null
-
-  const teamId =
-    selectedTeamId ?? teamIdFromArray
 
   if (teamId == null) {
     return []
@@ -56,13 +48,53 @@ const buildUpdateTeamsInfo = (form) => {
     form.athletePositionId,
   )
 
-  return [
-    {
-      teamId,
-      disciplineId,
-      positionId,
-    },
-  ]
+  const teamInfo = {
+    teamId,
+    disciplineId:
+      disciplineId != null ? disciplineId : '',
+    positionId:
+      positionId != null ? positionId : '',
+  }
+
+  return [teamInfo]
+}
+
+const buildUpdateTeamsInfo = (form) => {
+  const selectedTeamId = toNullableNumber(
+    form.athleteTeamId,
+  )
+
+  const teamIdFromArray = Array.isArray(form.teamIds)
+    ? toNullableNumber(form.teamIds[0])
+    : null
+
+  const teamId = selectedTeamId ?? teamIdFromArray
+
+  if (teamId == null) {
+    return []
+  }
+
+  const selectedDisciplineId = toNullableNumber(
+    form.athleteDisciplineId,
+  )
+
+  const selectedPositionId = toNullableNumber(
+    form.athletePositionId,
+  )
+
+  const teamInfo = {
+    teamId,
+    disciplineId:
+      selectedDisciplineId != null
+        ? selectedDisciplineId
+        : '',
+    positionId:
+      selectedPositionId != null
+        ? selectedPositionId
+        : '',
+  }
+
+  return [teamInfo]
 }
 
 const getAthleteStatus = (athlete) => {
@@ -71,14 +103,11 @@ const getAthleteStatus = (athlete) => {
       ?.trim()
       .toUpperCase()
 
-  if (rawStatus === 'ACTIVE') {
+  if (rawStatus === 'Active') {
     return 'active'
   }
 
-  if (
-    rawStatus === 'PENDING' ||
-    rawStatus === 'A_ACTIVER'
-  ) {
+  if (rawStatus === 'Pending') {
     return 'pending'
   }
 
@@ -243,21 +272,14 @@ const mapAthleteDisplayItem = (athlete) => {
   }
 }
 
-const mapAthleteUpdatePayload = (form) => ({
-  phone:
-    form.phone?.trim() || null,
-
-  weightKg:
-    form.weightKg !== ''
-      ? Number(form.weightKg)
-      : null,
-
-  injuryHistory:
-    form.injuryHistory?.trim() || null,
-
-  teamsInfo:
-    buildUpdateTeamsInfo(form),
-})
+const mapAthleteUpdatePayload = (form) => {
+  return {
+    phone: form.phone?.trim() || null,
+    weightKg: Number(form.weightKg),
+    injuryHistory: form.injuryHistory?.trim() || null,
+    teamsInfo: buildUpdateTeamsInfo(form),
+  }
+}
 
 const findAthleteById = (
   athletes,

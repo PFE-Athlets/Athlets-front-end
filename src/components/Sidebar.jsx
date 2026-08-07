@@ -13,29 +13,30 @@ import {
 } from './Icons'
 
 const ALL_NAV_ITEMS = [
-  /**{
-    label: 'Tableau de bord',
-    icon: HomeIcon,
-    to: '/tableau-de-bord',
-    roles: ['Coach', 'Administrateur'],
-  },*/
+    roles: ['Coach', 'Administrateur', 'Kiné'],
+  },
   {
     label: 'Athlètes',
     icon: UsersIcon,
     to: '/athletes',
-    roles: ['Coach', 'Administrateur', 'Athlète'],
+    roles: [
+      'Coach',
+      'Administrateur',
+      'Athlète',
+      'Kiné',
+    ],
   },
   {
     label: 'Équipes',
     icon: UsersIcon,
     to: '/equipes',
-    roles: ['Coach', 'Administrateur'],
+    roles: ['Coach', 'Administrateur', 'Kiné'],
   },
   {
     label: 'Tests physiques',
     icon: PulseIcon,
     to: '/tests-physiques',
-    roles: ['Coach', 'Administrateur'],
+    roles: ['Coach', 'Administrateur', 'Kiné'],
   },
   {
     label: 'Batterie de tests physiques',
@@ -47,20 +48,20 @@ const ALL_NAV_ITEMS = [
     label: 'Résultats',
     icon: ChartIcon,
     to: '/resultats',
-    roles: ['Coach', 'Administrateur', 'Athlète'],
+    roles: [
+      'Coach',
+      'Administrateur',
+      'Athlète',
+      'Kiné',
+    ],
   },
-  /**{
-    label: 'Séances',
-    icon: CalendarIcon,
-    to: '/seances',
-    roles: ['Coach', 'Administrateur', 'Athlète'],
+    roles: [
+      'Coach',
+      'Administrateur',
+      'Athlète',
+      'Kiné',
+    ],
   },
-  {
-    label: 'Rapports',
-    icon: FileIcon,
-    to: '/rapports',
-    roles: ['Coach', 'Administrateur', 'Athlète'],
-  },*/
 ]
 
 export function Sidebar({

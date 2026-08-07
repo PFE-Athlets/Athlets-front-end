@@ -63,11 +63,21 @@ export default function CreateAthletePage() {
             </div>
 
             <div className="form-field">
-              <label>Position / Discipline</label>
-              <input
-                type="text"
-                placeholder="Ex. : Demi de mêlée, Sprint 100m"
-              />
+              <label>Position</label>
+              <select defaultValue="" disabled>
+                <option value="" disabled>
+                  En attente des positions backend
+                </option>
+              </select>
+            </div>
+
+            <div className="form-field">
+              <label>Discipline</label>
+              <select defaultValue="" disabled>
+                <option value="" disabled>
+                  En attente des disciplines backend
+                </option>
+              </select>
             </div>
 
             <div className="form-field">

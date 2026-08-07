@@ -36,20 +36,11 @@ export default function CreateAthletePage() {
   const [disciplines, setDisciplines] = useState([])
 
   const [loadingTeams, setLoadingTeams] = useState(true)
-  const [loadingSportExtras, setLoadingSportExtras] =
-    useState(false)
-
+  const [loadingSportExtras, setLoadingSportExtras] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
-  const [activationLink, setActivationLink] =
-    useState('')
-
-  const [copySuccess, setCopySuccess] =
-    useState(false)
-
-  const teamSelected =
-    form.athleteTeamId !== ''
+  const teamSelected = form.athleteTeamId !== ''
 
   useEffect(() => {
     const fetchTeams = async () => {
@@ -82,8 +73,7 @@ export default function CreateAthletePage() {
   }, [])
 
   useEffect(() => {
-    const selectedTeamId =
-      form.athleteTeamId
+    const selectedTeamId = form.athleteTeamId
 
     if (!selectedTeamId) {
       setPositions([])
@@ -97,8 +87,7 @@ export default function CreateAthletePage() {
         String(selectedTeamId),
     )
 
-    const selectedSportId =
-      selectedTeam?.sportId
+    const selectedSportId = selectedTeam?.sportId
 
     if (!selectedSportId) {
       setPositions([])
@@ -112,10 +101,9 @@ export default function CreateAthletePage() {
       setLoadingSportExtras(true)
 
       const result =
-        await teamService
-          .getDisciplinesAndPositionsBySportId(
-            selectedSportId,
-          )
+        await teamService.getDisciplinesAndPositionsBySportId(
+          selectedSportId,
+        )
 
       if (!isActive) {
         return
@@ -131,7 +119,6 @@ export default function CreateAthletePage() {
           result.error ||
             'Impossible de charger les positions et disciplines pour cette équipe.',
         )
-
         setPositions([])
         setDisciplines([])
         setLoadingSportExtras(false)
@@ -139,13 +126,8 @@ export default function CreateAthletePage() {
       }
 
       setError('')
-      setPositions(
-        result.data.positions ?? [],
-      )
-      setDisciplines(
-        result.data.disciplines ?? [],
-      )
-
+      setPositions(result.data.positions)
+      setDisciplines(result.data.disciplines)
       setLoadingSportExtras(false)
     }
 
@@ -467,49 +449,33 @@ export default function CreateAthletePage() {
 
               <select
                 id="athleteTeamName"
-                value={
-                  form.athleteTeamId
-                }
+                value={form.athleteTeamId}
                 onChange={(event) => {
-                  const selectedTeamId =
-                    event.target.value
-
-                  const selectedTeam =
-                    teams.find(
-                      (team) =>
-                        String(
-                          team.id,
-                        ) ===
-                        String(
-                          selectedTeamId,
-                        ),
-                    )
+                  const selectedTeamId = event.target.value
+                  const selectedTeam = teams.find(
+                    (team) =>
+                      String(team.id) ===
+                      String(selectedTeamId),
+                  )
 
                   updateField(
                     'athleteTeamId',
                     selectedTeamId,
                   )
-
                   updateField(
                     'athleteTeamName',
-                    selectedTeam?.name ||
-                      '',
+                    selectedTeam?.name || '',
                   )
-
                   updateField(
                     'athletePositionId',
                     '',
                   )
-
                   updateField(
                     'athleteDisciplineId',
                     '',
                   )
                 }}
-                disabled={
-                  loadingTeams ||
-                  submitting
-                }
+                disabled={loadingTeams}
                 required
               >
                 <option
@@ -539,45 +505,31 @@ export default function CreateAthletePage() {
 
               <select
                 id="athletePositionId"
-                value={
-                  form.athletePositionId
-                }
+                value={form.athletePositionId}
                 onChange={(event) =>
                   updateField(
                     'athletePositionId',
                     event.target.value,
                   )
                 }
-                disabled={
-                  !teamSelected ||
-                  submitting
-                }
+                disabled={!teamSelected}
               >
-                <option value="">
+                <option value="" disabled>
                   {teamSelected
                     ? loadingSportExtras
                       ? 'Chargement...'
-                      : 'Aucune'
+                      : 'Sélectionner'
                     : 'Sélectionner une équipe d’abord'}
                 </option>
 
-                {positions.map(
-                  (position) => (
-                    <option
-                      key={
-                        position.id ??
-                        position
-                      }
-                      value={
-                        position.id ??
-                        position
-                      }
-                    >
-                      {position.name ??
-                        position}
-                    </option>
-                  ),
-                )}
+                {positions.map((position) => (
+                  <option
+                    key={position.id ?? position}
+                    value={position.id ?? position}
+                  >
+                    {position.name ?? position}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -588,45 +540,31 @@ export default function CreateAthletePage() {
 
               <select
                 id="athleteDisciplineId"
-                value={
-                  form.athleteDisciplineId
-                }
+                value={form.athleteDisciplineId}
                 onChange={(event) =>
                   updateField(
                     'athleteDisciplineId',
                     event.target.value,
                   )
                 }
-                disabled={
-                  !teamSelected ||
-                  submitting
-                }
+                disabled={!teamSelected}
               >
-                <option value="">
+                <option value="" disabled>
                   {teamSelected
                     ? loadingSportExtras
                       ? 'Chargement...'
-                      : 'Aucune'
+                      : 'Sélectionner'
                     : 'Sélectionner une équipe d’abord'}
                 </option>
 
-                {disciplines.map(
-                  (discipline) => (
-                    <option
-                      key={
-                        discipline.id ??
-                        discipline
-                      }
-                      value={
-                        discipline.id ??
-                        discipline
-                      }
-                    >
-                      {discipline.name ??
-                        discipline}
-                    </option>
-                  ),
-                )}
+                {disciplines.map((discipline) => (
+                  <option
+                    key={discipline.id ?? discipline}
+                    value={discipline.id ?? discipline}
+                  >
+                    {discipline.name ?? discipline}
+                  </option>
+                ))}
               </select>
             </div>
 
