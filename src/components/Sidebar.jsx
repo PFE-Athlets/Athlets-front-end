@@ -13,8 +13,6 @@ import {
 } from './Icons'
 
 const ALL_NAV_ITEMS = [
-    roles: ['Coach', 'Administrateur', 'Kiné'],
-  },
   {
     label: 'Athlètes',
     icon: UsersIcon,
@@ -48,13 +46,6 @@ const ALL_NAV_ITEMS = [
     label: 'Résultats',
     icon: ChartIcon,
     to: '/resultats',
-    roles: [
-      'Coach',
-      'Administrateur',
-      'Athlète',
-      'Kiné',
-    ],
-  },
     roles: [
       'Coach',
       'Administrateur',

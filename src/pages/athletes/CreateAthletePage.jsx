@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { athleteService } from '../../api/athleteService'
 import { teamService } from '../../api/teamService'
-import '../../styles/page-form.css'
+import '../../styles/create-athlete.css'
+import '../../styles/link-modal.css'
 
 const INITIAL_FORM = {
   firstName: '',
@@ -10,21 +11,15 @@ const INITIAL_FORM = {
   birthDate: '',
   gender: '',
   email: '',
-
   athleteTeamId: '',
-  athleteTeamName: '',
   athletePositionId: '',
   athleteDisciplineId: '',
-
   heightMeters: '',
   weightKg: '',
   dominantArm: '',
   dominantLeg: '',
-
   username: '',
   injuryHistory: '',
-
-  accountStatus: 'Pending',
 }
 
 export default function CreateAthletePage() {
@@ -36,46 +31,48 @@ export default function CreateAthletePage() {
   const [disciplines, setDisciplines] = useState([])
 
   const [loadingTeams, setLoadingTeams] = useState(true)
-  const [loadingSportExtras, setLoadingSportExtras] = useState(false)
+  const [loadingExtras, setLoadingExtras] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState('')
 
-  const teamSelected = form.athleteTeamId !== ''
+  const [error, setError] = useState('')
+  const [activationLink, setActivationLink] = useState('')
+  const [copySuccess, setCopySuccess] = useState(false)
+
+  const updateField = (field, value) => {
+    setForm((current) => ({
+      ...current,
+      [field]: value,
+    }))
+  }
 
   useEffect(() => {
-    const fetchTeams = async () => {
+    const loadTeams = async () => {
       setLoadingTeams(true)
-      setError('')
 
       const result =
         await teamService.getDisplayTeams()
 
       if (!result.success) {
-        console.error(
-          'Erreur lors du chargement des équipes :',
-          result.error,
-        )
-
         setError(
           result.error ||
             'Impossible de charger les équipes.',
         )
-
+        setTeams([])
         setLoadingTeams(false)
         return
       }
 
-      setTeams(result.data)
+      setTeams(result.data ?? [])
       setLoadingTeams(false)
     }
 
-    fetchTeams()
+    loadTeams()
   }, [])
 
   useEffect(() => {
-    const selectedTeamId = form.athleteTeamId
+    const teamId = form.athleteTeamId
 
-    if (!selectedTeamId) {
+    if (!teamId) {
       setPositions([])
       setDisciplines([])
       return
@@ -83,223 +80,165 @@ export default function CreateAthletePage() {
 
     const selectedTeam = teams.find(
       (team) =>
-        String(team.id) ===
-        String(selectedTeamId),
+        String(team.id) === String(teamId),
     )
 
-    const selectedSportId = selectedTeam?.sportId
+    const sportId = selectedTeam?.sportId
 
-    if (!selectedSportId) {
+    if (!sportId) {
       setPositions([])
       setDisciplines([])
       return
     }
 
-    let isActive = true
-
-    const fetchSportExtras = async () => {
-      setLoadingSportExtras(true)
+    const loadExtras = async () => {
+      setLoadingExtras(true)
 
       const result =
         await teamService.getDisciplinesAndPositionsBySportId(
-          selectedSportId,
+          sportId,
         )
-
-      if (!isActive) {
-        return
-      }
 
       if (!result.success) {
-        console.error(
-          'Erreur lors du chargement des positions/disciplines :',
-          result.error,
-        )
-
         setError(
           result.error ||
-            'Impossible de charger les positions et disciplines pour cette équipe.',
+            'Impossible de charger les positions et disciplines.',
         )
         setPositions([])
         setDisciplines([])
-        setLoadingSportExtras(false)
+        setLoadingExtras(false)
         return
       }
 
-      setError('')
-      setPositions(result.data.positions)
-      setDisciplines(result.data.disciplines)
-      setLoadingSportExtras(false)
+      setPositions(
+        result.data?.positions ?? [],
+      )
+
+      setDisciplines(
+        result.data?.disciplines ?? [],
+      )
+
+      setLoadingExtras(false)
     }
 
-    fetchSportExtras()
-
-    return () => {
-      isActive = false
-    }
+    loadExtras()
   }, [form.athleteTeamId, teams])
 
-  const updateField = (field, value) => {
-    setForm((currentForm) => ({
-      ...currentForm,
-      [field]: value,
+  const handleTeamChange = (event) => {
+    setForm((current) => ({
+      ...current,
+      athleteTeamId: event.target.value,
+      athletePositionId: '',
+      athleteDisciplineId: '',
     }))
   }
+
+  const buildPayload = () => ({
+    firstName: form.firstName.trim(),
+    lastName: form.lastName.trim(),
+    birthDate: form.birthDate,
+    gender: form.gender,
+    email: form.email.trim(),
+    username: form.username.trim(),
+
+    heightMeters: form.heightMeters
+      ? Number(form.heightMeters)
+      : 0,
+
+    weightKg: form.weightKg
+      ? Number(form.weightKg)
+      : null,
+
+    dominantArm:
+      form.dominantArm || null,
+
+    dominantLeg:
+      form.dominantLeg || null,
+
+    injuryHistory:
+      form.injuryHistory.trim() || null,
+
+    teamsInfo: [
+      {
+        teamId: Number(
+          form.athleteTeamId,
+        ),
+
+        positionId:
+          form.athletePositionId
+            ? Number(
+                form.athletePositionId,
+              )
+            : null,
+
+        disciplineId:
+          form.athleteDisciplineId
+            ? Number(
+                form.athleteDisciplineId,
+              )
+            : null,
+      },
+    ],
+  })
 
   const handleSubmit = async (event) => {
     event.preventDefault()
 
-    setSubmitting(true)
     setError('')
+    setSubmitting(true)
 
     if (!form.athleteTeamId) {
       setError(
         'Veuillez sélectionner une équipe.',
       )
-
       setSubmitting(false)
       return
     }
 
-    const payload = {
-      firstName: form.firstName.trim(),
-      lastName: form.lastName.trim(),
-      birthDate: form.birthDate,
-      gender: form.gender,
-      email: form.email.trim(),
-
-      heightMeters: form.heightMeters
-        ? Number(form.heightMeters)
-        : 0,
-
-      weightKg: form.weightKg
-        ? Number(form.weightKg)
-        : null,
-
-      dominantArm:
-        form.dominantArm || null,
-
-      dominantLeg:
-        form.dominantLeg || null,
-
-      username: form.username.trim(),
-
-      injuryHistory:
-        form.injuryHistory.trim() || null,
-
-      teamsInfo: [
-        {
-          teamId: Number(
-            form.athleteTeamId,
-          ),
-
-          positionId:
-            form.athletePositionId
-              ? Number(
-                  form.athletePositionId,
-                )
-              : null,
-
-          disciplineId:
-            form.athleteDisciplineId
-              ? Number(
-                  form.athleteDisciplineId,
-                )
-              : null,
-        },
-      ],
-    }
-
-    console.log(
-      'Payload création athlète :',
-      payload,
-    )
-
-    try {
-      const result =
-        await athleteService.createAthlete(
-          payload,
-        )
-
-      if (!result.success) {
-        console.error(
-          'Erreur lors de la création de l’athlète :',
-          result.error,
-        )
-
-        setError(
-          result.error ||
-            'Une erreur est survenue lors de la création de l’athlète.',
-        )
-
-        return
-      }
-
-      if (!result.data) {
-        setError(
-          'L’athlète a été créé, mais aucun lien d’activation n’a été retourné.',
-        )
-
-        return
-      }
-
-      setActivationLink(result.data)
-    } catch (submitError) {
-      console.error(
-        'Erreur lors de la création de l’athlète :',
-        submitError,
+    const result =
+      await athleteService.createAthlete(
+        buildPayload(),
       )
 
+    if (!result.success) {
       setError(
-        'Une erreur inattendue est survenue lors de la création de l’athlète.',
+        result.error ||
+          'Impossible de créer l’athlète.',
       )
-    } finally {
       setSubmitting(false)
-    }
-  }
-
-  const handleCancel = () => {
-    navigate('/athletes')
-  }
-
-  const handleCloseModal = () => {
-    navigate('/athletes')
-  }
-
-  const handleOpenActivationLink = () => {
-    if (!activationLink) {
       return
     }
 
-    window.open(
-      activationLink,
-      '_blank',
-      'noopener,noreferrer',
-    )
+    if (!result.data) {
+      setError(
+        'L’athlète a été créé, mais aucun lien d’activation n’a été retourné.',
+      )
+      setSubmitting(false)
+      return
+    }
+
+    setActivationLink(result.data)
+    setSubmitting(false)
   }
 
-  const handleCopyActivationLink =
-    async () => {
-      if (!activationLink) {
-        return
-      }
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(
+        activationLink,
+      )
 
-      try {
-        await navigator.clipboard.writeText(
-          activationLink,
-        )
+      setCopySuccess(true)
 
-        setCopySuccess(true)
-
-        window.setTimeout(() => {
-          setCopySuccess(false)
-        }, 2000)
-      } catch (copyError) {
-        console.error(
-          'Impossible de copier le lien :',
-          copyError,
-        )
-      }
+      setTimeout(() => {
+        setCopySuccess(false)
+      }, 2000)
+    } catch (error) {
+      console.error(
+        'Impossible de copier le lien :',
+        error,
+      )
     }
+  }
 
   return (
     <div className="create-page">
@@ -314,127 +253,99 @@ export default function CreateAthletePage() {
         )}
 
         <section className="form-section">
-          <h2>
-            Informations personnelles
-          </h2>
+          <h2>Informations personnelles</h2>
 
           <div className="form-grid">
-            <div className="form-field">
-              <label htmlFor="firstName">
-                Prénom
-              </label>
-
+            <Field
+              label="Prénom"
+              required
+            >
               <input
-                id="firstName"
                 type="text"
                 placeholder="Ex. : Léa"
                 value={form.firstName}
-                onChange={(event) =>
+                onChange={(e) =>
                   updateField(
                     'firstName',
-                    event.target.value,
+                    e.target.value,
                   )
                 }
                 required
-                disabled={submitting}
               />
-            </div>
+            </Field>
 
-            <div className="form-field">
-              <label htmlFor="lastName">
-                Nom
-              </label>
-
+            <Field
+              label="Nom"
+              required
+            >
               <input
-                id="lastName"
                 type="text"
                 placeholder="Ex. : Martin"
                 value={form.lastName}
-                onChange={(event) =>
+                onChange={(e) =>
                   updateField(
                     'lastName',
-                    event.target.value,
+                    e.target.value,
                   )
                 }
                 required
-                disabled={submitting}
               />
-            </div>
+            </Field>
 
-            <div className="form-field">
-              <label htmlFor="birthDate">
-                Date de naissance
-              </label>
-
+            <Field label="Date de naissance">
               <input
-                id="birthDate"
                 type="date"
                 value={form.birthDate}
-                onChange={(event) =>
+                onChange={(e) =>
                   updateField(
                     'birthDate',
-                    event.target.value,
+                    e.target.value,
                   )
                 }
                 required
-                disabled={submitting}
               />
-            </div>
+            </Field>
 
-            <div className="form-field">
-              <label htmlFor="gender">
-                Sexe
-              </label>
-
+            <Field label="Sexe">
               <select
-                id="gender"
                 value={form.gender}
-                onChange={(event) =>
+                onChange={(e) =>
                   updateField(
                     'gender',
-                    event.target.value,
+                    e.target.value,
                   )
                 }
                 required
-                disabled={submitting}
               >
-                <option
-                  value=""
-                  disabled
-                >
+                <option value="">
                   Sélectionner
                 </option>
-
                 <option value="Female">
                   Femme
                 </option>
-
                 <option value="Male">
                   Homme
                 </option>
               </select>
-            </div>
+            </Field>
 
-            <div className="form-field full-width">
-              <label htmlFor="email">
-                Courriel
-              </label>
-
+            <Field
+              label="Courriel"
+              fullWidth
+            >
               <input
-                id="email"
                 type="email"
                 placeholder="Ex. : lea.martin@athlets.com"
                 value={form.email}
-                onChange={(event) =>
+                onChange={(e) =>
                   updateField(
                     'email',
-                    event.target.value,
+                    e.target.value,
                   )
                 }
                 required
-                disabled={submitting}
               />
-            </div>
+            </Field>
           </div>
         </section>
 
@@ -442,46 +353,14 @@ export default function CreateAthletePage() {
           <h2>Profil sportif</h2>
 
           <div className="form-grid">
-            <div className="form-field">
-              <label htmlFor="athleteTeamName">
-                Équipe
-              </label>
-
+            <Field label="Équipe">
               <select
-                id="athleteTeamName"
                 value={form.athleteTeamId}
-                onChange={(event) => {
-                  const selectedTeamId = event.target.value
-                  const selectedTeam = teams.find(
-                    (team) =>
-                      String(team.id) ===
-                      String(selectedTeamId),
-                  )
-
-                  updateField(
-                    'athleteTeamId',
-                    selectedTeamId,
-                  )
-                  updateField(
-                    'athleteTeamName',
-                    selectedTeam?.name || '',
-                  )
-                  updateField(
-                    'athletePositionId',
-                    '',
-                  )
-                  updateField(
-                    'athleteDisciplineId',
-                    '',
-                  )
-                }}
+                onChange={handleTeamChange}
                 disabled={loadingTeams}
                 required
               >
-                <option
-                  value=""
-                  disabled
-                >
+                <option value="">
                   {loadingTeams
                     ? 'Chargement...'
                     : 'Sélectionner'}
@@ -496,187 +375,150 @@ export default function CreateAthletePage() {
                   </option>
                 ))}
               </select>
-            </div>
+            </Field>
 
-            <div className="form-field">
-              <label htmlFor="athletePositionId">
-                Position
-              </label>
-
+            <Field label="Position">
               <select
-                id="athletePositionId"
-                value={form.athletePositionId}
-                onChange={(event) =>
+                value={
+                  form.athletePositionId
+                }
+                onChange={(e) =>
                   updateField(
                     'athletePositionId',
-                    event.target.value,
+                    e.target.value,
                   )
                 }
-                disabled={!teamSelected}
+                disabled={
+                  !form.athleteTeamId ||
+                  loadingExtras
+                }
               >
-                <option value="" disabled>
-                  {teamSelected
-                    ? loadingSportExtras
-                      ? 'Chargement...'
-                      : 'Sélectionner'
-                    : 'Sélectionner une équipe d’abord'}
+                <option value="">
+                  {loadingExtras
+                    ? 'Chargement...'
+                    : 'Aucune'}
                 </option>
 
                 {positions.map((position) => (
                   <option
-                    key={position.id ?? position}
-                    value={position.id ?? position}
+                    key={position.id}
+                    value={position.id}
                   >
-                    {position.name ?? position}
+                    {position.name}
                   </option>
                 ))}
               </select>
-            </div>
+            </Field>
 
-            <div className="form-field">
-              <label htmlFor="athleteDisciplineId">
-                Discipline
-              </label>
-
+            <Field label="Discipline">
               <select
-                id="athleteDisciplineId"
-                value={form.athleteDisciplineId}
-                onChange={(event) =>
+                value={
+                  form.athleteDisciplineId
+                }
+                onChange={(e) =>
                   updateField(
                     'athleteDisciplineId',
-                    event.target.value,
+                    e.target.value,
                   )
                 }
-                disabled={!teamSelected}
+                disabled={
+                  !form.athleteTeamId ||
+                  loadingExtras
+                }
               >
-                <option value="" disabled>
-                  {teamSelected
-                    ? loadingSportExtras
-                      ? 'Chargement...'
-                      : 'Sélectionner'
-                    : 'Sélectionner une équipe d’abord'}
+                <option value="">
+                  {loadingExtras
+                    ? 'Chargement...'
+                    : 'Aucune'}
                 </option>
 
-                {disciplines.map((discipline) => (
-                  <option
-                    key={discipline.id ?? discipline}
-                    value={discipline.id ?? discipline}
-                  >
-                    {discipline.name ?? discipline}
-                  </option>
-                ))}
+                {disciplines.map(
+                  (discipline) => (
+                    <option
+                      key={discipline.id}
+                      value={discipline.id}
+                    >
+                      {discipline.name}
+                    </option>
+                  ),
+                )}
               </select>
-            </div>
+            </Field>
 
-            <div className="form-field">
-              <label htmlFor="heightMeters">
-                Taille (cm)
-              </label>
-
+            <Field label="Taille (cm)">
               <input
-                id="heightMeters"
                 type="number"
                 min="1"
-                step="1"
                 placeholder="Ex. : 180"
-                value={
-                  form.heightMeters
-                }
-                onChange={(event) =>
+                value={form.heightMeters}
+                onChange={(e) =>
                   updateField(
                     'heightMeters',
-                    event.target.value,
+                    e.target.value,
                   )
                 }
-                disabled={submitting}
               />
-            </div>
+            </Field>
 
-            <div className="form-field">
-              <label htmlFor="weightKg">
-                Poids (kg)
-              </label>
-
+            <Field label="Poids (kg)">
               <input
-                id="weightKg"
                 type="number"
                 min="1"
                 step="0.1"
                 placeholder="Ex. : 75"
                 value={form.weightKg}
-                onChange={(event) =>
+                onChange={(e) =>
                   updateField(
                     'weightKg',
-                    event.target.value,
+                    e.target.value,
                   )
                 }
-                disabled={submitting}
               />
-            </div>
+            </Field>
 
-            <div className="form-field">
-              <label htmlFor="dominantArm">
-                Bras dominant
-              </label>
-
+            <Field label="Bras dominant">
               <select
-                id="dominantArm"
-                value={
-                  form.dominantArm
-                }
-                onChange={(event) =>
+                value={form.dominantArm}
+                onChange={(e) =>
                   updateField(
                     'dominantArm',
-                    event.target.value,
+                    e.target.value,
                   )
                 }
-                disabled={submitting}
               >
                 <option value="">
                   Sélectionner
                 </option>
-
                 <option value="Right">
                   Droit
                 </option>
-
                 <option value="Left">
                   Gauche
                 </option>
               </select>
-            </div>
+            </Field>
 
-            <div className="form-field">
-              <label htmlFor="dominantLeg">
-                Jambe dominante
-              </label>
-
+            <Field label="Jambe dominante">
               <select
-                id="dominantLeg"
-                value={
-                  form.dominantLeg
-                }
-                onChange={(event) =>
+                value={form.dominantLeg}
+                onChange={(e) =>
                   updateField(
                     'dominantLeg',
-                    event.target.value,
+                    e.target.value,
                   )
                 }
-                disabled={submitting}
               >
                 <option value="">
                   Sélectionner
                 </option>
-
                 <option value="Right">
                   Droite
                 </option>
-
                 <option value="Left">
                   Gauche
                 </option>
               </select>
-            </div>
+            </Field>
           </div>
         </section>
 
@@ -684,39 +526,27 @@ export default function CreateAthletePage() {
           <h2>Compte utilisateur</h2>
 
           <div className="form-grid">
-            <div className="form-field">
-              <label htmlFor="username">
-                Nom d'utilisateur
-              </label>
-
+            <Field label="Nom d'utilisateur">
               <input
-                id="username"
                 type="text"
                 placeholder="Ex. : lea.martin"
                 value={form.username}
-                onChange={(event) =>
+                onChange={(e) =>
                   updateField(
                     'username',
-                    event.target.value,
+                    e.target.value,
                   )
                 }
                 required
-                disabled={submitting}
               />
-            </div>
+            </Field>
 
-            <div className="form-field">
-              <label htmlFor="accountStatus">
-                Statut du compte
-              </label>
-
+            <Field label="Statut du compte">
               <input
-                id="accountStatus"
-                type="text"
                 value="En attente d’activation"
                 disabled
               />
-            </div>
+            </Field>
           </div>
         </section>
 
@@ -725,33 +555,30 @@ export default function CreateAthletePage() {
             Historique médical et notes
           </h2>
 
-          <div className="form-field full-width">
-            <label htmlFor="injuryHistory">
-              Historique des blessures et notes
-            </label>
-
+          <Field
+            label="Historique des blessures et notes"
+            fullWidth
+          >
             <textarea
-              id="injuryHistory"
-              placeholder="Ex. : Antécédents de blessures, interventions, recommandations particulières..."
-              value={
-                form.injuryHistory
-              }
-              onChange={(event) =>
+              placeholder="Ex. : Antécédents de blessures, interventions..."
+              value={form.injuryHistory}
+              onChange={(e) =>
                 updateField(
                   'injuryHistory',
-                  event.target.value,
+                  e.target.value,
                 )
               }
-              disabled={submitting}
             />
-          </div>
+          </Field>
         </section>
 
         <div className="form-actions">
           <button
             type="button"
             className="btn-secondary"
-            onClick={handleCancel}
+            onClick={() =>
+              navigate('/athletes')
+            }
             disabled={submitting}
           >
             Annuler
@@ -773,81 +600,113 @@ export default function CreateAthletePage() {
       </form>
 
       {activationLink && (
-        <div
-          className="activation-modal-overlay"
-          role="presentation"
-        >
-          <div
-            className="activation-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="activation-modal-title"
-          >
-            <div className="activation-modal__header">
-              <div>
-                <h2 id="activation-modal-title">
-                  Athlète créé avec succès
-                </h2>
-
-                <p>
-                  Le compte est maintenant en attente
-                  d’activation.
-                </p>
-              </div>
-            </div>
-
-            <div className="activation-modal__content">
-              <p>
-                Puisque l’envoi par courriel n’est pas
-                encore configuré, utilisez ce lien pour
-                activer le compte de l’athlète.
-              </p>
-
-              <div className="activation-modal__link">
-                {activationLink}
-              </div>
-
-              {copySuccess && (
-                <p className="activation-modal__copy-success">
-                  Lien copié.
-                </p>
-              )}
-            </div>
-
-            <div className="activation-modal__actions">
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={
-                  handleCopyActivationLink
-                }
-              >
-                {copySuccess
-                  ? 'Copié'
-                  : 'Copier le lien'}
-              </button>
-
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={
-                  handleOpenActivationLink
-                }
-              >
-                Ouvrir le lien
-              </button>
-
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={handleCloseModal}
-              >
-                Terminer
-              </button>
-            </div>
-          </div>
-        </div>
+        <ActivationModal
+          link={activationLink}
+          copySuccess={copySuccess}
+          onCopy={handleCopyLink}
+          onOpen={() =>
+            window.open(
+              activationLink,
+              '_blank',
+              'noopener,noreferrer',
+            )
+          }
+          onClose={() =>
+            navigate('/athletes')
+          }
+        />
       )}
+    </div>
+  )
+}
+
+function Field({
+  label,
+  fullWidth = false,
+  children,
+}) {
+  return (
+    <div
+      className={`form-field ${
+        fullWidth ? 'full-width' : ''
+      }`}
+    >
+      <label>{label}</label>
+      {children}
+    </div>
+  )
+}
+
+function ActivationModal({
+  link,
+  copySuccess,
+  onCopy,
+  onOpen,
+  onClose,
+}) {
+  return (
+    <div className="link-modal-overlay">
+      <div
+        className="link-modal"
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="link-modal__header">
+          <h2>
+            Athlète créé avec succès
+          </h2>
+
+          <p>
+            Le compte est en attente
+            d’activation.
+          </p>
+        </div>
+
+        <div className="link-modal__content">
+          <p>
+            Utilisez ce lien pour activer
+            le compte de l’athlète.
+          </p>
+
+          <div className="link-modal__link">
+            {link}
+          </div>
+
+          {copySuccess && (
+            <p className="link-modal__copy-success">
+              Lien copié.
+            </p>
+          )}
+        </div>
+
+        <div className="link-modal__actions">
+          <button
+            type="button"
+            className="link-modal__button link-modal__button--secondary"
+            onClick={onCopy}
+          >
+            {copySuccess
+              ? 'Copié'
+              : 'Copier le lien'}
+          </button>
+
+          <button
+            type="button"
+            className="link-modal__button link-modal__button--secondary"
+            onClick={onOpen}
+          >
+            Ouvrir le lien
+          </button>
+
+          <button
+            type="button"
+            className="link-modal__button link-modal__button--primary"
+            onClick={onClose}
+          >
+            Terminer
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
