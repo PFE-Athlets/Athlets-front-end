@@ -151,40 +151,18 @@ const findAthleteById = (athletes, athleteId) =>
   )
 
 export const athleteService = {
-  createAthlete: async (form) => {
+  createAthlete: async (payload) => {
     try {
-      await api.post('/api/athlete/create', {
-        firstName: form.firstName.trim(),
-        lastName: form.lastName.trim(),
-        birthDate: form.birthDate,
-        gender: form.gender,
-        email: form.email.trim(),
-        username: form.username.trim(),
-
-        accountStatus: form.accountStatus,
-
-        heightMeters:
-          form.heightMeters !== ''
-            ? Number(form.heightMeters)
-            : null,
-
-        weightKg:
-          form.weightKg !== ''
-            ? Number(form.weightKg)
-            : null,
-
-        dominantArm: form.dominantArm || null,
-        dominantLeg: form.dominantLeg || null,
-
-        injuryHistory:
-          form.injuryHistory?.trim() || null,
-
-        athleteTeamName: form.athleteTeamName,
-      })
+      const response = await api.post(
+        '/api/athlete/create',
+        payload,
+      )
 
       return {
         success: true,
-        message: 'L’athlète a été créé avec succès.',
+        data: response.data,
+        message:
+          'L’athlète a été créé avec succès.',
       }
     } catch (error) {
       return {
