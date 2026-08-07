@@ -18,11 +18,18 @@ const extractError = (error, fallback) => {
 export const authService = {
   login: async (username, password) => {
     try {
-      const response = await api.post('/api/auth/login', {
-        username,
-        password,
-      })
-      return { success: true, data: response.data }
+      const response = await api.post(
+        '/api/auth/login',
+        {
+          username,
+          password,
+        },
+      )
+
+      return {
+        success: true,
+        data: response.data,
+      }
     } catch (error) {
       return {
         success: false,
@@ -37,8 +44,14 @@ export const authService = {
 
   logout: async () => {
     try {
-      const response = await api.post('/api/auth/logout')
-      return { success: true, data: response.data }
+      const response = await api.post(
+        '/api/auth/logout',
+      )
+
+      return {
+        success: true,
+        data: response.data,
+      }
     } catch (error) {
       return {
         success: false,
@@ -51,13 +64,20 @@ export const authService = {
     }
   },
 
-  async activateAccount({ token, newPassword, confirmPassword }) {
+  activateAccount: async ({
+    token,
+    newPassword,
+    confirmPassword,
+  }) => {
     try {
-      const response = await api.post('/api/auth/activate', {
-        token,
-        newPassword,
-        confirmPassword,
-      })
+      const response = await api.post(
+        '/api/auth/activate',
+        {
+          token,
+          newPassword,
+          confirmPassword,
+        },
+      )
 
       return {
         success: true,
@@ -66,30 +86,35 @@ export const authService = {
     } catch (error) {
       return {
         success: false,
-        error:
-          error.response?.data?.erreur ||
-          error.response?.data?.message ||
+        status: error.response?.status,
+        error: extractError(
+          error,
           'Impossible d’activer le compte.',
+        ),
       }
     }
   },
 
   requestPasswordReset: async (payload) => {
     try {
-      await api.post(
+      const response = await api.post(
         '/api/auth/password-reset/request',
         payload,
       )
 
       return {
         success: true,
+        data: response.data,
+        message:
+          'Le lien de réinitialisation a été généré.',
       }
     } catch (error) {
       return {
         success: false,
+        status: error.response?.status,
         error: extractError(
           error,
-          'Impossible d’envoyer le lien de réinitialisation.',
+          'Impossible de générer le lien de réinitialisation.',
         ),
       }
     }
@@ -97,17 +122,19 @@ export const authService = {
 
   resetPassword: async (payload) => {
     try {
-      await api.post(
+      const response = await api.post(
         '/api/auth/password-reset/confirm',
         payload,
       )
 
       return {
         success: true,
+        data: response.data,
       }
     } catch (error) {
       return {
         success: false,
+        status: error.response?.status,
         error: extractError(
           error,
           'Impossible de réinitialiser le mot de passe.',
