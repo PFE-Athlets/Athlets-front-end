@@ -246,12 +246,6 @@ export default function CreateAthletePage() {
         className="entity-form"
         onSubmit={handleSubmit}
       >
-        {error && (
-          <div className="form-error">
-            {error}
-          </div>
-        )}
-
         <section className="form-section">
           <h2>Informations personnelles</h2>
 
@@ -571,6 +565,12 @@ export default function CreateAthletePage() {
             />
           </Field>
         </section>
+
+        {error && (
+          <div className="form-error">
+            {error}
+          </div>
+        )}
 
         <div className="form-actions">
           <button

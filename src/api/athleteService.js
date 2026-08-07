@@ -295,8 +295,45 @@ const findAthleteById = (
   )
 
 export const athleteService = {
-  createAthlete: async (payload) => {
+  createAthlete: async (form) => {
     try {
+      const payload = {
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        birthDate: form.birthDate,
+        gender: form.gender,
+        email: form.email.trim(),
+        username: form.username.trim(),
+
+        accountStatus: form.accountStatus,
+
+        dominantArm: form.dominantArm || null,
+        dominantLeg: form.dominantLeg || null,
+
+        injuryHistory:
+          form.injuryHistory?.trim() || null,
+
+        athleteTeamName: form.athleteTeamName,
+      }
+
+      if (form.heightMeters !== '') {
+        payload.heightMeters = Number(form.heightMeters)
+      }
+
+      if (form.weightKg !== '') {
+        payload.weightKg = Number(form.weightKg)
+      }
+
+      if (form.athletePositionId) {
+        payload.position = form.athletePositionId
+      }
+
+      if (form.athleteDisciplineId) {
+        payload.discipline = form.athleteDisciplineId
+      }
+
+      payload.teamsInfo = buildTeamsInfo(form)
+
       const response = await api.post(
         '/api/athlete/create',
         payload,
@@ -305,18 +342,15 @@ export const athleteService = {
       return {
         success: true,
         data: response.data,
-        message:
-          'L’athlète a été créé avec succès.',
+        message: 'L’athlète a été créé avec succès.',
       }
     } catch (error) {
       return {
         success: false,
-        status:
-          error.response?.status,
-
+        status: error.response?.status,
         error: extractError(
           error,
-          'Impossible de créer l’athlète',
+          'Impossible de créer l’athlète.',
         ),
       }
     }
