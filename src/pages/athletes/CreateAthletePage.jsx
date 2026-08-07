@@ -36,18 +36,28 @@ export default function CreateAthletePage() {
   const [disciplines, setDisciplines] = useState([])
 
   const [loadingTeams, setLoadingTeams] = useState(true)
-  const [loadingSportExtras, setLoadingSportExtras] = useState(false)
+  const [loadingSportExtras, setLoadingSportExtras] =
+    useState(false)
+
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
-  const teamSelected = form.athleteTeamId !== ''
+  const [activationLink, setActivationLink] =
+    useState('')
+
+  const [copySuccess, setCopySuccess] =
+    useState(false)
+
+  const teamSelected =
+    form.athleteTeamId !== ''
 
   useEffect(() => {
     const fetchTeams = async () => {
       setLoadingTeams(true)
       setError('')
 
-      const result = await teamService.getDisplayTeams()
+      const result =
+        await teamService.getDisplayTeams()
 
       if (!result.success) {
         console.error(
@@ -72,7 +82,8 @@ export default function CreateAthletePage() {
   }, [])
 
   useEffect(() => {
-    const selectedTeamId = form.athleteTeamId
+    const selectedTeamId =
+      form.athleteTeamId
 
     if (!selectedTeamId) {
       setPositions([])
@@ -81,10 +92,13 @@ export default function CreateAthletePage() {
     }
 
     const selectedTeam = teams.find(
-      (team) => String(team.id) === String(selectedTeamId),
+      (team) =>
+        String(team.id) ===
+        String(selectedTeamId),
     )
 
-    const selectedSportId = selectedTeam?.sportId
+    const selectedSportId =
+      selectedTeam?.sportId
 
     if (!selectedSportId) {
       setPositions([])
@@ -98,9 +112,10 @@ export default function CreateAthletePage() {
       setLoadingSportExtras(true)
 
       const result =
-        await teamService.getDisciplinesAndPositionsBySportId(
-          selectedSportId,
-        )
+        await teamService
+          .getDisciplinesAndPositionsBySportId(
+            selectedSportId,
+          )
 
       if (!isActive) {
         return
@@ -116,6 +131,7 @@ export default function CreateAthletePage() {
           result.error ||
             'Impossible de charger les positions et disciplines pour cette équipe.',
         )
+
         setPositions([])
         setDisciplines([])
         setLoadingSportExtras(false)
@@ -123,8 +139,13 @@ export default function CreateAthletePage() {
       }
 
       setError('')
-      setPositions(result.data.positions)
-      setDisciplines(result.data.disciplines)
+      setPositions(
+        result.data.positions ?? [],
+      )
+      setDisciplines(
+        result.data.disciplines ?? [],
+      )
+
       setLoadingSportExtras(false)
     }
 
@@ -149,7 +170,10 @@ export default function CreateAthletePage() {
     setError('')
 
     if (!form.athleteTeamId) {
-      setError('Veuillez sélectionner une équipe.')
+      setError(
+        'Veuillez sélectionner une équipe.',
+      )
+
       setSubmitting(false)
       return
     }
@@ -169,8 +193,11 @@ export default function CreateAthletePage() {
         ? Number(form.weightKg)
         : null,
 
-      dominantArm: form.dominantArm || null,
-      dominantLeg: form.dominantLeg || null,
+      dominantArm:
+        form.dominantArm || null,
+
+      dominantLeg:
+        form.dominantLeg || null,
 
       username: form.username.trim(),
 
@@ -179,15 +206,23 @@ export default function CreateAthletePage() {
 
       teamsInfo: [
         {
-          teamId: Number(form.athleteTeamId),
+          teamId: Number(
+            form.athleteTeamId,
+          ),
 
-          positionId: form.athletePositionId
-            ? Number(form.athletePositionId)
-            : null,
+          positionId:
+            form.athletePositionId
+              ? Number(
+                  form.athletePositionId,
+                )
+              : null,
 
-          disciplineId: form.athleteDisciplineId
-            ? Number(form.athleteDisciplineId)
-            : null,
+          disciplineId:
+            form.athleteDisciplineId
+              ? Number(
+                  form.athleteDisciplineId,
+                )
+              : null,
         },
       ],
     }
@@ -199,7 +234,9 @@ export default function CreateAthletePage() {
 
     try {
       const result =
-        await athleteService.createAthlete(payload)
+        await athleteService.createAthlete(
+          payload,
+        )
 
       if (!result.success) {
         console.error(
@@ -215,7 +252,15 @@ export default function CreateAthletePage() {
         return
       }
 
-      navigate('/athletes')
+      if (!result.data) {
+        setError(
+          'L’athlète a été créé, mais aucun lien d’activation n’a été retourné.',
+        )
+
+        return
+      }
+
+      setActivationLink(result.data)
     } catch (submitError) {
       console.error(
         'Erreur lors de la création de l’athlète :',
@@ -234,6 +279,46 @@ export default function CreateAthletePage() {
     navigate('/athletes')
   }
 
+  const handleCloseModal = () => {
+    navigate('/athletes')
+  }
+
+  const handleOpenActivationLink = () => {
+    if (!activationLink) {
+      return
+    }
+
+    window.open(
+      activationLink,
+      '_blank',
+      'noopener,noreferrer',
+    )
+  }
+
+  const handleCopyActivationLink =
+    async () => {
+      if (!activationLink) {
+        return
+      }
+
+      try {
+        await navigator.clipboard.writeText(
+          activationLink,
+        )
+
+        setCopySuccess(true)
+
+        window.setTimeout(() => {
+          setCopySuccess(false)
+        }, 2000)
+      } catch (copyError) {
+        console.error(
+          'Impossible de copier le lien :',
+          copyError,
+        )
+      }
+    }
+
   return (
     <div className="create-page">
       <form
@@ -247,7 +332,9 @@ export default function CreateAthletePage() {
         )}
 
         <section className="form-section">
-          <h2>Informations personnelles</h2>
+          <h2>
+            Informations personnelles
+          </h2>
 
           <div className="form-grid">
             <div className="form-field">
@@ -267,6 +354,7 @@ export default function CreateAthletePage() {
                   )
                 }
                 required
+                disabled={submitting}
               />
             </div>
 
@@ -287,6 +375,7 @@ export default function CreateAthletePage() {
                   )
                 }
                 required
+                disabled={submitting}
               />
             </div>
 
@@ -306,6 +395,7 @@ export default function CreateAthletePage() {
                   )
                 }
                 required
+                disabled={submitting}
               />
             </div>
 
@@ -324,8 +414,12 @@ export default function CreateAthletePage() {
                   )
                 }
                 required
+                disabled={submitting}
               >
-                <option value="" disabled>
+                <option
+                  value=""
+                  disabled
+                >
                   Sélectionner
                 </option>
 
@@ -356,6 +450,7 @@ export default function CreateAthletePage() {
                   )
                 }
                 required
+                disabled={submitting}
               />
             </div>
           </div>
@@ -372,36 +467,55 @@ export default function CreateAthletePage() {
 
               <select
                 id="athleteTeamName"
-                value={form.athleteTeamId}
+                value={
+                  form.athleteTeamId
+                }
                 onChange={(event) => {
-                  const selectedTeamId = event.target.value
-                  const selectedTeam = teams.find(
-                    (team) =>
-                      String(team.id) ===
-                      String(selectedTeamId),
-                  )
+                  const selectedTeamId =
+                    event.target.value
+
+                  const selectedTeam =
+                    teams.find(
+                      (team) =>
+                        String(
+                          team.id,
+                        ) ===
+                        String(
+                          selectedTeamId,
+                        ),
+                    )
 
                   updateField(
                     'athleteTeamId',
                     selectedTeamId,
                   )
+
                   updateField(
                     'athleteTeamName',
-                    selectedTeam?.name || '',
+                    selectedTeam?.name ||
+                      '',
                   )
+
                   updateField(
                     'athletePositionId',
                     '',
                   )
+
                   updateField(
                     'athleteDisciplineId',
                     '',
                   )
                 }}
-                disabled={loadingTeams}
+                disabled={
+                  loadingTeams ||
+                  submitting
+                }
                 required
               >
-                <option value="" disabled>
+                <option
+                  value=""
+                  disabled
+                >
                   {loadingTeams
                     ? 'Chargement...'
                     : 'Sélectionner'}
@@ -425,31 +539,45 @@ export default function CreateAthletePage() {
 
               <select
                 id="athletePositionId"
-                value={form.athletePositionId}
+                value={
+                  form.athletePositionId
+                }
                 onChange={(event) =>
                   updateField(
                     'athletePositionId',
                     event.target.value,
                   )
                 }
-                disabled={!teamSelected}
+                disabled={
+                  !teamSelected ||
+                  submitting
+                }
               >
-                <option value="" disabled>
+                <option value="">
                   {teamSelected
                     ? loadingSportExtras
                       ? 'Chargement...'
-                      : 'Sélectionner'
+                      : 'Aucune'
                     : 'Sélectionner une équipe d’abord'}
                 </option>
 
-                {positions.map((position) => (
-                  <option
-                    key={position.id ?? position}
-                    value={position.id ?? position}
-                  >
-                    {position.name ?? position}
-                  </option>
-                ))}
+                {positions.map(
+                  (position) => (
+                    <option
+                      key={
+                        position.id ??
+                        position
+                      }
+                      value={
+                        position.id ??
+                        position
+                      }
+                    >
+                      {position.name ??
+                        position}
+                    </option>
+                  ),
+                )}
               </select>
             </div>
 
@@ -460,31 +588,45 @@ export default function CreateAthletePage() {
 
               <select
                 id="athleteDisciplineId"
-                value={form.athleteDisciplineId}
+                value={
+                  form.athleteDisciplineId
+                }
                 onChange={(event) =>
                   updateField(
                     'athleteDisciplineId',
                     event.target.value,
                   )
                 }
-                disabled={!teamSelected}
+                disabled={
+                  !teamSelected ||
+                  submitting
+                }
               >
-                <option value="" disabled>
+                <option value="">
                   {teamSelected
                     ? loadingSportExtras
                       ? 'Chargement...'
-                      : 'Sélectionner'
+                      : 'Aucune'
                     : 'Sélectionner une équipe d’abord'}
                 </option>
 
-                {disciplines.map((discipline) => (
-                  <option
-                    key={discipline.id ?? discipline}
-                    value={discipline.id ?? discipline}
-                  >
-                    {discipline.name ?? discipline}
-                  </option>
-                ))}
+                {disciplines.map(
+                  (discipline) => (
+                    <option
+                      key={
+                        discipline.id ??
+                        discipline
+                      }
+                      value={
+                        discipline.id ??
+                        discipline
+                      }
+                    >
+                      {discipline.name ??
+                        discipline}
+                    </option>
+                  ),
+                )}
               </select>
             </div>
 
@@ -499,13 +641,16 @@ export default function CreateAthletePage() {
                 min="1"
                 step="1"
                 placeholder="Ex. : 180"
-                value={form.heightMeters}
+                value={
+                  form.heightMeters
+                }
                 onChange={(event) =>
                   updateField(
                     'heightMeters',
                     event.target.value,
                   )
                 }
+                disabled={submitting}
               />
             </div>
 
@@ -527,6 +672,7 @@ export default function CreateAthletePage() {
                     event.target.value,
                   )
                 }
+                disabled={submitting}
               />
             </div>
 
@@ -537,13 +683,16 @@ export default function CreateAthletePage() {
 
               <select
                 id="dominantArm"
-                value={form.dominantArm}
+                value={
+                  form.dominantArm
+                }
                 onChange={(event) =>
                   updateField(
                     'dominantArm',
                     event.target.value,
                   )
                 }
+                disabled={submitting}
               >
                 <option value="">
                   Sélectionner
@@ -566,13 +715,16 @@ export default function CreateAthletePage() {
 
               <select
                 id="dominantLeg"
-                value={form.dominantLeg}
+                value={
+                  form.dominantLeg
+                }
                 onChange={(event) =>
                   updateField(
                     'dominantLeg',
                     event.target.value,
                   )
                 }
+                disabled={submitting}
               >
                 <option value="">
                   Sélectionner
@@ -611,6 +763,7 @@ export default function CreateAthletePage() {
                   )
                 }
                 required
+                disabled={submitting}
               />
             </div>
 
@@ -630,7 +783,9 @@ export default function CreateAthletePage() {
         </section>
 
         <section className="form-section form-section--notes">
-          <h2>Historique médical et notes</h2>
+          <h2>
+            Historique médical et notes
+          </h2>
 
           <div className="form-field full-width">
             <label htmlFor="injuryHistory">
@@ -640,13 +795,16 @@ export default function CreateAthletePage() {
             <textarea
               id="injuryHistory"
               placeholder="Ex. : Antécédents de blessures, interventions, recommandations particulières..."
-              value={form.injuryHistory}
+              value={
+                form.injuryHistory
+              }
               onChange={(event) =>
                 updateField(
                   'injuryHistory',
                   event.target.value,
                 )
               }
+              disabled={submitting}
             />
           </div>
         </section>
@@ -664,7 +822,10 @@ export default function CreateAthletePage() {
           <button
             type="submit"
             className="btn-primary"
-            disabled={submitting || loadingTeams}
+            disabled={
+              submitting ||
+              loadingTeams
+            }
           >
             {submitting
               ? 'Création...'
@@ -672,6 +833,83 @@ export default function CreateAthletePage() {
           </button>
         </div>
       </form>
+
+      {activationLink && (
+        <div
+          className="activation-modal-overlay"
+          role="presentation"
+        >
+          <div
+            className="activation-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="activation-modal-title"
+          >
+            <div className="activation-modal__header">
+              <div>
+                <h2 id="activation-modal-title">
+                  Athlète créé avec succès
+                </h2>
+
+                <p>
+                  Le compte est maintenant en attente
+                  d’activation.
+                </p>
+              </div>
+            </div>
+
+            <div className="activation-modal__content">
+              <p>
+                Puisque l’envoi par courriel n’est pas
+                encore configuré, utilisez ce lien pour
+                activer le compte de l’athlète.
+              </p>
+
+              <div className="activation-modal__link">
+                {activationLink}
+              </div>
+
+              {copySuccess && (
+                <p className="activation-modal__copy-success">
+                  Lien copié.
+                </p>
+              )}
+            </div>
+
+            <div className="activation-modal__actions">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={
+                  handleCopyActivationLink
+                }
+              >
+                {copySuccess
+                  ? 'Copié'
+                  : 'Copier le lien'}
+              </button>
+
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={
+                  handleOpenActivationLink
+                }
+              >
+                Ouvrir le lien
+              </button>
+
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={handleCloseModal}
+              >
+                Terminer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -20,16 +20,65 @@ const normalizeText = (value) =>
     .trim()
     .toLowerCase()
 
+const toNullableNumber = (value) => {
+  if (value == null || value === '') {
+    return null
+  }
+
+  const numericValue = Number(value)
+
+  return Number.isFinite(numericValue)
+    ? numericValue
+    : null
+}
+
+const buildUpdateTeamsInfo = (form) => {
+  const selectedTeamId = toNullableNumber(
+    form.athleteTeamId,
+  )
+
+  const teamIdFromArray = Array.isArray(form.teamIds)
+    ? toNullableNumber(form.teamIds[0])
+    : null
+
+  const teamId =
+    selectedTeamId ?? teamIdFromArray
+
+  if (teamId == null) {
+    return []
+  }
+
+  const disciplineId = toNullableNumber(
+    form.athleteDisciplineId,
+  )
+
+  const positionId = toNullableNumber(
+    form.athletePositionId,
+  )
+
+  return [
+    {
+      teamId,
+      disciplineId,
+      positionId,
+    },
+  ]
+}
+
 const getAthleteStatus = (athlete) => {
-  const rawStatus = athlete?.authUser?.accountStatus
-    ?.trim()
-    .toUpperCase()
+  const rawStatus =
+    athlete?.authUser?.accountStatus
+      ?.trim()
+      .toUpperCase()
 
   if (rawStatus === 'ACTIVE') {
     return 'active'
   }
 
-  if (rawStatus === 'A_ACTIVER') {
+  if (
+    rawStatus === 'PENDING' ||
+    rawStatus === 'A_ACTIVER'
+  ) {
     return 'pending'
   }
 
@@ -53,7 +102,10 @@ const getAthleteSports = (athlete) => {
 
   const disciplineSports =
     athlete?.disciplines
-      ?.map((discipline) => discipline.sport?.name)
+      ?.map(
+        (discipline) =>
+          discipline.sport?.name,
+      )
       .filter(Boolean) ?? []
 
   return [
@@ -76,7 +128,10 @@ const getAthletePositions = (athlete) => {
 const getAthleteDisciplines = (athlete) => {
   const disciplines =
     athlete?.disciplines
-      ?.map((discipline) => discipline.name)
+      ?.map(
+        (discipline) =>
+          discipline.name,
+      )
       .filter(Boolean) ?? []
 
   return [...new Set(disciplines)]
@@ -84,31 +139,70 @@ const getAthleteDisciplines = (athlete) => {
 
 const mapAthleteDisplayItem = (athlete) => {
   const user = athlete?.authUser ?? {}
-  const teams = getAthleteTeams(athlete)
-  const sports = getAthleteSports(athlete)
-  const positions = getAthletePositions(athlete)
-  const disciplines = getAthleteDisciplines(athlete)
+
+  const teams =
+    getAthleteTeams(athlete)
+
+  const sports =
+    getAthleteSports(athlete)
+
+  const positions =
+    getAthletePositions(athlete)
+
+  const disciplines =
+    getAthleteDisciplines(athlete)
 
   return {
     id: String(user.id ?? ''),
-    firstName: user.firstName ?? '',
-    lastName: user.lastName ?? '',
-    fullName: [user.firstName, user.lastName]
+
+    firstName:
+      user.firstName ?? '',
+
+    lastName:
+      user.lastName ?? '',
+
+    fullName: [
+      user.firstName,
+      user.lastName,
+    ]
       .filter(Boolean)
       .join(' '),
-    username: user.username ?? '',
-    email: user.email ?? '',
-    accountStatus: user.accountStatus ?? '',
-    status: getAthleteStatus(athlete),
 
-    birthDate: athlete?.birthDate ?? '',
-    gender: athlete?.gender ?? '',
-    phone: athlete?.phone ?? '',
-    heightMeters: athlete?.heightMeters ?? '',
-    weightKg: athlete?.weightKg ?? '',
-    dominantArm: athlete?.dominantArm ?? '',
-    dominantLeg: athlete?.dominantLeg ?? '',
-    injuryHistory: athlete?.injuryHistory ?? '',
+    username:
+      user.username ?? '',
+
+    email:
+      user.email ?? '',
+
+    accountStatus:
+      user.accountStatus ?? '',
+
+    status:
+      getAthleteStatus(athlete),
+
+    birthDate:
+      athlete?.birthDate ?? '',
+
+    gender:
+      athlete?.gender ?? '',
+
+    phone:
+      athlete?.phone ?? '',
+
+    heightMeters:
+      athlete?.heightMeters ?? '',
+
+    weightKg:
+      athlete?.weightKg ?? '',
+
+    dominantArm:
+      athlete?.dominantArm ?? '',
+
+    dominantLeg:
+      athlete?.dominantLeg ?? '',
+
+    injuryHistory:
+      athlete?.injuryHistory ?? '',
 
     teams,
     sports,
@@ -118,36 +212,64 @@ const mapAthleteDisplayItem = (athlete) => {
     teamIds:
       athlete?.teams
         ?.map((team) => team.id)
-        .filter((teamId) => teamId != null) ?? [],
+        .filter(
+          (teamId) =>
+            teamId != null,
+        ) ?? [],
 
     positionIds:
       athlete?.positions
-        ?.map((position) => position.id)
-        .filter((positionId) => positionId != null) ?? [],
+        ?.map(
+          (position) =>
+            position.id,
+        )
+        .filter(
+          (positionId) =>
+            positionId != null,
+        ) ?? [],
 
     disciplineIds:
       athlete?.disciplines
-        ?.map((discipline) => discipline.id)
-        .filter((disciplineId) => disciplineId != null) ?? [],
+        ?.map(
+          (discipline) =>
+            discipline.id,
+        )
+        .filter(
+          (disciplineId) =>
+            disciplineId != null,
+        ) ?? [],
 
     raw: athlete,
   }
 }
 
 const mapAthleteUpdatePayload = (form) => ({
-  phone: form.phone?.trim() || null,
-  weightKg: Number(form.weightKg),
-  injuryHistory: form.injuryHistory?.trim() || null,
-  teamIds: form.teamIds ?? [],
-  positionIds: form.positionIds ?? [],
-  disciplineIds: form.disciplineIds ?? [],
+  phone:
+    form.phone?.trim() || null,
+
+  weightKg:
+    form.weightKg !== ''
+      ? Number(form.weightKg)
+      : null,
+
+  injuryHistory:
+    form.injuryHistory?.trim() || null,
+
+  teamsInfo:
+    buildUpdateTeamsInfo(form),
 })
 
-const findAthleteById = (athletes, athleteId) =>
+const findAthleteById = (
+  athletes,
+  athleteId,
+) =>
   athletes.find(
     (athlete) =>
-      String(athlete?.authUser?.id) === String(athleteId) ||
-      String(athlete?.id) === String(athleteId),
+      String(
+        athlete?.authUser?.id,
+      ) === String(athleteId) ||
+      String(athlete?.id) ===
+        String(athleteId),
   )
 
 export const athleteService = {
@@ -167,7 +289,9 @@ export const athleteService = {
     } catch (error) {
       return {
         success: false,
-        status: error.response?.status,
+        status:
+          error.response?.status,
+
         error: extractError(
           error,
           'Impossible de créer l’athlète',
@@ -178,8 +302,13 @@ export const athleteService = {
 
   getAllAthletes: async () => {
     try {
-      const response = await api.get('/api/athlete/all')
-      const rawList = Array.isArray(response.data)
+      const response = await api.get(
+        '/api/athlete/all',
+      )
+
+      const rawList = Array.isArray(
+        response.data,
+      )
         ? response.data
         : []
 
@@ -190,7 +319,9 @@ export const athleteService = {
     } catch (error) {
       return {
         success: false,
-        status: error.response?.status,
+        status:
+          error.response?.status,
+
         error: extractError(
           error,
           'Erreur lors du chargement des athlètes',
@@ -201,19 +332,28 @@ export const athleteService = {
 
   getDisplayAthletes: async () => {
     try {
-      const response = await api.get('/api/athlete/all')
-      const rawList = Array.isArray(response.data)
+      const response = await api.get(
+        '/api/athlete/all',
+      )
+
+      const rawList = Array.isArray(
+        response.data,
+      )
         ? response.data
         : []
 
       return {
         success: true,
-        data: rawList.map(mapAthleteDisplayItem),
+        data: rawList.map(
+          mapAthleteDisplayItem,
+        ),
       }
     } catch (error) {
       return {
         success: false,
-        status: error.response?.status,
+        status:
+          error.response?.status,
+
         error: extractError(
           error,
           'Erreur lors du chargement des athlètes',
@@ -222,23 +362,32 @@ export const athleteService = {
     }
   },
 
-  getDisplayAthletesByTeam: async (teamId) => {
+  getDisplayAthletesByTeam: async (
+    teamId,
+  ) => {
     try {
       const response = await api.get(
         `/api/athlete/team/${teamId}`,
       )
-      const rawList = Array.isArray(response.data)
+
+      const rawList = Array.isArray(
+        response.data,
+      )
         ? response.data
         : []
 
       return {
         success: true,
-        data: rawList.map(mapAthleteDisplayItem),
+        data: rawList.map(
+          mapAthleteDisplayItem,
+        ),
       }
     } catch (error) {
       return {
         success: false,
-        status: error.response?.status,
+        status:
+          error.response?.status,
+
         error: extractError(
           error,
           'Erreur lors du chargement des athlètes de l’équipe',
@@ -247,17 +396,25 @@ export const athleteService = {
     }
   },
 
-  getAthleteById: async (athleteId) => {
+  getAthleteById: async (
+    athleteId,
+  ) => {
     try {
-      const response = await api.get('/api/athlete/all')
-      const rawList = Array.isArray(response.data)
+      const response = await api.get(
+        '/api/athlete/all',
+      )
+
+      const rawList = Array.isArray(
+        response.data,
+      )
         ? response.data
         : []
 
-      const athlete = findAthleteById(
-        rawList,
-        athleteId,
-      )
+      const athlete =
+        findAthleteById(
+          rawList,
+          athleteId,
+        )
 
       if (!athlete) {
         return {
@@ -271,17 +428,26 @@ export const athleteService = {
       return {
         success: true,
         data: athlete,
+
         displayData:
-          mapAthleteDisplayItem(athlete),
+          mapAthleteDisplayItem(
+            athlete,
+          ),
+
         canEdit: true,
       }
     } catch (error) {
-      const status = error.response?.status
+      const status =
+        error.response?.status
 
-      if (status !== 401 && status !== 403) {
+      if (
+        status !== 401 &&
+        status !== 403
+      ) {
         return {
           success: false,
           status,
+
           error: extractError(
             error,
             'Erreur lors du chargement de la fiche athlète',
@@ -289,9 +455,10 @@ export const athleteService = {
         }
       }
 
-      return athleteService.getCurrentAthleteByRouteId(
-        athleteId,
-      )
+      return athleteService
+        .getCurrentAthleteByRouteId(
+          athleteId,
+        )
     }
   },
 
@@ -304,13 +471,18 @@ export const athleteService = {
       return {
         success: true,
         data: response.data,
+
         displayData:
-          mapAthleteDisplayItem(response.data),
+          mapAthleteDisplayItem(
+            response.data,
+          ),
       }
     } catch (error) {
       return {
         success: false,
-        status: error.response?.status,
+        status:
+          error.response?.status,
+
         error: extractError(
           error,
           'Erreur lors du chargement de votre fiche athlète',
@@ -319,39 +491,44 @@ export const athleteService = {
     }
   },
 
-  getCurrentAthleteByRouteId: async (
-    athleteId,
-  ) => {
-    const result =
-      await athleteService.getCurrentAthlete()
+  getCurrentAthleteByRouteId:
+    async (athleteId) => {
+      const result =
+        await athleteService.getCurrentAthlete()
 
-    if (!result.success) {
-      return result
-    }
-
-    if (
-      String(result.data?.authUser?.id) !==
-      String(athleteId)
-    ) {
-      return {
-        success: false,
-        status: 403,
-        error:
-          'Vous pouvez seulement consulter votre propre fiche athlète.',
+      if (!result.success) {
+        return result
       }
-    }
 
-    return {
-      ...result,
-      canEdit: false,
-    }
-  },
+      if (
+        String(
+          result.data?.authUser?.id,
+        ) !== String(athleteId)
+      ) {
+        return {
+          success: false,
+          status: 403,
+          error:
+            'Vous pouvez seulement consulter votre propre fiche athlète.',
+        }
+      }
 
-  updateAthlete: async (athleteId, form) => {
+      return {
+        ...result,
+        canEdit: false,
+      }
+    },
+
+  updateAthlete: async (
+    athleteId,
+    form,
+  ) => {
     try {
       await api.put(
         `/api/athlete/${athleteId}`,
-        mapAthleteUpdatePayload(form),
+        mapAthleteUpdatePayload(
+          form,
+        ),
       )
 
       return {
@@ -362,7 +539,9 @@ export const athleteService = {
     } catch (error) {
       return {
         success: false,
-        status: error.response?.status,
+        status:
+          error.response?.status,
+
         error: extractError(
           error,
           'Impossible d’enregistrer les modifications',
