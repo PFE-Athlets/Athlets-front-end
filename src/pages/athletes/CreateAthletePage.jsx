@@ -240,6 +240,37 @@ export default function CreateAthletePage() {
     }
   }
 
+  const handleOpenActivationLink = () => {
+    if (!activationLink) {
+      return
+    }
+
+    try {
+      const activationUrl = new URL(activationLink)
+      const token = activationUrl.searchParams.get('token')
+
+      if (
+        activationUrl.origin !== window.location.origin ||
+        activationUrl.pathname !== '/activation-compte' ||
+        !token
+      ) {
+        setError("Le lien d'activation est invalide.")
+        return
+      }
+
+      const safeUrl =
+        `/activation-compte?token=${encodeURIComponent(token)}`
+
+      window.open(
+        safeUrl,
+        '_blank',
+        'noopener,noreferrer',
+      )
+    } catch {
+      setError("Le lien d'activation est invalide.")
+    }
+  }
+
   return (
     <div className="create-page">
       <form
@@ -604,13 +635,7 @@ export default function CreateAthletePage() {
           link={activationLink}
           copySuccess={copySuccess}
           onCopy={handleCopyLink}
-          onOpen={() =>
-            window.open(
-              activationLink,
-              '_blank',
-              'noopener,noreferrer',
-            )
-          }
+          onOpen={handleOpenActivationLink}
           onClose={() =>
             navigate('/athletes')
           }
