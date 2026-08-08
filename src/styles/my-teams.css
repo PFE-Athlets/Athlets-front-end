@@ -1,0 +1,50 @@
+.my-teams-page {
+  gap: 16px;
+}
+
+.my-teams-page__subtitle {
+  margin: 0;
+  color: #6e7ca8;
+  font-size: 0.95rem;
+}
+
+.my-teams-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.05);
+  overflow: hidden;
+}
+
+.my-teams-table th,
+.my-teams-table td {
+  padding-top: 18px;
+  padding-bottom: 18px;
+}
+
+.my-teams-table th {
+  color: #8b9ac8;
+  font-size: 0.82rem;
+}
+
+.my-teams-table__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid #4f46e5;
+  border-radius: 8px;
+  color: #4f46e5;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.my-teams-table__link:hover {
+  background: #eef2ff;
+}
+
+@media (max-width: 900px) {
+  .my-teams-card {
+    border-radius: 16px;
+  }
+}

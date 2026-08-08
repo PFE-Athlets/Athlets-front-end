@@ -183,27 +183,10 @@ export default function TeamDetailsPage() {
       setAthletesLoading(true)
       setAthletesError(null)
 
-
-      //get the acces level of the current user, if he is a coach call getDisplayAthleteAll, since the getDisplayAthletesByTeam is only for admins
-      const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null')
-      const userAccessLevel = Number(
-        currentUser?.accessLevel ?? currentUser?.access_level ?? 0
-      )
-      const isAdmin = userAccessLevel === 1
-
-      let result
-      if (isAdmin) {
-        result = await athleteService.getDisplayAthletesByTeam(resolvedTeamId)
-      } else {
-        result = await athleteService.getDisplayAthletes()
-
-        if (result.success) {
-          result.data = result.data.filter((athlete) =>
-            Array.isArray(athlete.teamIds) &&
-            athlete.teamIds.map((id) => String(id)).includes(String(resolvedTeamId)),
-          )
-        }
-      }
+      const result =
+        await athleteService.getAthletesPreviewByTeamId(
+          resolvedTeamId,
+        )
 
       if (cancelled) {
         return
@@ -212,12 +195,19 @@ export default function TeamDetailsPage() {
       if (result.success) {
         const rows = result.data.map((athlete) => ({
           id: athlete.id,
-          name: athlete.fullName || athlete.username || '—',
+          name:
+            athlete.name ||
+            athlete.fullName ||
+            athlete.username ||
+            '—',
           position:
-            Array.isArray(athlete.positions) && athlete.positions.length > 0
+            Array.isArray(athlete.positions) &&
+            athlete.positions.length > 0
               ? athlete.positions.join(', ')
               : '—',
-          status: mapStatusLabel(athlete.status),
+          status: athlete.status
+            ? mapStatusLabel(athlete.status)
+            : '—',
         }))
 
         setAthletes(rows)

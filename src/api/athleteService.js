@@ -220,6 +220,56 @@ const mapAthleteUpdatePayload = (form) => {
   }
 }
 
+const mapPreviewPositions = (
+  disciplinesAndPositions,
+) => {
+  if (!disciplinesAndPositions) {
+    return []
+  }
+
+  const positionsSource =
+    disciplinesAndPositions.positions ??
+    disciplinesAndPositions.positionNames ??
+    disciplinesAndPositions.positionLabels ??
+    []
+
+  const names = Array.isArray(positionsSource)
+    ? positionsSource
+        .map((item) => {
+          if (typeof item === 'string') {
+            return item.trim()
+          }
+
+          if (
+            item &&
+            typeof item.name === 'string'
+          ) {
+            return item.name.trim()
+          }
+
+          return ''
+        })
+        .filter(Boolean)
+    : []
+
+  return [...new Set(names)]
+}
+
+const mapAthletePreviewItem = (item) => ({
+  id:
+    item?.athleteId != null
+      ? String(item.athleteId)
+      : '',
+  name:
+    typeof item?.athleteName === 'string' &&
+    item.athleteName.trim() !== ''
+      ? item.athleteName
+      : '—',
+  positions: mapPreviewPositions(
+    item?.disciplinesAndPositions,
+  ),
+})
+
 const findAthleteById = (athletes, athleteId) =>
   athletes.find(
     (athlete) =>
@@ -354,6 +404,31 @@ export const athleteService = {
         error: extractError(
           error,
           'Erreur lors du chargement des athlètes de l’équipe',
+        ),
+      }
+    }
+  },
+
+  getAthletesPreviewByTeamId: async (teamId) => {
+    try {
+      const response = await api.get(
+        `/athletes/preview/${teamId}`,
+      )
+      const rawList = Array.isArray(response.data)
+        ? response.data
+        : []
+
+      return {
+        success: true,
+        data: rawList.map(mapAthletePreviewItem),
+      }
+    } catch (error) {
+      return {
+        success: false,
+        status: error.response?.status,
+        error: extractError(
+          error,
+          'Erreur lors du chargement des apercus athlètes de l’équipe',
         ),
       }
     }
