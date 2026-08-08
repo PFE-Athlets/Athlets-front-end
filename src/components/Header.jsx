@@ -2,9 +2,7 @@ import { BellIcon, MenuIcon } from './Icons'
 
 export function Header({
   pageTitle,
-  pageSubtitle,
   activeUserName,
-  activeUserRole,
   notificationsCount = 0,
   onMenuClick,
 }) {
