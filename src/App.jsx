@@ -34,6 +34,7 @@ import CreateTeamPage from './pages/teams/CreateTeamPage.jsx'
 import EditTeamPage from './pages/teams/EditTeamPage.jsx'
 import TeamPageView from './pages/teams/TeamPageView.jsx'
 import TeamDetailsPage from './pages/teams/TeamDetailsPage.jsx'
+import MyTeamsPage from './pages/teams/MyTeamsPage.jsx'
 
 const pages = [
   {
@@ -80,6 +81,11 @@ const pages = [
     path: '/batterie-tests/creer',
     title: 'Créer une batterie de tests physiques',
     subtitle: 'Ajout d’une nouvelle batterie de tests physiques',
+  },
+  {
+    path: '/mes-equipes',
+    title: 'Mes équipes',
+    subtitle: 'Équipes associées à votre profil',
   },
   {
     path: '/resultats',
@@ -241,6 +247,8 @@ function App() {
 
       case '/batterie-tests/creer':
         return <CreateBatterieTestPage />
+      case '/mes-equipes':
+        return <MyTeamsPage />
 
       default:
         return <PageView />

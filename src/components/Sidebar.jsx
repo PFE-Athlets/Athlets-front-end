@@ -25,6 +25,12 @@ const ALL_NAV_ITEMS = [
     ],
   },
   {
+    label: 'Mes équipes',
+    icon: UsersIcon,
+    to: '/mes-equipes',
+    roles: ['Athlète'],
+  },
+  {
     label: 'Équipes',
     icon: UsersIcon,
     to: '/equipes',
