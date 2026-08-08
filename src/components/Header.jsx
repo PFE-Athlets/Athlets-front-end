@@ -20,7 +20,7 @@ export function Header({
           >
             <MenuIcon />
           </button>
-          <h1>{pageTitle}</h1>
+          {pageTitle ? <h1>{pageTitle}</h1> : null}
         </div>
 
         <div className="header-controls">

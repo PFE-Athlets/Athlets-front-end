@@ -111,6 +111,55 @@ export function XIcon() {
   )
 }
 
+export function DownloadIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M11 4h2v8.17l2.59-2.58L17 11l-5 5-5-5 1.41-1.41L11 12.17V4Z" />
+      <path d="M5 18h14v2H5z" />
+    </svg>
+  )
+}
+
+export function FilterIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M4 5h16l-6 7v5l-4 2v-7L4 5Zm4.4 2 3.6 4.2L15.6 7H8.4Z" />
+    </svg>
+  )
+}
+
+export function EyeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M12 5c5.5 0 9.5 5.1 10 6-.5.9-4.5 6-10 6S2.5 11.9 2 11c.5-.9 4.5-6 10-6Zm0 2c-3.65 0-6.62 3.02-7.75 4 .88.95 3.86 4 7.75 4 3.9 0 6.87-3.05 7.75-4C18.63 10.02 15.66 7 12 7Zm0 1.5A2.5 2.5 0 1 1 9.5 11 2.5 2.5 0 0 1 12 8.5Z" />
+    </svg>
+  )
+}
+
+export function MoreVerticalIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M12 7a1.75 1.75 0 1 0 0-3.5A1.75 1.75 0 0 0 12 7Zm0 7a1.75 1.75 0 1 0 0-3.5A1.75 1.75 0 0 0 12 14Zm0 7a1.75 1.75 0 1 0 0-3.5A1.75 1.75 0 0 0 12 21Z" />
+    </svg>
+  )
+}
+
+export function ChevronUpIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="m7.41 14.59 4.59-4.58 4.59 4.58L18 13.17l-6-6-6 6z" />
+    </svg>
+  )
+}
+
+export function ChevronDownIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="m7.41 8.83 4.59 4.59 4.59-4.59L18 10.24l-6 6-6-6z" />
+    </svg>
+  )
+}
+
 function IconBase({ children }) {
   return (
     <svg

@@ -34,6 +34,7 @@ import CreateTeamPage from './pages/teams/CreateTeamPage.jsx'
 import EditTeamPage from './pages/teams/EditTeamPage.jsx'
 import TeamPageView from './pages/teams/TeamPageView.jsx'
 import TeamDetailsPage from './pages/teams/TeamDetailsPage.jsx'
+import ResultPageView from './pages/results/ResultPageView.jsx'
 
 const pages = [
   {
@@ -83,8 +84,8 @@ const pages = [
   },
   {
     path: '/resultats',
-    title: 'Résultats',
-    subtitle: 'Analyse et comparaison des performances',
+    title: '',
+    subtitle: '',
   },
   {
     path: '/seances',
@@ -241,6 +242,9 @@ function App() {
 
       case '/batterie-tests/creer':
         return <CreateBatterieTestPage />
+
+      case '/resultats':
+        return <ResultPageView />
 
       default:
         return <PageView />
