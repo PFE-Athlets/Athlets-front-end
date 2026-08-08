@@ -220,6 +220,81 @@ const mapAthleteUpdatePayload = (form) => {
   }
 }
 
+const mapPreviewNames = (
+  source,
+) => {
+  const names = Array.isArray(source)
+    ? source
+        .map((item) => {
+          if (typeof item === 'string') {
+            return item.trim()
+          }
+
+          if (
+            item &&
+            typeof item.name === 'string'
+          ) {
+            return item.name.trim()
+          }
+
+          return ''
+        })
+        .filter(Boolean)
+    : []
+
+  return [...new Set(names)]
+}
+
+const mapPreviewPositions = (
+  disciplinesAndPositions,
+) => {
+  if (!disciplinesAndPositions) {
+    return []
+  }
+
+  const positionsSource =
+    disciplinesAndPositions.positions ??
+    disciplinesAndPositions.positionNames ??
+    disciplinesAndPositions.positionLabels ??
+    []
+
+  return mapPreviewNames(positionsSource)
+}
+
+const mapPreviewDisciplines = (
+  disciplinesAndPositions,
+) => {
+  if (!disciplinesAndPositions) {
+    return []
+  }
+
+  const disciplinesSource =
+    disciplinesAndPositions.disciplines ??
+    disciplinesAndPositions.disciplineNames ??
+    disciplinesAndPositions.disciplineLabels ??
+    []
+
+  return mapPreviewNames(disciplinesSource)
+}
+
+const mapAthletePreviewItem = (item) => ({
+  id:
+    item?.athleteId != null
+      ? String(item.athleteId)
+      : '',
+  name:
+    typeof item?.athleteName === 'string' &&
+    item.athleteName.trim() !== ''
+      ? item.athleteName
+      : '—',
+  disciplines: mapPreviewDisciplines(
+    item?.disciplinesAndPositions,
+  ),
+  positions: mapPreviewPositions(
+    item?.disciplinesAndPositions,
+  ),
+})
+
 const findAthleteById = (athletes, athleteId) =>
   athletes.find(
     (athlete) =>
@@ -354,6 +429,31 @@ export const athleteService = {
         error: extractError(
           error,
           'Erreur lors du chargement des athlètes de l’équipe',
+        ),
+      }
+    }
+  },
+
+  getAthletesPreviewByTeamId: async (teamId) => {
+    try {
+      const response = await api.get(
+        `/api/team/athletes/preview/${teamId}`,
+      )
+      const rawList = Array.isArray(response.data)
+        ? response.data
+        : []
+
+      return {
+        success: true,
+        data: rawList.map(mapAthletePreviewItem),
+      }
+    } catch (error) {
+      return {
+        success: false,
+        status: error.response?.status,
+        error: extractError(
+          error,
+          'Erreur lors du chargement des apercus athlètes de l’équipe',
         ),
       }
     }

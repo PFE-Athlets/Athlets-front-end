@@ -82,14 +82,14 @@ export default function TeamDetailsPage() {
     let cancelled = false
 
     const loadTeam = async () => {
-      if (location.state?.team) {
-        setTeam(location.state.team)
-        setTeamLoading(false)
-        setTeamError(null)
-        return
+      const stateTeam = location.state?.team ?? null
+      const resolvedTeamId = stateTeam?.id ?? teamId
+
+      if (stateTeam) {
+        setTeam(stateTeam)
       }
 
-      if (!teamId) {
+      if (!resolvedTeamId) {
         if (!cancelled) {
           setTeam(null)
           setTeamError('Equipe introuvable ou inaccessible avec vos permissions.')
@@ -101,7 +101,9 @@ export default function TeamDetailsPage() {
       setTeamLoading(true)
       setTeamError(null)
 
-      const result = await teamService.getDisplayTeamById(teamId)
+      const result = await teamService.getDisplayTeamById(
+        resolvedTeamId,
+      )
 
       if (cancelled) {
         return
@@ -183,27 +185,10 @@ export default function TeamDetailsPage() {
       setAthletesLoading(true)
       setAthletesError(null)
 
-
-      //get the acces level of the current user, if he is a coach call getDisplayAthleteAll, since the getDisplayAthletesByTeam is only for admins
-      const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null')
-      const userAccessLevel = Number(
-        currentUser?.accessLevel ?? currentUser?.access_level ?? 0
-      )
-      const isAdmin = userAccessLevel === 1
-
-      let result
-      if (isAdmin) {
-        result = await athleteService.getDisplayAthletesByTeam(resolvedTeamId)
-      } else {
-        result = await athleteService.getDisplayAthletes()
-
-        if (result.success) {
-          result.data = result.data.filter((athlete) =>
-            Array.isArray(athlete.teamIds) &&
-            athlete.teamIds.map((id) => String(id)).includes(String(resolvedTeamId)),
-          )
-        }
-      }
+      const result =
+        await athleteService.getAthletesPreviewByTeamId(
+          resolvedTeamId,
+        )
 
       if (cancelled) {
         return
@@ -212,12 +197,24 @@ export default function TeamDetailsPage() {
       if (result.success) {
         const rows = result.data.map((athlete) => ({
           id: athlete.id,
-          name: athlete.fullName || athlete.username || '—',
+          name:
+            athlete.name ||
+            athlete.fullName ||
+            athlete.username ||
+            '—',
           position:
-            Array.isArray(athlete.positions) && athlete.positions.length > 0
+            Array.isArray(athlete.positions) &&
+            athlete.positions.length > 0
               ? athlete.positions.join(', ')
               : '—',
-          status: mapStatusLabel(athlete.status),
+          discipline:
+            Array.isArray(athlete.disciplines) &&
+            athlete.disciplines.length > 0
+              ? athlete.disciplines.join(', ')
+              : '—',
+          status: athlete.status
+            ? mapStatusLabel(athlete.status)
+            : '—',
         }))
 
         setAthletes(rows)
@@ -339,6 +336,7 @@ export default function TeamDetailsPage() {
                 <tr>
                   <th>Athlète</th>
                   <th>Position</th>
+                  <th>Discipline</th>
                   <th>Statut</th>
                   <th>Actions</th>
                 </tr>
@@ -346,17 +344,18 @@ export default function TeamDetailsPage() {
               <tbody>
                 {athletesLoading ? (
                   <tr>
-                    <td colSpan="4" className="list-empty">Chargement des athlètes...</td>
+                    <td colSpan="5" className="list-empty">Chargement des athlètes...</td>
                   </tr>
                 ) : athletesError ? (
                   <tr>
-                    <td colSpan="4" className="list-empty">{athletesError}</td>
+                    <td colSpan="5" className="list-empty">{athletesError}</td>
                   </tr>
                 ) : athletes.length > 0 ? (
                   athletes.map((athlete) => (
                     <tr key={athlete.id}>
                       <td className="cell--name">{athlete.name}</td>
                       <td>{athlete.position}</td>
+                      <td>{athlete.discipline}</td>
                       <td>
                         <span className={`team-details-status ${athlete.status === 'Actif' ? 'team-details-status--active' : 'team-details-status--inactive'}`}>
                           {athlete.status}
@@ -376,7 +375,7 @@ export default function TeamDetailsPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="4" className="list-empty">Aucun athlète associé à cette équipe.</td>
+                    <td colSpan="5" className="list-empty">Aucun athlète associé à cette équipe.</td>
                   </tr>
                 )}
               </tbody>

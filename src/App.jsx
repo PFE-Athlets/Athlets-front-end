@@ -24,6 +24,7 @@ import CreateTeamPage from './pages/teams/CreateTeamPage.jsx'
 import EditTeamPage from './pages/teams/EditTeamPage.jsx'
 import TeamPageView from './pages/teams/TeamPageView.jsx'
 import TeamDetailsPage from './pages/teams/TeamDetailsPage.jsx'
+import MyTeamsPage from './pages/teams/MyTeamsPage.jsx'
 
 const pages = [
   {
@@ -60,6 +61,11 @@ const pages = [
     path: '/tests-physiques/creer',
     title: 'Créer un test physique',
     subtitle: 'Ajout d’un nouveau test physique',
+  },
+  {
+    path: '/mes-equipes',
+    title: 'Mes équipes',
+    subtitle: 'Équipes associées à votre profil',
   },
   {
     path: '/resultats',
@@ -215,6 +221,9 @@ function App() {
 
       case '/tests-physiques/creer':
         return <CreatePhysicalTestPage />
+
+      case '/mes-equipes':
+        return <MyTeamsPage />
 
       default:
         return <PageView />
