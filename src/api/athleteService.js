@@ -220,21 +220,11 @@ const mapAthleteUpdatePayload = (form) => {
   }
 }
 
-const mapPreviewPositions = (
-  disciplinesAndPositions,
+const mapPreviewNames = (
+  source,
 ) => {
-  if (!disciplinesAndPositions) {
-    return []
-  }
-
-  const positionsSource =
-    disciplinesAndPositions.positions ??
-    disciplinesAndPositions.positionNames ??
-    disciplinesAndPositions.positionLabels ??
-    []
-
-  const names = Array.isArray(positionsSource)
-    ? positionsSource
+  const names = Array.isArray(source)
+    ? source
         .map((item) => {
           if (typeof item === 'string') {
             return item.trim()
@@ -255,6 +245,38 @@ const mapPreviewPositions = (
   return [...new Set(names)]
 }
 
+const mapPreviewPositions = (
+  disciplinesAndPositions,
+) => {
+  if (!disciplinesAndPositions) {
+    return []
+  }
+
+  const positionsSource =
+    disciplinesAndPositions.positions ??
+    disciplinesAndPositions.positionNames ??
+    disciplinesAndPositions.positionLabels ??
+    []
+
+  return mapPreviewNames(positionsSource)
+}
+
+const mapPreviewDisciplines = (
+  disciplinesAndPositions,
+) => {
+  if (!disciplinesAndPositions) {
+    return []
+  }
+
+  const disciplinesSource =
+    disciplinesAndPositions.disciplines ??
+    disciplinesAndPositions.disciplineNames ??
+    disciplinesAndPositions.disciplineLabels ??
+    []
+
+  return mapPreviewNames(disciplinesSource)
+}
+
 const mapAthletePreviewItem = (item) => ({
   id:
     item?.athleteId != null
@@ -265,6 +287,9 @@ const mapAthletePreviewItem = (item) => ({
     item.athleteName.trim() !== ''
       ? item.athleteName
       : '—',
+  disciplines: mapPreviewDisciplines(
+    item?.disciplinesAndPositions,
+  ),
   positions: mapPreviewPositions(
     item?.disciplinesAndPositions,
   ),
@@ -412,7 +437,7 @@ export const athleteService = {
   getAthletesPreviewByTeamId: async (teamId) => {
     try {
       const response = await api.get(
-        `/athletes/preview/${teamId}`,
+        `/api/team/athletes/preview/${teamId}`,
       )
       const rawList = Array.isArray(response.data)
         ? response.data

@@ -82,14 +82,14 @@ export default function TeamDetailsPage() {
     let cancelled = false
 
     const loadTeam = async () => {
-      if (location.state?.team) {
-        setTeam(location.state.team)
-        setTeamLoading(false)
-        setTeamError(null)
-        return
+      const stateTeam = location.state?.team ?? null
+      const resolvedTeamId = stateTeam?.id ?? teamId
+
+      if (stateTeam) {
+        setTeam(stateTeam)
       }
 
-      if (!teamId) {
+      if (!resolvedTeamId) {
         if (!cancelled) {
           setTeam(null)
           setTeamError('Equipe introuvable ou inaccessible avec vos permissions.')
@@ -101,7 +101,9 @@ export default function TeamDetailsPage() {
       setTeamLoading(true)
       setTeamError(null)
 
-      const result = await teamService.getDisplayTeamById(teamId)
+      const result = await teamService.getDisplayTeamById(
+        resolvedTeamId,
+      )
 
       if (cancelled) {
         return
@@ -204,6 +206,11 @@ export default function TeamDetailsPage() {
             Array.isArray(athlete.positions) &&
             athlete.positions.length > 0
               ? athlete.positions.join(', ')
+              : '—',
+          discipline:
+            Array.isArray(athlete.disciplines) &&
+            athlete.disciplines.length > 0
+              ? athlete.disciplines.join(', ')
               : '—',
           status: athlete.status
             ? mapStatusLabel(athlete.status)
@@ -329,6 +336,7 @@ export default function TeamDetailsPage() {
                 <tr>
                   <th>Athlète</th>
                   <th>Position</th>
+                  <th>Discipline</th>
                   <th>Statut</th>
                   <th>Actions</th>
                 </tr>
@@ -336,17 +344,18 @@ export default function TeamDetailsPage() {
               <tbody>
                 {athletesLoading ? (
                   <tr>
-                    <td colSpan="4" className="list-empty">Chargement des athlètes...</td>
+                    <td colSpan="5" className="list-empty">Chargement des athlètes...</td>
                   </tr>
                 ) : athletesError ? (
                   <tr>
-                    <td colSpan="4" className="list-empty">{athletesError}</td>
+                    <td colSpan="5" className="list-empty">{athletesError}</td>
                   </tr>
                 ) : athletes.length > 0 ? (
                   athletes.map((athlete) => (
                     <tr key={athlete.id}>
                       <td className="cell--name">{athlete.name}</td>
                       <td>{athlete.position}</td>
+                      <td>{athlete.discipline}</td>
                       <td>
                         <span className={`team-details-status ${athlete.status === 'Actif' ? 'team-details-status--active' : 'team-details-status--inactive'}`}>
                           {athlete.status}
@@ -366,7 +375,7 @@ export default function TeamDetailsPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="4" className="list-empty">Aucun athlète associé à cette équipe.</td>
+                    <td colSpan="5" className="list-empty">Aucun athlète associé à cette équipe.</td>
                   </tr>
                 )}
               </tbody>
