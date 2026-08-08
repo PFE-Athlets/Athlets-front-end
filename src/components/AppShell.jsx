@@ -9,7 +9,6 @@ export function AppShell({
   activeUserName,
   activeUserRole,
   activeUserId,
-  notificationsCount = 0,
   onLogout,
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -30,7 +29,6 @@ export function AppShell({
           pageSubtitle={pageSubtitle}
           activeUserName={activeUserName}
           activeUserRole={activeUserRole}
-          notificationsCount={notificationsCount}
           onMenuClick={() => setIsSidebarOpen(true)}
         />
 

@@ -26,7 +26,7 @@
 }
 
 .stat-card {
-  min-height: 140px;
+  min-height: 80px;
   padding: 26px 28px;
   display: flex;
   align-items: flex-start;
@@ -529,10 +529,6 @@
     grid-template-columns: 1fr;
   }
 
-  .stat-cards {
-    max-width: none;
-  }
-
   .create-btn {
     justify-self: start;
   }
@@ -587,11 +583,6 @@
 
 @media (max-width: 640px) {
   .list-page {
-    gap: 16px;
-  }
-
-  .stat-cards {
-    grid-template-columns: 1fr;
     gap: 16px;
   }
 

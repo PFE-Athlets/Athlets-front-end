@@ -150,9 +150,6 @@ export default function TeamPageView({ canCreateTeam = false, canModifyTeam = fa
                             Modifier
                           </button>
                         ) : null}
-                        <button type="button" className="team-table__menu-btn" aria-label={`Plus d'actions pour ${team.name}`}>
-                          <span aria-hidden="true">⋮</span>
-                        </button>
                       </div>
                     </td>
                   </tr>

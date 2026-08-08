@@ -102,11 +102,6 @@ const pages = [
     title: 'Rapports',
     subtitle: 'Export et synthèse des données',
   },
-  {
-    path: '/parametres',
-    title: 'Paramètres',
-    subtitle: 'Réglages de l’application',
-  },
 ]
 
 function ProtectedRoute({
@@ -210,7 +205,6 @@ function App() {
     activeUserRole,
     activeUserId: currentUser?.id,
     onLogout: handleLogout,
-    notificationsCount: 2,
   }
 
   const renderPageContent = (path) => {

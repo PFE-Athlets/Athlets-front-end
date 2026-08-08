@@ -5,7 +5,6 @@ export function Header({
   pageSubtitle,
   activeUserName,
   activeUserRole,
-  notificationsCount = 0,
   onMenuClick,
 }) {
   return (
@@ -24,11 +23,6 @@ export function Header({
         </div>
 
         <div className="header-controls">
-          <button type="button" className="icon-button" aria-label={`Notifications ${notificationsCount}`}>
-            <BellIcon />
-            {notificationsCount > 0 ? <span className="badge">{notificationsCount}</span> : null}
-          </button>
-
           <div className="profile-chip" aria-label={activeUserName}>
             <div className="avatar" aria-hidden="true">
               {activeUserName

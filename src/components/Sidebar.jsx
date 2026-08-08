@@ -144,15 +144,6 @@ export function Sidebar({
       </div>
 
       <div className="sidebar-footer">
-        <NavLink
-          to="/parametres"
-          onClick={onClose}
-          className="sidebar-nav__item sidebar-nav__item--muted"
-        >
-          <SettingsIcon />
-          <span>Paramètres</span>
-        </NavLink>
-
         <button
           type="button"
           onClick={onLogout}

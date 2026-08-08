@@ -10,6 +10,8 @@ import { teamService } from '../../api/teamService'
 export default function CreateTeamPage({ canCreateTeam = false }) {
   const navigate = useNavigate()
   const [teamName, setTeamName] = useState('')
+  const [existingTeams, setExistingTeams] = useState([])
+  const [teamsLoading, setTeamsLoading] = useState(true)
   const [sport, setSport] = useState('')
   const [sportOptions, setSportOptions] = useState([])
   const [sportsLoading, setSportsLoading] = useState(true)
@@ -26,6 +28,31 @@ export default function CreateTeamPage({ canCreateTeam = false }) {
   const [submitError, setSubmitError] = useState(null)
   const [submitSuccess, setSubmitSuccess] = useState('')
   const [submitting, setSubmitting] = useState(false)
+
+  // Chargement des équipes existantes pour la vérification des doublons
+  useEffect(() => {
+    let cancelled = false
+
+    const loadTeams = async () => {
+      setTeamsLoading(true)
+      const result = await teamService.getDisplayTeams()
+
+      if (cancelled) return
+
+      if (result.success) {
+        setExistingTeams(result.data)
+      } else {
+        setExistingTeams([])
+      }
+      setTeamsLoading(false)
+    }
+
+    loadTeams()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -152,6 +179,16 @@ export default function CreateTeamPage({ canCreateTeam = false }) {
     const trimmedTeamName = teamName.trim()
     if (!trimmedTeamName) {
       setSubmitError('Veuillez saisir un nom d\'équipe.')
+      return
+    }
+
+    // Vérification de doublon (comparaison insensible à la casse)
+    const isDuplicate = existingTeams.some(
+      (team) => team.name.trim().toLowerCase() === trimmedTeamName.toLowerCase()
+    )
+
+    if (isDuplicate) {
+      setSubmitError('Une équipe avec ce nom existe déjà.')
       return
     }
 
