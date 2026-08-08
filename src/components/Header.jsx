@@ -2,9 +2,7 @@ import { BellIcon, MenuIcon } from './Icons'
 
 export function Header({
   pageTitle,
-  pageSubtitle,
   activeUserName,
-  activeUserRole,
   notificationsCount = 0,
   onMenuClick,
 }) {
@@ -20,7 +18,7 @@ export function Header({
           >
             <MenuIcon />
           </button>
-          <h1>{pageTitle}</h1>
+          {pageTitle ? <h1>{pageTitle}</h1> : null}
         </div>
 
         <div className="header-controls">

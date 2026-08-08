@@ -10,7 +10,11 @@ import './App.css'
 
 import { AppShell } from './components/AppShell.jsx'
 import { PageView } from './pages/PageView.jsx'
+
 import LoginPage from './pages/LoginPage.jsx'
+import ActivateAccountPage from './pages/ActivateAccountPage.jsx'
+import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx'
+import ResetPasswordPage from './pages/ResetPasswordPage.jsx'
 
 import AthletePageView from './pages/athletes/AthletePageView.jsx'
 import CreateAthletePage from './pages/athletes/CreateAthletePage.jsx'
@@ -19,12 +23,18 @@ import AthleteDetailsPage from './pages/athletes/AthleteDetailsPage.jsx'
 
 import PhysicalTestPageView from './pages/physical-test/PhysicalTestPageView.jsx'
 import CreatePhysicalTestPage from './pages/physical-test/CreatePhysicalTestPage.jsx'
+import PhysicalTestDetailsPage from './pages/physical-test/PhysicalTestDetailsPage.jsx'
+
+import BatterieTestPageView from './pages/batterie-tests/BatterieTestPageView.jsx'
+import CreateBatterieTestPage from './pages/batterie-tests/CreateBatterieTestPage.jsx'
+import BatterieTestDetailsPage from './pages/batterie-tests/BatterieTestDetailsPage.jsx'
+import EditBatterieTestPage from './pages/batterie-tests/EditBatterieTestPage.jsx'
 
 import CreateTeamPage from './pages/teams/CreateTeamPage.jsx'
 import EditTeamPage from './pages/teams/EditTeamPage.jsx'
 import TeamPageView from './pages/teams/TeamPageView.jsx'
 import TeamDetailsPage from './pages/teams/TeamDetailsPage.jsx'
-import MyTeamsPage from './pages/teams/MyTeamsPage.jsx'
+import ResultPageView from './pages/results/ResultPageView.jsx'
 
 const pages = [
   {
@@ -63,14 +73,19 @@ const pages = [
     subtitle: 'Ajout d’un nouveau test physique',
   },
   {
-    path: '/mes-equipes',
-    title: 'Mes équipes',
-    subtitle: 'Équipes associées à votre profil',
+    path: '/batterie-tests',
+    title: 'Batteries de tests physiques',
+    subtitle: 'Suivi des batteries de tests physiques',
+  },
+  {
+    path: '/batterie-tests/creer',
+    title: 'Créer une batterie de tests physiques',
+    subtitle: 'Ajout d’une nouvelle batterie de tests physiques',
   },
   {
     path: '/resultats',
-    title: 'Résultats',
-    subtitle: 'Analyse et comparaison des performances',
+    title: '',
+    subtitle: '',
   },
   {
     path: '/seances',
@@ -106,7 +121,7 @@ function ProtectedRoute({
 }
 
 const HOME_BY_ROLE = {
-  Administrateur: '/tableau-de-bord',
+  Administrateur: '/athletes',
   Coach: '/athletes',
   Athlète: '/resultats',
   Kiné: '/equipes',
@@ -222,8 +237,14 @@ function App() {
       case '/tests-physiques/creer':
         return <CreatePhysicalTestPage />
 
-      case '/mes-equipes':
-        return <MyTeamsPage />
+      case '/batterie-tests':
+        return <BatterieTestPageView />
+
+      case '/batterie-tests/creer':
+        return <CreateBatterieTestPage />
+
+      case '/resultats':
+        return <ResultPageView />
 
       default:
         return <PageView />
@@ -251,6 +272,21 @@ function App() {
             }
           />
         }
+      />
+
+      <Route
+        path="/activation-compte"
+        element={<ActivateAccountPage />}
+      />
+
+      <Route
+        path="/mot-de-passe-oublie"
+        element={<ForgotPasswordPage />}
+      />
+
+      <Route
+        path="/reinitialisation-mot-de-passe"
+        element={<ResetPasswordPage />}
       />
 
       {pages.map((page) => (
@@ -295,7 +331,9 @@ function App() {
       <Route
         path="/athletes/:id"
         element={
-          <ProtectedRoute currentUser={currentUser}>
+          <ProtectedRoute
+            currentUser={currentUser}
+          >
             <AppShell
               pageTitle="Profil de l’athlète"
               pageSubtitle=""
@@ -314,7 +352,7 @@ function App() {
             currentUser={currentUser}
           >
             <AppShell
-              pageTitle="Fiche de l'équipe"
+              pageTitle="Fiche de l’équipe"
               pageSubtitle=""
               {...shellProps}
             >
@@ -344,6 +382,57 @@ function App() {
                 replace
               />
             )}
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/tests-physiques/:id"
+        element={
+          <ProtectedRoute
+            currentUser={currentUser}
+          >
+            <AppShell
+              pageTitle="Fiche du test physique"
+              pageSubtitle=""
+              {...shellProps}
+            >
+              <PhysicalTestDetailsPage />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/batterie-tests/:id"
+        element={
+          <ProtectedRoute
+            currentUser={currentUser}
+          >
+            <AppShell
+              pageTitle="Détail de la batterie"
+              pageSubtitle=""
+              {...shellProps}
+            >
+              <BatterieTestDetailsPage />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/batterie-tests/:id/modifier"
+        element={
+          <ProtectedRoute
+            currentUser={currentUser}
+          >
+            <AppShell
+              pageTitle="Modifier une batterie de tests"
+              pageSubtitle="Modifiez les informations de la batterie et ajoutez de nouveaux tests si nécessaire."
+              {...shellProps}
+            >
+              <EditBatterieTestPage />
+            </AppShell>
           </ProtectedRoute>
         }
       />
