@@ -2,7 +2,10 @@ import api from './config'
 
 const extractError = (error, fallback) => {
   const data = error.response?.data
-  return typeof data === 'string' ? data : data?.message ?? fallback
+
+  return typeof data === 'string'
+    ? data
+    : data?.message ?? fallback
 }
 
 const mapTeamDisplayItem = (item) => {
@@ -106,9 +109,22 @@ export const teamService = {
 
   getDisplayTeams: async () => {
     try {
-      const response = await api.get('/api/team/teams')
-      const rawList = Array.isArray(response.data) ? response.data : []
-      return { success: true, data: rawList.map(mapTeamDisplayItem) }
+      const response = await api.get(
+        '/api/team/teams',
+      )
+
+      const rawList = Array.isArray(
+        response.data,
+      )
+        ? response.data
+        : []
+
+      return {
+        success: true,
+        data: rawList.map(
+          mapTeamDisplayItem,
+        ),
+      }
     } catch (error) {
       return {
         success: false,
@@ -119,13 +135,18 @@ export const teamService = {
   },
 
   getDisplayTeamById: async (teamId) => {
-    const result = await teamService.getDisplayTeams()
+    const result =
+      await teamService.getDisplayTeams()
 
     if (!result.success) {
       return result
     }
 
-    const team = result.data.find((item) => String(item.id) === String(teamId))
+    const team = result.data.find(
+      (item) =>
+        String(item.id) ===
+        String(teamId),
+    )
 
     if (!team) {
       return {

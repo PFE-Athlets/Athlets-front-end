@@ -167,3 +167,15 @@
     grid-template-columns: 1fr;
   }
 }
+
+.form-error {
+  margin-top: 20px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 14px;
+  font-weight: 500;
+}

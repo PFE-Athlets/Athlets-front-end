@@ -18,11 +18,18 @@ const extractError = (error, fallback) => {
 export const authService = {
   login: async (username, password) => {
     try {
-      const response = await api.post('/api/auth/login', {
-        username,
-        password,
-      })
-      return { success: true, data: response.data }
+      const response = await api.post(
+        '/api/auth/login',
+        {
+          username,
+          password,
+        },
+      )
+
+      return {
+        success: true,
+        data: response.data,
+      }
     } catch (error) {
       return {
         success: false,
@@ -37,8 +44,14 @@ export const authService = {
 
   logout: async () => {
     try {
-      const response = await api.post('/api/auth/logout')
-      return { success: true, data: response.data }
+      const response = await api.post(
+        '/api/auth/logout',
+      )
+
+      return {
+        success: true,
+        data: response.data,
+      }
     } catch (error) {
       return {
         success: false,
@@ -46,6 +59,85 @@ export const authService = {
         error: extractError(
           error,
           'Erreur lors de la déconnexion',
+        ),
+      }
+    }
+  },
+
+  activateAccount: async ({
+    token,
+    newPassword,
+    confirmPassword,
+  }) => {
+    try {
+      const response = await api.post(
+        '/api/auth/activate',
+        {
+          token,
+          newPassword,
+          confirmPassword,
+        },
+      )
+
+      return {
+        success: true,
+        data: response.data,
+      }
+    } catch (error) {
+      return {
+        success: false,
+        status: error.response?.status,
+        error: extractError(
+          error,
+          'Impossible d’activer le compte.',
+        ),
+      }
+    }
+  },
+
+  requestPasswordReset: async (payload) => {
+    try {
+      const response = await api.post(
+        '/api/auth/password-reset/request',
+        payload,
+      )
+
+      return {
+        success: true,
+        data: response.data,
+        message:
+          'Le lien de réinitialisation a été généré.',
+      }
+    } catch (error) {
+      return {
+        success: false,
+        status: error.response?.status,
+        error: extractError(
+          error,
+          'Impossible de générer le lien de réinitialisation.',
+        ),
+      }
+    }
+  },
+
+  resetPassword: async (payload) => {
+    try {
+      const response = await api.post(
+        '/api/auth/password-reset/confirm',
+        payload,
+      )
+
+      return {
+        success: true,
+        data: response.data,
+      }
+    } catch (error) {
+      return {
+        success: false,
+        status: error.response?.status,
+        error: extractError(
+          error,
+          'Impossible de réinitialiser le mot de passe.',
         ),
       }
     }
