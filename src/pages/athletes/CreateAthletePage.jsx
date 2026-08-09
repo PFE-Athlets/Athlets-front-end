@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { athleteService } from '../../api/athleteService'
 import { teamService } from '../../api/teamService'
@@ -22,21 +22,70 @@ const INITIAL_FORM = {
   injuryHistory: '',
 }
 
+const getMaximumBirthDate = () => {
+  const today = new Date()
+
+  const maxDate = new Date(
+    today.getFullYear() - 18,
+    today.getMonth(),
+    today.getDate(),
+  )
+
+  const year = maxDate.getFullYear()
+
+  const month = String(
+    maxDate.getMonth() + 1,
+  ).padStart(2, '0')
+
+  const day = String(
+    maxDate.getDate(),
+  ).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
 export default function CreateAthletePage() {
   const navigate = useNavigate()
+
+  const currentUser = useMemo(() => {
+    try {
+      const storedUser =
+        sessionStorage.getItem('currentUser')
+
+      return storedUser
+        ? JSON.parse(storedUser)
+        : null
+    } catch {
+      return null
+    }
+  }, [])
+
+  const isCoach =
+    Number(currentUser?.accessLevel) === 2
+
+  const maximumBirthDate =
+    getMaximumBirthDate()
 
   const [form, setForm] = useState(INITIAL_FORM)
   const [teams, setTeams] = useState([])
   const [positions, setPositions] = useState([])
   const [disciplines, setDisciplines] = useState([])
 
-  const [loadingTeams, setLoadingTeams] = useState(true)
-  const [loadingExtras, setLoadingExtras] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
+  const [loadingTeams, setLoadingTeams] =
+    useState(true)
+
+  const [loadingExtras, setLoadingExtras] =
+    useState(false)
+
+  const [submitting, setSubmitting] =
+    useState(false)
 
   const [error, setError] = useState('')
-  const [activationLink, setActivationLink] = useState('')
-  const [copySuccess, setCopySuccess] = useState(false)
+  const [activationLink, setActivationLink] =
+    useState('')
+
+  const [copySuccess, setCopySuccess] =
+    useState(false)
 
   const updateField = (field, value) => {
     setForm((current) => ({
@@ -57,17 +106,55 @@ export default function CreateAthletePage() {
           result.error ||
             'Impossible de charger les équipes.',
         )
+
         setTeams([])
         setLoadingTeams(false)
         return
       }
 
-      setTeams(result.data ?? [])
+      const loadedTeams =
+        Array.isArray(result.data)
+          ? result.data
+          : []
+
+      setTeams(loadedTeams)
+
+      /*
+       * Un coach reçoit déjà seulement
+       * les équipes auxquelles il a accès.
+       *
+       * On sélectionne donc automatiquement
+       * sa première équipe.
+       */
+      if (
+        isCoach &&
+        loadedTeams.length > 0
+      ) {
+        setForm((current) => {
+          /*
+           * Ne pas écraser une sélection
+           * déjà présente.
+           */
+          if (current.athleteTeamId) {
+            return current
+          }
+
+          return {
+            ...current,
+            athleteTeamId: String(
+              loadedTeams[0].id,
+            ),
+            athletePositionId: '',
+            athleteDisciplineId: '',
+          }
+        })
+      }
+
       setLoadingTeams(false)
     }
 
     loadTeams()
-  }, [])
+  }, [isCoach])
 
   useEffect(() => {
     const teamId = form.athleteTeamId
@@ -80,7 +167,8 @@ export default function CreateAthletePage() {
 
     const selectedTeam = teams.find(
       (team) =>
-        String(team.id) === String(teamId),
+        String(team.id) ===
+        String(teamId),
     )
 
     const sportId = selectedTeam?.sportId
@@ -104,6 +192,7 @@ export default function CreateAthletePage() {
           result.error ||
             'Impossible de charger les positions et disciplines.',
         )
+
         setPositions([])
         setDisciplines([])
         setLoadingExtras(false)
@@ -135,10 +224,15 @@ export default function CreateAthletePage() {
 
   const buildPayload = () => ({
     firstName: form.firstName.trim(),
+
     lastName: form.lastName.trim(),
+
     birthDate: form.birthDate,
+
     gender: form.gender,
+
     email: form.email.trim(),
+
     username: form.username.trim(),
 
     heightMeters: form.heightMeters
@@ -191,6 +285,32 @@ export default function CreateAthletePage() {
       setError(
         'Veuillez sélectionner une équipe.',
       )
+
+      setSubmitting(false)
+      return
+    }
+
+    if (!form.birthDate) {
+      setError(
+        'Veuillez sélectionner une date de naissance.',
+      )
+
+      setSubmitting(false)
+      return
+    }
+
+    /*
+     * Sécurité supplémentaire au cas où
+     * la validation HTML serait contournée.
+     */
+    if (
+      form.birthDate >
+      maximumBirthDate
+    ) {
+      setError(
+        'L’athlète doit avoir au moins 18 ans.',
+      )
+
       setSubmitting(false)
       return
     }
@@ -205,6 +325,7 @@ export default function CreateAthletePage() {
         result.error ||
           'Impossible de créer l’athlète.',
       )
+
       setSubmitting(false)
       return
     }
@@ -213,6 +334,7 @@ export default function CreateAthletePage() {
       setError(
         'L’athlète a été créé, mais aucun lien d’activation n’a été retourné.',
       )
+
       setSubmitting(false)
       return
     }
@@ -246,20 +368,32 @@ export default function CreateAthletePage() {
     }
 
     try {
-      const activationUrl = new URL(activationLink)
-      const token = activationUrl.searchParams.get('token')
+      const activationUrl =
+        new URL(activationLink)
+
+      const token =
+        activationUrl.searchParams.get(
+          'token',
+        )
 
       if (
-        activationUrl.origin !== window.location.origin ||
-        activationUrl.pathname !== '/activation-compte' ||
+        activationUrl.origin !==
+          window.location.origin ||
+        activationUrl.pathname !==
+          '/activation-compte' ||
         !token
       ) {
-        setError("Le lien d'activation est invalide.")
+        setError(
+          "Le lien d'activation est invalide.",
+        )
+
         return
       }
 
       const safeUrl =
-        `/activation-compte?token=${encodeURIComponent(token)}`
+        `/activation-compte?token=${encodeURIComponent(
+          token,
+        )}`
 
       window.open(
         safeUrl,
@@ -267,7 +401,9 @@ export default function CreateAthletePage() {
         'noopener,noreferrer',
       )
     } catch {
-      setError("Le lien d'activation est invalide.")
+      setError(
+        "Le lien d'activation est invalide.",
+      )
     }
   }
 
@@ -278,7 +414,9 @@ export default function CreateAthletePage() {
         onSubmit={handleSubmit}
       >
         <section className="form-section">
-          <h2>Informations personnelles</h2>
+          <h2>
+            Informations personnelles
+          </h2>
 
           <div className="form-grid">
             <Field
@@ -321,6 +459,7 @@ export default function CreateAthletePage() {
               <input
                 type="date"
                 value={form.birthDate}
+                max={maximumBirthDate}
                 onChange={(e) =>
                   updateField(
                     'birthDate',
@@ -345,9 +484,11 @@ export default function CreateAthletePage() {
                 <option value="">
                   Sélectionner
                 </option>
+
                 <option value="Female">
                   Femme
                 </option>
+
                 <option value="Male">
                   Homme
                 </option>
@@ -380,9 +521,16 @@ export default function CreateAthletePage() {
           <div className="form-grid">
             <Field label="Équipe">
               <select
-                value={form.athleteTeamId}
-                onChange={handleTeamChange}
-                disabled={loadingTeams}
+                value={
+                  form.athleteTeamId
+                }
+                onChange={
+                  handleTeamChange
+                }
+                disabled={
+                  loadingTeams ||
+                  isCoach
+                }
                 required
               >
                 <option value="">
@@ -424,14 +572,16 @@ export default function CreateAthletePage() {
                     : 'Aucune'}
                 </option>
 
-                {positions.map((position) => (
-                  <option
-                    key={position.id}
-                    value={position.id}
-                  >
-                    {position.name}
-                  </option>
-                ))}
+                {positions.map(
+                  (position) => (
+                    <option
+                      key={position.id}
+                      value={position.id}
+                    >
+                      {position.name}
+                    </option>
+                  ),
+                )}
               </select>
             </Field>
 
@@ -460,10 +610,16 @@ export default function CreateAthletePage() {
                 {disciplines.map(
                   (discipline) => (
                     <option
-                      key={discipline.id}
-                      value={discipline.id}
+                      key={
+                        discipline.id
+                      }
+                      value={
+                        discipline.id
+                      }
                     >
-                      {discipline.name}
+                      {
+                        discipline.name
+                      }
                     </option>
                   ),
                 )}
@@ -475,7 +631,9 @@ export default function CreateAthletePage() {
                 type="number"
                 min="1"
                 placeholder="Ex. : 180"
-                value={form.heightMeters}
+                value={
+                  form.heightMeters
+                }
                 onChange={(e) =>
                   updateField(
                     'heightMeters',
@@ -503,7 +661,9 @@ export default function CreateAthletePage() {
 
             <Field label="Bras dominant">
               <select
-                value={form.dominantArm}
+                value={
+                  form.dominantArm
+                }
                 onChange={(e) =>
                   updateField(
                     'dominantArm',
@@ -514,9 +674,11 @@ export default function CreateAthletePage() {
                 <option value="">
                   Sélectionner
                 </option>
+
                 <option value="Right">
                   Droit
                 </option>
+
                 <option value="Left">
                   Gauche
                 </option>
@@ -525,7 +687,9 @@ export default function CreateAthletePage() {
 
             <Field label="Jambe dominante">
               <select
-                value={form.dominantLeg}
+                value={
+                  form.dominantLeg
+                }
                 onChange={(e) =>
                   updateField(
                     'dominantLeg',
@@ -536,9 +700,11 @@ export default function CreateAthletePage() {
                 <option value="">
                   Sélectionner
                 </option>
+
                 <option value="Right">
                   Droite
                 </option>
+
                 <option value="Left">
                   Gauche
                 </option>
@@ -586,7 +752,9 @@ export default function CreateAthletePage() {
           >
             <textarea
               placeholder="Ex. : Antécédents de blessures, interventions..."
-              value={form.injuryHistory}
+              value={
+                form.injuryHistory
+              }
               onChange={(e) =>
                 updateField(
                   'injuryHistory',
@@ -635,7 +803,9 @@ export default function CreateAthletePage() {
           link={activationLink}
           copySuccess={copySuccess}
           onCopy={handleCopyLink}
-          onOpen={handleOpenActivationLink}
+          onOpen={
+            handleOpenActivationLink
+          }
           onClose={() =>
             navigate('/athletes')
           }
@@ -653,10 +823,13 @@ function Field({
   return (
     <div
       className={`form-field ${
-        fullWidth ? 'full-width' : ''
+        fullWidth
+          ? 'full-width'
+          : ''
       }`}
     >
       <label>{label}</label>
+
       {children}
     </div>
   )
@@ -689,8 +862,9 @@ function ActivationModal({
 
         <div className="link-modal__content">
           <p>
-            Utilisez ce lien pour activer
-            le compte de l’athlète.
+            Utilisez ce lien pour
+            activer le compte de
+            l’athlète.
           </p>
 
           <div className="link-modal__link">

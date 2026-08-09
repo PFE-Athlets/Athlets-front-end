@@ -84,6 +84,22 @@ const getProofRequiredValue = (test) => {
 export default function CreateBatterieTestPage() {
   const navigate = useNavigate()
 
+  const currentUser = useMemo(() => {
+    try {
+      const storedUser =
+        sessionStorage.getItem('currentUser')
+
+      return storedUser
+        ? JSON.parse(storedUser)
+        : null
+    } catch {
+      return null
+    }
+  }, [])
+
+  const isCoach =
+    Number(currentUser?.accessLevel) === 2
+
   const [name, setName] = useState('')
   const [teamId, setTeamId] = useState('')
   const [status, setStatus] = useState('true')
@@ -110,20 +126,46 @@ export default function CreateBatterieTestPage() {
       setTeamsError(null)
 
       try {
-        const result = await teamService.getDisplayTeams()
+        const result =
+          await teamService.getDisplayTeams()
 
         if (cancelled) {
           return
         }
 
         if (result.success) {
-          setTeams(
+          const loadedTeams =
             Array.isArray(result.data)
               ? result.data
-              : [],
-          )
+              : []
+
+          setTeams(loadedTeams)
+
+          /*
+           * Pour un coach, getDisplayTeams()
+           * retourne les équipes auxquelles
+           * il a accès.
+           *
+           * On sélectionne automatiquement
+           * sa première équipe.
+           */
+          if (
+            isCoach &&
+            loadedTeams.length > 0
+          ) {
+            setTeamId((currentTeamId) => {
+              if (currentTeamId) {
+                return currentTeamId
+              }
+
+              return String(
+                loadedTeams[0].id,
+              )
+            })
+          }
         } else {
           setTeams([])
+
           setTeamsError(
             result.error ??
               'Impossible de charger les équipes.',
@@ -137,6 +179,7 @@ export default function CreateBatterieTestPage() {
           )
 
           setTeams([])
+
           setTeamsError(
             'Impossible de charger les équipes.',
           )
@@ -153,7 +196,7 @@ export default function CreateBatterieTestPage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [isCoach])
 
   useEffect(() => {
     let cancelled = false
@@ -163,7 +206,8 @@ export default function CreateBatterieTestPage() {
       setTestsError(null)
 
       try {
-        const result = await physicalTestService.getAll()
+        const result =
+          await physicalTestService.getAll()
 
         if (cancelled) {
           return
@@ -171,10 +215,13 @@ export default function CreateBatterieTestPage() {
 
         if (result.success) {
           setPhysicalTests(
-            normalizePhysicalTests(result.data),
+            normalizePhysicalTests(
+              result.data,
+            ),
           )
         } else {
           setPhysicalTests([])
+
           setTestsError(
             result.error ??
               'Impossible de charger les tests physiques.',
@@ -188,6 +235,7 @@ export default function CreateBatterieTestPage() {
           )
 
           setPhysicalTests([])
+
           setTestsError(
             'Impossible de charger les tests physiques.',
           )
@@ -207,12 +255,15 @@ export default function CreateBatterieTestPage() {
   }, [])
 
   const selectedTestIds = useMemo(() => {
-    return selectedTests.map(getPhysicalTestId)
+    return selectedTests.map(
+      getPhysicalTestId,
+    )
   }, [selectedTests])
 
   const availableTests = useMemo(() => {
     return physicalTests.filter((test) => {
-      const testId = getPhysicalTestId(test)
+      const testId =
+        getPhysicalTestId(test)
 
       return (
         testId &&
@@ -229,37 +280,48 @@ export default function CreateBatterieTestPage() {
       return
     }
 
-    const testToAdd = physicalTests.find(
-      (test) =>
-        getPhysicalTestId(test) === testToAddId,
-    )
+    const testToAdd =
+      physicalTests.find(
+        (test) =>
+          getPhysicalTestId(test) ===
+          testToAddId,
+      )
 
     if (!testToAdd) {
       return
     }
 
-    setSelectedTests((previousTests) => {
-      const alreadySelected = previousTests.some(
-        (test) =>
-          getPhysicalTestId(test) === testToAddId,
-      )
+    setSelectedTests(
+      (previousTests) => {
+        const alreadySelected =
+          previousTests.some(
+            (test) =>
+              getPhysicalTestId(test) ===
+              testToAddId,
+          )
 
-      if (alreadySelected) {
-        return previousTests
-      }
+        if (alreadySelected) {
+          return previousTests
+        }
 
-      return [...previousTests, testToAdd]
-    })
+        return [
+          ...previousTests,
+          testToAdd,
+        ]
+      },
+    )
 
     setTestToAddId('')
   }
 
   const handleRemoveTest = (testId) => {
-    setSelectedTests((previousTests) =>
-      previousTests.filter(
-        (test) =>
-          getPhysicalTestId(test) !== testId,
-      ),
+    setSelectedTests(
+      (previousTests) =>
+        previousTests.filter(
+          (test) =>
+            getPhysicalTestId(test) !==
+            testId,
+        ),
     )
   }
 
@@ -279,6 +341,7 @@ export default function CreateBatterieTestPage() {
       setSubmitError(
         'Veuillez saisir un nom pour la batterie de tests.',
       )
+
       return
     }
 
@@ -286,6 +349,7 @@ export default function CreateBatterieTestPage() {
       setSubmitError(
         'Veuillez sélectionner une équipe.',
       )
+
       return
     }
 
@@ -293,6 +357,7 @@ export default function CreateBatterieTestPage() {
       setSubmitError(
         'Veuillez ajouter au moins un test physique.',
       )
+
       return
     }
 
@@ -300,21 +365,33 @@ export default function CreateBatterieTestPage() {
 
     try {
       const result =
-        await physicalTestService.createTestBattery({
-          name: trimmedName,
-          teamId: Number(teamId),
-          status,
-          physicalTestIds: selectedTests.map(
-            (test) =>
-              Number(getPhysicalTestId(test)),
-          ),
-        })
+        await physicalTestService.createTestBattery(
+          {
+            name: trimmedName,
+
+            teamId:
+              Number(teamId),
+
+            status,
+
+            physicalTestIds:
+              selectedTests.map(
+                (test) =>
+                  Number(
+                    getPhysicalTestId(
+                      test,
+                    ),
+                  ),
+              ),
+          },
+        )
 
       if (!result.success) {
         setSubmitError(
           result.error ??
             'Impossible de créer la batterie de tests.',
         )
+
         return
       }
 
@@ -342,12 +419,15 @@ export default function CreateBatterieTestPage() {
         onSubmit={handleSubmit}
       >
         <section className="form-section">
-          <h2>Informations générales</h2>
+          <h2>
+            Informations générales
+          </h2>
 
           <div className="form-grid">
             <div className="form-field">
               <label htmlFor="battery-name">
                 Nom de la batterie
+
                 <span className="required-marker">
                   {' '}*
                 </span>
@@ -359,7 +439,9 @@ export default function CreateBatterieTestPage() {
                 placeholder="Ex. : Batterie pré-saison 2026"
                 value={name}
                 onChange={(event) =>
-                  setName(event.target.value)
+                  setName(
+                    event.target.value,
+                  )
                 }
                 disabled={isFormLocked}
               />
@@ -368,6 +450,7 @@ export default function CreateBatterieTestPage() {
             <div className="form-field">
               <label htmlFor="battery-team">
                 Équipe
+
                 <span className="required-marker">
                   {' '}*
                 </span>
@@ -377,12 +460,15 @@ export default function CreateBatterieTestPage() {
                 id="battery-team"
                 value={teamId}
                 onChange={(event) =>
-                  setTeamId(event.target.value)
+                  setTeamId(
+                    event.target.value,
+                  )
                 }
                 disabled={
                   teamsLoading ||
                   teams.length === 0 ||
-                  isFormLocked
+                  isFormLocked ||
+                  isCoach
                 }
               >
                 <option value="">
@@ -411,6 +497,7 @@ export default function CreateBatterieTestPage() {
             <div className="form-field full-width">
               <label htmlFor="battery-status">
                 Statut
+
                 <span className="required-marker">
                   {' '}*
                 </span>
@@ -420,18 +507,22 @@ export default function CreateBatterieTestPage() {
                 id="battery-status"
                 value={status}
                 onChange={(event) =>
-                  setStatus(event.target.value)
+                  setStatus(
+                    event.target.value,
+                  )
                 }
                 disabled={isFormLocked}
               >
-                {STATUS_OPTIONS.map((option) => (
-                  <option
-                    key={option.value}
-                    value={option.value}
-                  >
-                    {option.label}
-                  </option>
-                ))}
+                {STATUS_OPTIONS.map(
+                  (option) => (
+                    <option
+                      key={option.value}
+                      value={option.value}
+                    >
+                      {option.label}
+                    </option>
+                  ),
+                )}
               </select>
             </div>
           </div>
@@ -451,35 +542,45 @@ export default function CreateBatterieTestPage() {
                   id="physical-test"
                   value={testToAddId}
                   onChange={(event) =>
-                    setTestToAddId(event.target.value)
+                    setTestToAddId(
+                      event.target.value,
+                    )
                   }
                   disabled={
                     testsLoading ||
-                    availableTests.length === 0 ||
+                    availableTests.length ===
+                      0 ||
                     isFormLocked
                   }
                 >
                   <option value="">
                     {testsLoading
                       ? 'Chargement des tests...'
-                      : availableTests.length === 0
+                      : availableTests.length ===
+                          0
                         ? 'Aucun test disponible'
                         : 'Rechercher ou sélectionner un test'}
                   </option>
 
-                  {availableTests.map((test) => {
-                    const testId =
-                      getPhysicalTestId(test)
+                  {availableTests.map(
+                    (test) => {
+                      const testId =
+                        getPhysicalTestId(
+                          test,
+                        )
 
-                    return (
-                      <option
-                        key={testId}
-                        value={testId}
-                      >
-                        {getPhysicalTestName(test)}
-                      </option>
-                    )
-                  })}
+                      return (
+                        <option
+                          key={testId}
+                          value={testId}
+                        >
+                          {getPhysicalTestName(
+                            test,
+                          )}
+                        </option>
+                      )
+                    },
+                  )}
                 </select>
 
                 {testsError ? (
@@ -494,95 +595,132 @@ export default function CreateBatterieTestPage() {
                 className="form-outline-button"
                 onClick={handleAddTest}
                 disabled={
-                  !testToAddId || isFormLocked
+                  !testToAddId ||
+                  isFormLocked
                 }
               >
                 <PlusIcon />
-                <span>Ajouter le test</span>
+                <span>
+                  Ajouter le test
+                </span>
               </button>
             </div>
 
             <div className="form-table-wrapper">
               <div className="form-table form-table--battery">
                 <div className="form-table__header">
-                  <span aria-hidden="true" />
-                  <span>Nom du test</span>
-                  <span>Qualité physique</span>
-                  <span>Supervisé</span>
-                  <span>Preuve requise</span>
-                  <span>Action</span>
+                  <span
+                    aria-hidden="true"
+                  />
+                  <span>
+                    Nom du test
+                  </span>
+                  <span>
+                    Qualité physique
+                  </span>
+                  <span>
+                    Supervisé
+                  </span>
+                  <span>
+                    Preuve requise
+                  </span>
+                  <span>
+                    Action
+                  </span>
                 </div>
 
-                {selectedTests.length > 0 ? (
-                  selectedTests.map((test) => {
-                    const testId =
-                      getPhysicalTestId(test)
+                {selectedTests.length >
+                0 ? (
+                  selectedTests.map(
+                    (test) => {
+                      const testId =
+                        getPhysicalTestId(
+                          test,
+                        )
 
-                    const supervised =
-                      getSupervisedValue(test)
+                      const supervised =
+                        getSupervisedValue(
+                          test,
+                        )
 
-                    const proofRequired =
-                      getProofRequiredValue(test)
+                      const proofRequired =
+                        getProofRequiredValue(
+                          test,
+                        )
 
-                    return (
-                      <div
-                        key={testId}
-                        className="form-table__row"
-                      >
-                        <span
-                          className="form-drag-handle"
-                          aria-hidden="true"
+                      return (
+                        <div
+                          key={testId}
+                          className="form-table__row"
                         >
-                          ⠿
-                        </span>
-
-                        <span className="form-table__cell form-table__cell--name">
-                          {getPhysicalTestName(test)}
-                        </span>
-
-                        <span className="form-table__cell">
-                          {getPhysicalQualityName(test)}
-                        </span>
-
-                        <span className="form-table__cell">
                           <span
-                            className={
-                              supervised
-                                ? 'boolean-badge boolean-badge--yes'
-                                : 'boolean-badge boolean-badge--no'
-                            }
+                            className="form-drag-handle"
+                            aria-hidden="true"
                           >
-                            {supervised
+                            ⠿
+                          </span>
+
+                          <span className="form-table__cell form-table__cell--name">
+                            {getPhysicalTestName(
+                              test,
+                            )}
+                          </span>
+
+                          <span className="form-table__cell">
+                            {getPhysicalQualityName(
+                              test,
+                            )}
+                          </span>
+
+                          <span className="form-table__cell">
+                            <span
+                              className={
+                                supervised
+                                  ? 'boolean-badge boolean-badge--yes'
+                                  : 'boolean-badge boolean-badge--no'
+                              }
+                            >
+                              {supervised
+                                ? 'Oui'
+                                : 'Non'}
+                            </span>
+                          </span>
+
+                          <span className="form-table__cell">
+                            {proofRequired
                               ? 'Oui'
                               : 'Non'}
                           </span>
-                        </span>
 
-                        <span className="form-table__cell">
-                          {proofRequired
-                            ? 'Oui'
-                            : 'Non'}
-                        </span>
-
-                        <button
-                          type="button"
-                          className="form-delete-button"
-                          onClick={() =>
-                            handleRemoveTest(testId)
-                          }
-                          disabled={isFormLocked}
-                          aria-label={`Retirer ${getPhysicalTestName(test)}`}
-                        >
-                          <span aria-hidden="true">
-                            ×
-                          </span>
-                        </button>
-                      </div>
-                    )
-                  })
+                          <button
+                            type="button"
+                            className="form-delete-button"
+                            onClick={() =>
+                              handleRemoveTest(
+                                testId,
+                              )
+                            }
+                            disabled={
+                              isFormLocked
+                            }
+                            aria-label={`Retirer ${getPhysicalTestName(
+                              test,
+                            )}`}
+                          >
+                            <span
+                              aria-hidden="true"
+                            >
+                              ×
+                            </span>
+                          </button>
+                        </div>
+                      )
+                    },
+                  )
                 ) : (
                   <div className="form-table-empty">
-                    Aucun test physique ajouté.
+                    Aucun test physique
+                    ajouté.
                   </div>
                 )}
               </div>
@@ -615,7 +753,10 @@ export default function CreateBatterieTestPage() {
 
               <div>
                 <h2>Succès</h2>
-                <p>{submitSuccess}</p>
+
+                <p>
+                  {submitSuccess}
+                </p>
               </div>
             </div>
 
@@ -623,10 +764,13 @@ export default function CreateBatterieTestPage() {
               type="button"
               className="btn-secondary"
               onClick={() =>
-                navigate('/batterie-tests')
+                navigate(
+                  '/batterie-tests',
+                )
               }
             >
-              Retour aux batteries de tests
+              Retour aux batteries de
+              tests
             </button>
           </section>
         ) : null}
@@ -635,7 +779,9 @@ export default function CreateBatterieTestPage() {
           <button
             type="button"
             className="btn-secondary"
-            onClick={() => navigate(-1)}
+            onClick={() =>
+              navigate(-1)
+            }
             disabled={isFormLocked}
           >
             Annuler

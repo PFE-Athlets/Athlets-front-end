@@ -186,7 +186,7 @@ export default function TeamDetailsPage() {
       setAthletesError(null)
 
       const result =
-        await athleteService.getAthletesPreviewByTeamId(
+        await athleteService.getDisplayAthletesByTeam(
           resolvedTeamId,
         )
 
@@ -197,24 +197,19 @@ export default function TeamDetailsPage() {
       if (result.success) {
         const rows = result.data.map((athlete) => ({
           id: athlete.id,
-          name:
-            athlete.name ||
-            athlete.fullName ||
-            athlete.username ||
-            '—',
+          name: athlete.fullName || athlete.username || '—',
+
           position:
-            Array.isArray(athlete.positions) &&
             athlete.positions.length > 0
               ? athlete.positions.join(', ')
               : '—',
+
           discipline:
-            Array.isArray(athlete.disciplines) &&
             athlete.disciplines.length > 0
               ? athlete.disciplines.join(', ')
               : '—',
-          status: athlete.status
-            ? mapStatusLabel(athlete.status)
-            : '—',
+
+          status: mapStatusLabel(athlete.status),
         }))
 
         setAthletes(rows)
