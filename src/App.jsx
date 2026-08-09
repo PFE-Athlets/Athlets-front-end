@@ -34,6 +34,10 @@ import CreateTeamPage from './pages/teams/CreateTeamPage.jsx'
 import EditTeamPage from './pages/teams/EditTeamPage.jsx'
 import TeamPageView from './pages/teams/TeamPageView.jsx'
 import TeamDetailsPage from './pages/teams/TeamDetailsPage.jsx'
+
+import CreateResultPage from './pages/results/CreateResultPage.jsx'
+import CreateResultSingleAthletePage from './pages/results/CreateResultSingleAthletePage.jsx'
+import CreateResultMultipleAthletesPage from './pages/results/CreateResultMultipleAthletesPage.jsx'
 import ResultPageView from './pages/results/ResultPageView.jsx'
 
 const pages = [
@@ -84,8 +88,13 @@ const pages = [
   },
   {
     path: '/resultats',
-    title: '',
-    subtitle: '',
+    title: 'Résultats des athlètes',
+    subtitle: 'Suivi des résultats des athlètes',
+  },
+  {
+    path: '/resultats/creer',
+    title: 'Créer un résultat',
+    subtitle: 'Création d’un nouveau résultat',
   },
   {
     path: '/seances',
@@ -245,6 +254,9 @@ function App() {
 
       case '/resultats':
         return <ResultPageView />
+
+      case '/resultats/creer':
+        return <CreateResultPage />
 
       default:
         return <PageView />
@@ -432,6 +444,36 @@ function App() {
               {...shellProps}
             >
               <EditBatterieTestPage />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/resultats/creer/single"
+        element={
+          <ProtectedRoute currentUser={currentUser}>
+            <AppShell
+              pageTitle="Saisir un résultat"
+              pageSubtitle=""
+              {...shellProps}
+            >
+              <CreateResultSingleAthletePage />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/resultats/creer/multiple"
+        element={
+          <ProtectedRoute currentUser={currentUser}>
+            <AppShell
+              pageTitle="Saisir des résultats"
+              pageSubtitle=""
+              {...shellProps}
+            >
+              <CreateResultMultipleAthletesPage />
             </AppShell>
           </ProtectedRoute>
         }

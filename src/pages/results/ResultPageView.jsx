@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import { resultService } from '../../api/resultService'
 import {
@@ -47,6 +48,7 @@ const ROLE_LABELS = {
   ATHLETE: 'Athlète',
   KINE: 'Kinésiologue',
 }
+
 
 const formatDateLine = (value) => {
   if (!value) {
@@ -155,8 +157,8 @@ export default function ResultPageView() {
   const [exporting, setExporting] = useState(false)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
-  const [filtersExpanded, setFiltersExpanded] =
-    useState(true)
+  const [filtersExpanded, setFiltersExpanded] = useState(true)
+  const navigate = useNavigate()
 
   useEffect(() => {
     let cancelled = false
@@ -629,6 +631,7 @@ export default function ResultPageView() {
           <button
             type="button"
             className="results-toolbar-btn"
+            onClick={() => navigate('/resultats/creer')}
           >
             <PlusIcon />
             <span>Ajouter</span>

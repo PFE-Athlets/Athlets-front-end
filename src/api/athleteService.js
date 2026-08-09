@@ -103,11 +103,11 @@ const getAthleteStatus = (athlete) => {
       ?.trim()
       .toUpperCase()
 
-  if (rawStatus === 'Active') {
+  if (rawStatus === 'ACTIVE') {
     return 'active'
   }
 
-  if (rawStatus === 'Pending') {
+  if (rawStatus === 'PENDING') {
     return 'pending'
   }
 
