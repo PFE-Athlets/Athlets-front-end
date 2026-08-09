@@ -150,11 +150,9 @@ export default function ResultPageView() {
     statuses: [],
   })
 
-  const [draftFilters, setDraftFilters] =
-    useState(INITIAL_FILTERS)
+  const [draftFilters, setDraftFilters] = useState(INITIAL_FILTERS)
 
-  const [appliedFilters, setAppliedFilters] =
-    useState(INITIAL_FILTERS)
+  const [appliedFilters, setAppliedFilters] = useState(INITIAL_FILTERS)
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -164,8 +162,7 @@ export default function ResultPageView() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
 
-  const [filtersExpanded, setFiltersExpanded] =
-    useState(true)
+  const [filtersExpanded, setFiltersExpanded] = useState(true)
 
   const navigate = useNavigate()
 
@@ -779,7 +776,13 @@ export default function ResultPageView() {
               <tbody>
                 {visibleResults.map(
                   (result) => (
-                    <tr key={result.id}>
+                    <tr
+                      key={result.id}
+                      className="results-table-row"
+                      onClick={() =>
+                        navigate(`/resultats/${result.id}`)
+                      }
+                    >
                       <td data-label="Date de saisie">
                         <div className="results-date-cell">
                           <strong>
@@ -872,20 +875,10 @@ export default function ResultPageView() {
                           <button
                             type="button"
                             className="results-action-btn"
-                            aria-label={`Consulter le résultat ${result.id}`}
-                            onClick={() =>
-                              navigate(
-                                `/resultats/${result.id}`,
-                              )
-                            }
-                          >
-                            <EyeIcon />
-                          </button>
-
-                          <button
-                            type="button"
-                            className="results-action-btn"
                             aria-label={`Plus d’actions pour le résultat ${result.id}`}
+                            onClick={(event) => {
+                              event.stopPropagation()
+                            }}
                           >
                             <MoreVerticalIcon />
                           </button>

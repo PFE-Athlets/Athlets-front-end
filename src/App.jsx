@@ -34,11 +34,13 @@ import CreateTeamPage from './pages/teams/CreateTeamPage.jsx'
 import EditTeamPage from './pages/teams/EditTeamPage.jsx'
 import TeamPageView from './pages/teams/TeamPageView.jsx'
 import TeamDetailsPage from './pages/teams/TeamDetailsPage.jsx'
+import MyTeamsPage from './pages/teams/MyTeamsPage.jsx'
 
 import CreateResultPage from './pages/results/CreateResultPage.jsx'
 import CreateResultSingleAthletePage from './pages/results/CreateResultSingleAthletePage.jsx'
 import CreateResultMultipleAthletesPage from './pages/results/CreateResultMultipleAthletesPage.jsx'
 import ResultPageView from './pages/results/ResultPageView.jsx'
+import ResultDetailsPage from './pages/results/ResultDetailPage.jsx'
 
 const pages = [
   {
@@ -50,6 +52,11 @@ const pages = [
     path: '/athletes',
     title: 'Athlètes',
     subtitle: 'Gestion de la liste des athlètes',
+  },
+  {
+    path: '/mes-equipes',
+    title: 'Mes équipes',
+    subtitle: 'Consultez les équipes auxquelles vous appartenez',
   },
   {
     path: '/equipes',
@@ -224,6 +231,11 @@ function App() {
 
       case '/athletes/creer':
         return <CreateAthletePage />
+
+      case '/mes-equipes':
+        return (
+          <MyTeamsPage/>
+        )
 
       case '/equipes':
         return (
@@ -444,6 +456,21 @@ function App() {
               {...shellProps}
             >
               <EditBatterieTestPage />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/resultats/:id"
+        element={
+          <ProtectedRoute currentUser={currentUser}>
+            <AppShell
+              pageTitle="Détail du résultat"
+              pageSubtitle=""
+              {...shellProps}
+            >
+              <ResultDetailsPage />
             </AppShell>
           </ProtectedRoute>
         }

@@ -359,6 +359,51 @@ export const resultService = {
     }
   },
 
+  getResultById: async (id) => {
+    try {
+      const response = await api.get(
+        `/api/result/${id}`,
+      )
+
+      return {
+        success: true,
+        data: response.data,
+      }
+    } catch (error) {
+      return {
+        success: false,
+        status: error.response?.status,
+        error: extractError(
+          error,
+          'Impossible de charger le résultat.',
+        ),
+      }
+    }
+  },
+
+  verifyResult: async (id, approved) => {
+    try {
+      await api.put(
+        `/api/result/verify/${id}/${approved}`,
+      )
+
+      return {
+        success: true,
+      }
+    } catch (error) {
+      return {
+        success: false,
+        status: error.response?.status,
+        error: extractError(
+          error,
+          approved
+            ? 'Impossible d’approuver le résultat.'
+            : 'Impossible de refuser le résultat.',
+        ),
+      }
+    }
+  },
+
   submit: async (payload) => {
     try {
       await api.put(

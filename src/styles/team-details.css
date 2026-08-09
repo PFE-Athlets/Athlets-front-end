@@ -1,4 +1,5 @@
 .team-details-page {
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -8,53 +9,83 @@
   margin: 0;
   color: #6e7ca8;
   font-size: 0.95rem;
+  line-height: 1.45;
 }
+
+/* =========================
+   CARTE PRINCIPALE
+   ========================= */
 
 .team-details-card {
+  padding: 28px 28px 24px;
   background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.05);
-  padding: 20px;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
 }
 
+/* =========================
+   SECTIONS
+   ========================= */
+
 .team-details-section {
-  padding: 10px 0 18px;
-  border-bottom: 1px solid #e8edf7;
+  padding: 0 0 24px;
+  margin: 0 0 24px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .team-details-section--last {
+  padding-bottom: 24px;
+  margin-bottom: 0;
   border-bottom: none;
-  padding-bottom: 8px;
 }
 
 .team-details-section h2 {
-  margin: 0 0 12px;
-  color: #24396f;
-  font-size: 1.75rem;
+  margin: 0 0 22px;
+  color: #001b79;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
+
+/* =========================
+   GRILLE D'INFORMATIONS
+   ========================= */
 
 .team-details-grid {
   display: grid;
-  gap: 14px;
+  gap: 22px 34px;
 }
 
 .team-details-grid--three {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+/* =========================
+   LABELS / VALEURS
+   ========================= */
+
 .team-details-label {
   margin: 0 0 6px;
-  color: #7b87ad;
-  font-size: 0.88rem;
+  color: #001b79;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.25;
 }
 
 .team-details-value {
   margin: 0;
-  color: #24396f;
-  font-size: 1.2rem;
+  min-width: 0;
+  color: #001b79;
+  font-size: 0.95rem;
   font-weight: 700;
+  line-height: 1.45;
+  word-break: break-word;
 }
+
+/* =========================
+   CHIPS
+   ========================= */
 
 .team-details-chips {
   display: flex;
@@ -65,64 +96,178 @@
 .team-details-chip {
   display: inline-flex;
   align-items: center;
-  min-height: 30px;
-  padding: 0 12px;
-  border-radius: 999px;
+  padding: 5px 12px;
+  color: #0047ff;
   background: #eef2ff;
-  color: #2d5bdb;
-  font-weight: 700;
-  font-size: 0.85rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.25;
 }
+
+/* =========================
+   STATUT
+   ========================= */
 
 .team-details-status {
   display: inline-flex;
+  width: fit-content;
   align-items: center;
-  min-height: 26px;
-  padding: 0 10px;
+  padding: 5px 12px;
   border-radius: 999px;
-  font-weight: 700;
   font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.25;
 }
 
 .team-details-status--active {
-  color: #15803d;
+  color: #166534;
   background: #dcfce7;
 }
 
 .team-details-status--inactive {
-  color: #dc2626;
+  color: #b91c1c;
   background: #fee2e2;
 }
 
+/* =========================
+   TABLEAU DES ATHLÈTES
+   ========================= */
+
+.team-details-card .table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.team-details-card .data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.team-details-card .data-table th {
+  padding: 12px 14px;
+  color: #001b79;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.25;
+  text-align: left;
+}
+
+.team-details-card .data-table td {
+  padding: 14px;
+  color: #001b79;
+  font-size: 0.9rem;
+  font-weight: 650;
+  line-height: 1.45;
+  vertical-align: middle;
+}
+
+.team-details-card .data-table tbody tr {
+  border-top: 1px solid #e5e7eb;
+}
+
+.team-details-card .data-table .cell--name {
+  font-weight: 800;
+}
+
+/* =========================
+   BOUTON VOIR PROFIL
+   ========================= */
+
 .team-details-profile-btn {
-  min-height: 34px;
-  padding: 0 12px;
-  border: 1px solid #4f46e5;
+  min-height: 36px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #0047ff;
   border-radius: 8px;
   background: #fff;
-  color: #4f46e5;
-  font-weight: 700;
+  color: #0047ff;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
   cursor: pointer;
 }
 
-.team-details-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding-top: 10px;
+.team-details-profile-btn:hover:not(:disabled) {
+  background: #eef2ff;
 }
 
+.team-details-profile-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* =========================
+   ACTIONS
+   ========================= */
+
+.team-details-actions {
+  padding-top: 22px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+}
+
+.team-details-actions .btn-secondary,
+.team-details-actions .btn-primary {
+  min-width: 160px;
+  min-height: 44px;
+  padding: 0 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* =========================
+   ÉTATS VIDES / ERREURS
+   ========================= */
+
+.team-details-page .list-empty {
+  color: #001b79;
+  font-size: 0.9rem;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+/* =========================
+   RESPONSIVE
+   ========================= */
+
 @media (max-width: 900px) {
+  .team-details-card {
+    padding: 22px;
+  }
+
   .team-details-grid--three {
     grid-template-columns: 1fr;
   }
 
   .team-details-actions {
-    flex-direction: column;
+    flex-direction: column-reverse;
   }
 
   .team-details-actions .btn-secondary,
   .team-details-actions .btn-primary {
     width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .team-details-card {
+    padding: 18px;
+  }
+
+  .team-details-card .data-table th,
+  .team-details-card .data-table td {
+    padding-left: 10px;
+    padding-right: 10px;
   }
 }

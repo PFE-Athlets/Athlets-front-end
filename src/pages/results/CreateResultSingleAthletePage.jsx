@@ -1,7 +1,9 @@
 import {
+  useEffect,
   useMemo,
   useState,
 } from 'react'
+
 import {
   Navigate,
   useLocation,
@@ -10,6 +12,7 @@ import {
 
 import { TrashIcon } from '../../components/Icons.jsx'
 import { resultService } from '../../api/resultService'
+import { physicalTestService } from '../../api/physicalTestService'
 
 import '../../styles/create-result-single-athlete.css'
 
@@ -29,12 +32,14 @@ const getAthleteName = (athlete) => {
   const user =
     athlete.authUser ?? athlete
 
-  return [
-    user?.firstName,
-    user?.lastName,
-  ]
-    .filter(Boolean)
-    .join(' ') || '—'
+  return (
+    [
+      user?.firstName,
+      user?.lastName,
+    ]
+      .filter(Boolean)
+      .join(' ') || '—'
+  )
 }
 
 const formatDate = (
@@ -50,7 +55,9 @@ const formatDate = (
   )
 
   if (
-    Number.isNaN(date.getTime())
+    Number.isNaN(
+      date.getTime(),
+    )
   ) {
     return value
   }
@@ -94,6 +101,8 @@ const getUnitForType = (
   resultType?.unitSymbol ??
   resultType?.unitName ??
   resultType?.unit ??
+  resultType?.unitMeasure?.symbol ??
+  resultType?.unitMeasure?.name ??
   '—'
 
 export default function CreateResultSingleAthletePage() {
@@ -127,8 +136,25 @@ export default function CreateResultSingleAthletePage() {
   const context =
     location.state ?? null
 
-  const test =
-    context?.test ?? null
+  /*
+   * Le test reçu depuis la page précédente
+   * peut être seulement un résumé :
+   *
+   * {
+   *   id,
+   *   name
+   * }
+   *
+   * On le garde donc dans un state afin de
+   * pouvoir le remplacer par le PhysicalTest
+   * complet récupéré depuis le backend.
+   */
+  const [
+    test,
+    setTest,
+  ] = useState(
+    context?.test ?? null,
+  )
 
   const team =
     context?.team ?? null
@@ -137,8 +163,11 @@ export default function CreateResultSingleAthletePage() {
     context?.testDate ?? ''
 
   /*
-   * Le Result sélectionné
-   * à l'étape 1.
+   * Le Result sélectionné.
+   *
+   * Supporte :
+   * - results: [result]
+   * - result: result
    */
   const assignedResult =
     context?.results?.[0] ??
@@ -151,9 +180,77 @@ export default function CreateResultSingleAthletePage() {
     context?.athlete ??
     null
 
+  const [
+    loadingTest,
+    setLoadingTest,
+  ] = useState(false)
+
+  const [
+    error,
+    setError,
+  ] = useState('')
+
+  /*
+   * Si le test reçu ne contient pas les
+   * resultTypes, on récupère le PhysicalTest
+   * complet depuis le backend.
+   */
+  useEffect(() => {
+    let cancelled = false
+
+    const loadFullTest = async () => {
+      if (!test?.id) {
+        return
+      }
+
+      if (
+        Array.isArray(
+          test.resultTypes,
+        ) &&
+        test.resultTypes.length > 0
+      ) {
+        return
+      }
+
+      setLoadingTest(true)
+
+      const response =
+        await physicalTestService
+          .getPhysicalTestById(
+            test.id,
+          )
+
+      if (cancelled) {
+        return
+      }
+
+      if (!response.success) {
+        setError(
+          response.error ??
+            'Impossible de charger les informations du test physique.',
+        )
+
+        setLoadingTest(false)
+        return
+      }
+
+      setTest(
+        response.data,
+      )
+
+      setLoadingTest(false)
+    }
+
+    loadFullTest()
+
+    return () => {
+      cancelled = true
+    }
+  }, [test?.id])
+
   /*
    * Les ResultType viennent directement
-   * du PhysicalTest réel sélectionné.
+   * du PhysicalTest complet.
    */
   const resultTypes =
     useMemo(
@@ -167,11 +264,10 @@ export default function CreateResultSingleAthletePage() {
     )
 
   /*
-   * Préremplissage des valeurs déjà
-   * enregistrées dans le Result.
+   * Préremplissage des valeurs.
    *
-   * Une entrée est créée pour chaque
-   * ResultType défini dans le PhysicalTest.
+   * Une entrée est créée pour chacun
+   * des ResultType du test physique.
    */
   const initialResults =
     useMemo(
@@ -196,7 +292,6 @@ export default function CreateResultSingleAthletePage() {
             return {
               resultTypeId:
                 resultType.id,
-
               value:
                 getResultValue(
                   existingValue,
@@ -213,9 +308,21 @@ export default function CreateResultSingleAthletePage() {
   const [
     results,
     setResults,
-  ] = useState(
-    initialResults,
-  )
+  ] = useState([])
+
+  /*
+   * Important :
+   * le PhysicalTest complet est récupéré
+   * après le premier render.
+   *
+   * On synchronise donc les inputs lorsque
+   * les resultTypes deviennent disponibles.
+   */
+  useEffect(() => {
+    setResults(
+      initialResults,
+    )
+  }, [initialResults])
 
   const [
     proofLink,
@@ -237,11 +344,6 @@ export default function CreateResultSingleAthletePage() {
     showProofHelp,
     setShowProofHelp,
   ] = useState(false)
-
-  const [
-    error,
-    setError,
-  ] = useState('')
 
   const [
     isSubmitting,
@@ -268,8 +370,7 @@ export default function CreateResultSingleAthletePage() {
     null
 
   const protocol =
-    test?.protocol ??
-    ''
+    test?.protocol ?? ''
 
   if (
     !context ||
@@ -314,6 +415,13 @@ export default function CreateResultSingleAthletePage() {
   }
 
   const handleBack = () => {
+    if (
+      context?.fromResultDetails
+    ) {
+      navigate(-1)
+      return
+    }
+
     navigate(
       '/resultats/creer',
       {
@@ -340,7 +448,8 @@ export default function CreateResultSingleAthletePage() {
         (result) =>
           result.value === '' ||
           result.value === null ||
-          result.value === undefined,
+          result.value ===
+            undefined,
       )
 
     if (hasMissingValue) {
@@ -396,7 +505,6 @@ export default function CreateResultSingleAthletePage() {
       setError(
         validationError,
       )
-
       return
     }
 
@@ -478,7 +586,7 @@ export default function CreateResultSingleAthletePage() {
             ←
           </span>
 
-          Retour à la sélection
+          Retour
         </button>
 
         <div className="create-single-result-page__heading">
@@ -538,9 +646,7 @@ export default function CreateResultSingleAthletePage() {
                 </span>
 
                 <strong>
-                  {
-                    testName
-                  }
+                  {testName}
                 </strong>
               </div>
             </div>
@@ -581,9 +687,7 @@ export default function CreateResultSingleAthletePage() {
                 </span>
 
                 <strong>
-                  {
-                    teamName
-                  }
+                  {teamName}
                 </strong>
               </div>
             </div>
@@ -603,17 +707,13 @@ export default function CreateResultSingleAthletePage() {
                   </span>
 
                   <strong>
-                    {
-                      athleteName
-                    }
+                    {athleteName}
 
                     {athleteNumber && (
                       <>
                         {' '}
                         (#
-                        {
-                          athleteNumber
-                        }
+                        {athleteNumber}
                         )
                       </>
                     )}
@@ -663,9 +763,7 @@ export default function CreateResultSingleAthletePage() {
             </div>
 
             <div className="create-single-result-protocol__content">
-              {
-                protocol
-              }
+              {protocol}
             </div>
           </section>
         )}
@@ -682,92 +780,96 @@ export default function CreateResultSingleAthletePage() {
             </p>
           </div>
 
-          {/*
-           * IMPORTANT :
-           * les lignes sont générées
-           * dynamiquement depuis
-           * test.resultTypes.
-           */}
-          <div className="create-single-result-values">
-            <div className="create-single-result-values__header">
-              <span>
-                Type de résultat
-              </span>
-
-              <span>
-                Valeur
-              </span>
-
-              <span>
-                Unité
-              </span>
+          {loadingTest ? (
+            <div className="create-single-result-values__footer">
+              <p>
+                Chargement des champs du test...
+              </p>
             </div>
+          ) : (
+            <>
+              <div className="create-single-result-values">
+                <div className="create-single-result-values__header">
+                  <span>
+                    Type de résultat
+                  </span>
 
-            {resultTypes.map(
-              (
-                resultType,
-              ) => {
-                const result =
-                  results.find(
-                    (
-                      item,
-                    ) =>
-                      String(
-                        item.resultTypeId,
-                      ) ===
-                      String(
-                        resultType.id,
-                      ),
-                  )
+                  <span>
+                    Valeur
+                  </span>
 
-                return (
-                  <div
-                    key={
-                      resultType.id
-                    }
-                    className="create-single-result-values__row"
-                  >
-                    <div>
-                      {
-                        resultType.name
-                      }
-                    </div>
+                  <span>
+                    Unité
+                  </span>
+                </div>
 
-                    <input
-                      type="number"
-                      step="any"
-                      value={
-                        result?.value ??
-                        ''
-                      }
-                      placeholder="Saisir une valeur"
-                      onChange={(
-                        event,
-                      ) =>
-                        updateResult(
-                          resultType.id,
-                          event.target
-                            .value,
-                        )
-                      }
-                    />
+                {resultTypes.map(
+                  (
+                    resultType,
+                  ) => {
+                    const result =
+                      results.find(
+                        (
+                          item,
+                        ) =>
+                          String(
+                            item.resultTypeId,
+                          ) ===
+                          String(
+                            resultType.id,
+                          ),
+                      )
 
-                    <div className="create-single-result-unit">
-                      {getUnitForType(
-                        resultType,
-                      )}
-                    </div>
-                  </div>
-                )
-              },
-            )}
-          </div>
+                    return (
+                      <div
+                        key={
+                          resultType.id
+                        }
+                        className="create-single-result-values__row"
+                      >
+                        <div>
+                          {
+                            resultType.name
+                          }
+                        </div>
 
-          <div className="create-single-result-values__footer">
-            <p>
-              Les types de résultats et leurs unités sont définis automatiquement par le test physique.
-            </p>
-          </div>
+                        <input
+                          type="number"
+                          step="any"
+                          value={
+                            result?.value ??
+                            ''
+                          }
+                          placeholder="Saisir une valeur"
+                          onChange={(
+                            event,
+                          ) =>
+                            updateResult(
+                              resultType.id,
+                              event.target
+                                .value,
+                            )
+                          }
+                        />
+
+                        <div className="create-single-result-unit">
+                          {getUnitForType(
+                            resultType,
+                          )}
+                        </div>
+                      </div>
+                    )
+                  },
+                )}
+              </div>
+
+              <div className="create-single-result-values__footer">
+                <p>
+                  Les types de résultats et leurs unités sont définis automatiquement par le test physique.
+                </p>
+              </div>
+            </>
+          )}
 
           {/* Preuve */}
           <div className="create-single-result-form-extra">
@@ -954,7 +1056,8 @@ export default function CreateResultSingleAthletePage() {
               handleSubmit
             }
             disabled={
-              isSubmitting
+              isSubmitting ||
+              loadingTest
             }
           >
             {isSubmitting
@@ -970,8 +1073,6 @@ export default function CreateResultSingleAthletePage() {
    * =====================================
    * UI ADMIN / COACH / KINÉ
    * =====================================
-   *
-   * Ton ancien UI reste inchangé.
    */
   return (
     <div className="create-single-result-page">
@@ -1043,9 +1144,7 @@ export default function CreateResultSingleAthletePage() {
                 </span>
 
                 <strong>
-                  {
-                    testName
-                  }
+                  {testName}
                 </strong>
               </div>
             </div>
@@ -1079,9 +1178,7 @@ export default function CreateResultSingleAthletePage() {
                 </span>
 
                 <strong>
-                  {
-                    teamName
-                  }
+                  {teamName}
                 </strong>
               </div>
             </div>
@@ -1097,9 +1194,7 @@ export default function CreateResultSingleAthletePage() {
                 </span>
 
                 <strong>
-                  {
-                    athleteName
-                  }
+                  {athleteName}
                 </strong>
               </div>
             </div>
@@ -1116,92 +1211,102 @@ export default function CreateResultSingleAthletePage() {
             Saisissez les valeurs attendues pour le test sélectionné.
           </p>
 
-          <div className="create-single-result-values">
-            <div className="create-single-result-values__header">
-              <span>
-                Type de résultat
-              </span>
-
-              <span>
-                Valeur
-              </span>
-
-              <span>
-                Unité
-              </span>
-
-              <span />
+          {loadingTest ? (
+            <div className="create-single-result-values__footer">
+              <p>
+                Chargement des champs du test...
+              </p>
             </div>
+          ) : (
+            <>
+              <div className="create-single-result-values">
+                <div className="create-single-result-values__header">
+                  <span>
+                    Type de résultat
+                  </span>
 
-            {resultTypes.map(
-              (
-                resultType,
-              ) => {
-                const result =
-                  results.find(
-                    (
-                      item,
-                    ) =>
-                      String(
-                        item.resultTypeId,
-                      ) ===
-                      String(
-                        resultType.id,
-                      ),
-                  )
+                  <span>
+                    Valeur
+                  </span>
 
-                return (
-                  <div
-                    key={
-                      resultType.id
-                    }
-                    className="create-single-result-values__row"
-                  >
-                    <div>
-                      {
-                        resultType.name
-                      }
-                    </div>
+                  <span>
+                    Unité
+                  </span>
 
-                    <input
-                      type="number"
-                      step="any"
-                      value={
-                        result?.value ??
-                        ''
-                      }
-                      placeholder="Saisir une valeur"
-                      onChange={(
-                        event,
-                      ) =>
-                        updateResult(
-                          resultType.id,
-                          event.target
-                            .value,
-                        )
-                      }
-                    />
+                  <span />
+                </div>
 
-                    <div className="create-single-result-unit">
-                      {getUnitForType(
-                        resultType,
-                      )}
-                    </div>
+                {resultTypes.map(
+                  (
+                    resultType,
+                  ) => {
+                    const result =
+                      results.find(
+                        (
+                          item,
+                        ) =>
+                          String(
+                            item.resultTypeId,
+                          ) ===
+                          String(
+                            resultType.id,
+                          ),
+                      )
 
-                    <div className="create-single-result-delete-container">
-                      <TrashIcon />
-                    </div>
-                  </div>
-                )
-              },
-            )}
-          </div>
+                    return (
+                      <div
+                        key={
+                          resultType.id
+                        }
+                        className="create-single-result-values__row"
+                      >
+                        <div>
+                          {
+                            resultType.name
+                          }
+                        </div>
 
-          <div className="create-single-result-values__footer">
-            <p>
-              Les types de résultats et leurs unités sont définis automatiquement par le test physique.
-            </p>
-          </div>
+                        <input
+                          type="number"
+                          step="any"
+                          value={
+                            result?.value ??
+                            ''
+                          }
+                          placeholder="Saisir une valeur"
+                          onChange={(
+                            event,
+                          ) =>
+                            updateResult(
+                              resultType.id,
+                              event.target
+                                .value,
+                            )
+                          }
+                        />
+
+                        <div className="create-single-result-unit">
+                          {getUnitForType(
+                            resultType,
+                          )}
+                        </div>
+
+                        <div className="create-single-result-delete-container">
+                          <TrashIcon />
+                        </div>
+                      </div>
+                    )
+                  },
+                )}
+              </div>
+
+              <div className="create-single-result-values__footer">
+                <p>
+                  Les types de résultats et leurs unités sont définis automatiquement par le test physique.
+                </p>
+              </div>
+            </>
+          )}
         </div>
 
         {/* 3. Informations */}
@@ -1326,7 +1431,8 @@ export default function CreateResultSingleAthletePage() {
               handleSubmit
             }
             disabled={
-              isSubmitting
+              isSubmitting ||
+              loadingTest
             }
           >
             {isSubmitting
