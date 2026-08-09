@@ -6,24 +6,11 @@ import {
 import { useNavigate } from 'react-router-dom'
 
 import { teamService } from '../../api/teamService'
+import { resultService } from '../../api/resultService'
+import { physicalTestService } from '../../api/physicalTestService'
 import { athleteService } from '../../api/athleteService'
 
 import '../../styles/create-result.css'
-
-const MOCK_TESTS = [
-  {
-    id: 1,
-    name: 'Développé couché',
-  },
-  {
-    id: 2,
-    name: 'Sprint 30 m',
-  },
-  {
-    id: 3,
-    name: 'Saut vertical',
-  },
-]
 
 const SELECTION_MODE = {
   ONE: 'ONE',
@@ -52,37 +39,88 @@ const getAthleteName = (athlete) => {
     return athlete.fullName
   }
 
+  if (athlete?.displayName) {
+    return athlete.displayName
+  }
+
+  const user = athlete?.authUser ?? athlete
+
   return [
-    athlete?.firstName,
-    athlete?.lastName,
+    user?.firstName,
+    user?.lastName,
   ]
     .filter(Boolean)
     .join(' ')
 }
 
+const getResultStatus = (result) =>
+  String(
+    result?.statusCode ??
+      result?.status ??
+      '',
+  ).toUpperCase()
+
+const isApprovedResult = (result) => {
+  const status = getResultStatus(result)
+
+  return (
+    status === 'APPROVED' ||
+    status === 'ACCEPTED'
+  )
+}
+
 export default function CreateResultPage() {
   const navigate = useNavigate()
 
-  /*
-   * Tests
-   *
-   * Pour l'instant, les tests restent mockés.
-   * On pourra les remplacer par le vrai service
-   * lorsque l'endpoint sera branché.
-   */
-  const tests = MOCK_TESTS
+  const currentUser = useMemo(() => {
+    const stored =
+      sessionStorage.getItem(
+        'currentUser',
+      )
+
+    if (!stored) {
+      return null
+    }
+
+    try {
+      return JSON.parse(stored)
+    } catch {
+      return null
+    }
+  }, [])
+
+  const isAthlete =
+    Number(currentUser?.accessLevel) === 3
 
   /*
    * Contexte
    */
-  const [testId, setTestId] =
+  const [teamId, setTeamId] =
     useState('')
 
-  const [teamId, setTeamId] =
+  const [testId, setTestId] =
     useState('')
 
   const [testDate, setTestDate] =
     useState(getToday())
+
+  /*
+   * Athlète connecté
+   */
+  const [
+    currentAthlete,
+    setCurrentAthlete,
+  ] = useState(null)
+
+  const [
+    isLoadingCurrentAthlete,
+    setIsLoadingCurrentAthlete,
+  ] = useState(false)
+
+  const [
+    currentAthleteError,
+    setCurrentAthleteError,
+  ] = useState('')
 
   /*
    * Équipes
@@ -101,23 +139,43 @@ export default function CreateResultPage() {
   ] = useState('')
 
   /*
-   * Athlètes
+   * PhysicalTests complets.
    */
-  const [athletes, setAthletes] =
-    useState([])
+  const [
+    physicalTests,
+    setPhysicalTests,
+  ] = useState([])
 
   const [
-    isLoadingAthletes,
-    setIsLoadingAthletes,
+    isLoadingPhysicalTests,
+    setIsLoadingPhysicalTests,
   ] = useState(false)
 
   const [
-    athletesError,
-    setAthletesError,
+    physicalTestsError,
+    setPhysicalTestsError,
   ] = useState('')
 
   /*
-   * Sélection des athlètes
+   * Results assignés de l'équipe.
+   */
+  const [
+    teamResults,
+    setTeamResults,
+  ] = useState([])
+
+  const [
+    isLoadingResults,
+    setIsLoadingResults,
+  ] = useState(false)
+
+  const [
+    resultsError,
+    setResultsError,
+  ] = useState('')
+
+  /*
+   * Sélection
    */
   const [
     selectionMode,
@@ -127,22 +185,101 @@ export default function CreateResultPage() {
   )
 
   const [
-    selectedAthleteIds,
-    setSelectedAthleteIds,
+    selectedResultIds,
+    setSelectedResultIds,
   ] = useState([])
 
   const [search, setSearch] =
     useState('')
 
-  /*
-   * Erreur générale
-   */
   const [error, setError] =
     useState('')
 
   /*
-   * Charger les équipes au chargement
-   * de la page.
+   * Charger l'athlète connecté.
+   */
+  useEffect(() => {
+    if (!isAthlete) {
+      return
+    }
+
+    let isMounted = true
+
+    const loadCurrentAthlete =
+      async () => {
+        setIsLoadingCurrentAthlete(
+          true,
+        )
+
+        setCurrentAthleteError('')
+
+        const result =
+          await athleteService
+            .getCurrentAthlete()
+
+        if (!isMounted) {
+          return
+        }
+
+        if (!result.success) {
+          setCurrentAthlete(null)
+
+          setCurrentAthleteError(
+            result.error ??
+              'Impossible de charger votre profil athlète.',
+          )
+
+          setIsLoadingCurrentAthlete(
+            false,
+          )
+
+          return
+        }
+
+        setCurrentAthlete(
+          result.data,
+        )
+
+        const athleteTeams =
+          Array.isArray(
+            result.data?.teams,
+          )
+            ? result.data.teams
+            : []
+
+        if (athleteTeams.length > 0) {
+          setTeamId(
+            String(
+              athleteTeams[0].id,
+            ),
+          )
+        } else {
+          setCurrentAthleteError(
+            'Aucune équipe n’est associée à votre compte.',
+          )
+        }
+
+        setSelectionMode(
+          SELECTION_MODE.ONE,
+        )
+
+        setIsLoadingCurrentAthlete(
+          false,
+        )
+      }
+
+    loadCurrentAthlete()
+
+    return () => {
+      isMounted = false
+    }
+  }, [isAthlete])
+
+  /*
+   * Charger les équipes.
+   *
+   * Cette liste est surtout utilisée
+   * pour Admin / Coach / Kiné.
    */
   useEffect(() => {
     let isMounted = true
@@ -152,7 +289,8 @@ export default function CreateResultPage() {
       setTeamsError('')
 
       const result =
-        await teamService.getDisplayTeams()
+        await teamService
+          .getDisplayTeams()
 
       if (!isMounted) {
         return
@@ -184,97 +322,328 @@ export default function CreateResultPage() {
   }, [])
 
   /*
-   * Charger les athlètes lorsqu'une
-   * équipe est sélectionnée.
+   * Charger les PhysicalTests.
    */
   useEffect(() => {
     let isMounted = true
 
-    const loadAthletes = async () => {
-      /*
-       * Aucun team sélectionné :
-       * on vide simplement les athlètes.
-       */
-      if (!teamId) {
-        setAthletes([])
-        setSelectedAthleteIds([])
-        setAthletesError('')
-        setSearch('')
-        return
-      }
-
-      setIsLoadingAthletes(true)
-      setAthletesError('')
-
-      /*
-       * On vide l'ancienne sélection
-       * pendant qu'on change d'équipe.
-       */
-      setAthletes([])
-      setSelectedAthleteIds([])
-      setSearch('')
-
-      const result =
-        await athleteService
-          .getDisplayAthletesByTeam(
-            teamId,
-          )
-
-      if (!isMounted) {
-        return
-      }
-
-      if (result.success) {
-        const loadedAthletes =
-          Array.isArray(result.data)
-            ? result.data
-            : []
-
-        setAthletes(
-          loadedAthletes,
+    const loadPhysicalTests =
+      async () => {
+        setIsLoadingPhysicalTests(
+          true,
         )
 
-        /*
-         * Si le mode "Tous" était déjà
-         * actif, on sélectionne automatiquement
-         * les athlètes de la nouvelle équipe.
-         */
-        if (
-          selectionMode ===
-          SELECTION_MODE.ALL
-        ) {
-          setSelectedAthleteIds(
-            loadedAthletes.map(
-              (athlete) =>
-                String(
-                  athlete.id,
-                ),
-            ),
+        setPhysicalTestsError('')
+
+        const result =
+          await physicalTestService
+            .getAll()
+
+        if (!isMounted) {
+          return
+        }
+
+        if (result.success) {
+          setPhysicalTests(
+            Array.isArray(
+              result.data,
+            )
+              ? result.data
+              : [],
+          )
+        } else {
+          setPhysicalTests([])
+
+          setPhysicalTestsError(
+            result.error ??
+              'Impossible de charger les détails des tests.',
           )
         }
-      } else {
-        setAthletes([])
 
-        setAthletesError(
-          result.error ??
-            'Impossible de charger les athlètes de cette équipe.',
+        setIsLoadingPhysicalTests(
+          false,
         )
       }
 
-      setIsLoadingAthletes(false)
-    }
-
-    loadAthletes()
+    loadPhysicalTests()
 
     return () => {
       isMounted = false
     }
-  }, [teamId, selectionMode])
+  }, [])
 
   /*
-   * Recherche d'athlètes
+   * Charger les Results de l'équipe.
    */
-  const filteredAthletes =
+  useEffect(() => {
+    let isMounted = true
+
+    const loadTeamResults =
+      async () => {
+        if (!teamId) {
+          setTeamResults([])
+          setTestId('')
+          setSelectedResultIds([])
+          setResultsError('')
+          setSearch('')
+
+          return
+        }
+
+        setIsLoadingResults(true)
+        setResultsError('')
+
+        setTeamResults([])
+        setTestId('')
+        setSelectedResultIds([])
+        setSearch('')
+
+        const result =
+          await resultService
+            .getTeamResults(
+              teamId,
+            )
+
+        if (!isMounted) {
+          return
+        }
+
+        if (result.success) {
+          setTeamResults(
+            Array.isArray(
+              result.data,
+            )
+              ? result.data
+              : [],
+          )
+        } else {
+          setTeamResults([])
+
+          setResultsError(
+            result.error ??
+              'Impossible de charger les résultats de cette équipe.',
+          )
+        }
+
+        setIsLoadingResults(false)
+      }
+
+    loadTeamResults()
+
+    return () => {
+      isMounted = false
+    }
+  }, [teamId])
+
+  /*
+   * ID de l'athlète connecté.
+   */
+  const currentAthleteId =
+    currentAthlete?.authUser?.id ??
+    currentAthlete?.id ??
+    currentUser?.id
+
+  /*
+   * Results disponibles pour l'athlète.
+   *
+   * On ne garde que :
+   * - ses propres résultats
+   * - les résultats non approuvés
+   */
+  const athleteResults =
+    useMemo(() => {
+      if (
+        !isAthlete ||
+        !currentAthleteId
+      ) {
+        return []
+      }
+
+      return teamResults.filter(
+        (result) => {
+          const resultAthleteId =
+            result?.athlete?.id ??
+            result?.athlete
+              ?.authUser?.id
+
+          const isCurrentAthlete =
+            String(
+              resultAthleteId ?? '',
+            ) ===
+            String(
+              currentAthleteId,
+            )
+
+          return (
+            isCurrentAthlete &&
+            !isApprovedResult(
+              result,
+            )
+          )
+        },
+      )
+    }, [
+      isAthlete,
+      teamResults,
+      currentAthleteId,
+    ])
+
+  /*
+   * Tests disponibles.
+   *
+   * Pour un athlète :
+   * uniquement les tests reliés à ses
+   * propres résultats disponibles.
+   *
+   * Pour les autres rôles :
+   * tous les tests assignés à l'équipe.
+   */
+  const tests = useMemo(() => {
+    const sourceResults =
+      isAthlete
+        ? athleteResults
+        : teamResults
+
+    const assignedTestIds =
+      new Set(
+        sourceResults
+          .map(
+            (result) =>
+              result?.test?.id,
+          )
+          .filter(
+            (id) =>
+              id !== null &&
+              id !== undefined,
+          )
+          .map(String),
+      )
+
+    return physicalTests.filter(
+      (test) =>
+        assignedTestIds.has(
+          String(test.id),
+        ),
+    )
+  }, [
+    teamResults,
+    athleteResults,
+    physicalTests,
+    isAthlete,
+  ])
+
+  /*
+   * Results correspondant au test choisi.
+   *
+   * On exclut les résultats approuvés
+   * et on garde un résultat par athlète.
+   */
+  const testResults = useMemo(() => {
+    if (!testId) {
+      return []
+    }
+
+    const sourceResults =
+      isAthlete
+        ? athleteResults
+        : teamResults
+
+    const matchingResults =
+      sourceResults.filter(
+        (result) => {
+          const sameTest =
+            String(
+              result?.test?.id ?? '',
+            ) === String(testId)
+
+          return (
+            sameTest &&
+            !isApprovedResult(
+              result,
+            )
+          )
+        },
+      )
+
+    const latestResultByAthlete =
+      new Map()
+
+    matchingResults.forEach(
+      (result) => {
+        const athleteId =
+          result?.athlete?.id ??
+          result?.athlete
+            ?.authUser?.id
+
+        if (
+          athleteId === null ||
+          athleteId === undefined
+        ) {
+          return
+        }
+
+        const key =
+          String(athleteId)
+
+        const current =
+          latestResultByAthlete.get(
+            key,
+          )
+
+        if (
+          !current ||
+          Number(result.id) >
+            Number(current.id)
+        ) {
+          latestResultByAthlete.set(
+            key,
+            result,
+          )
+        }
+      },
+    )
+
+    return Array.from(
+      latestResultByAthlete.values(),
+    )
+  }, [
+    teamResults,
+    athleteResults,
+    testId,
+    isAthlete,
+  ])
+
+  /*
+   * Pour un athlète, sélectionner
+   * automatiquement son Result
+   * lorsqu'il choisit un test.
+   */
+  useEffect(() => {
+    if (
+      !isAthlete ||
+      !testId
+    ) {
+      return
+    }
+
+    if (testResults.length === 0) {
+      setSelectedResultIds([])
+      return
+    }
+
+    setSelectedResultIds([
+      String(testResults[0].id),
+    ])
+  }, [
+    isAthlete,
+    testId,
+    testResults,
+  ])
+
+  /*
+   * Recherche des athlètes.
+   */
+  const filteredResults =
     useMemo(() => {
       const normalizedSearch =
         search
@@ -282,11 +651,14 @@ export default function CreateResultPage() {
           .toLowerCase()
 
       if (!normalizedSearch) {
-        return athletes
+        return testResults
       }
 
-      return athletes.filter(
-        (athlete) => {
+      return testResults.filter(
+        (result) => {
+          const athlete =
+            result?.athlete
+
           const name =
             getAthleteName(
               athlete,
@@ -294,7 +666,10 @@ export default function CreateResultPage() {
 
           const username =
             String(
-              athlete.username ?? '',
+              athlete?.username ??
+                athlete?.authUser
+                  ?.username ??
+                '',
             ).toLowerCase()
 
           return (
@@ -307,28 +682,82 @@ export default function CreateResultPage() {
           )
         },
       )
-    }, [athletes, search])
+    }, [
+      testResults,
+      search,
+    ])
 
   /*
-   * Objets complets correspondant aux
-   * athlètes sélectionnés.
+   * Results sélectionnés.
    */
-  const selectedAthletes =
+  const selectedResults =
     useMemo(
       () =>
-        athletes.filter(
-          (athlete) =>
-            selectedAthleteIds.includes(
-              String(
-                athlete.id,
-              ),
+        testResults.filter(
+          (result) =>
+            selectedResultIds.includes(
+              String(result.id),
             ),
         ),
       [
-        athletes,
-        selectedAthleteIds,
+        testResults,
+        selectedResultIds,
       ],
     )
+
+  const selectedAthletes =
+    useMemo(
+      () =>
+        selectedResults
+          .map(
+            (result) =>
+              result?.athlete,
+          )
+          .filter(Boolean),
+      [selectedResults],
+    )
+
+  /*
+   * Équipe de l'athlète connecté.
+   */
+  const currentAthleteTeam =
+    useMemo(() => {
+      if (!isAthlete) {
+        return null
+      }
+
+      const athleteTeams =
+        Array.isArray(
+          currentAthlete?.teams,
+        )
+          ? currentAthlete.teams
+          : []
+
+      return (
+        athleteTeams.find(
+          (team) =>
+            String(team.id) ===
+            String(teamId),
+        ) ??
+        athleteTeams[0] ??
+        null
+      )
+    }, [
+      isAthlete,
+      currentAthlete,
+      teamId,
+    ])
+
+  const currentAthleteName =
+    useMemo(() => {
+      if (!currentAthlete) {
+        return ''
+      }
+
+      return getAthleteName(
+        currentAthlete,
+      )
+    }, [currentAthlete])
 
   const handleTeamChange = (
     event,
@@ -337,7 +766,20 @@ export default function CreateResultPage() {
       event.target.value,
     )
 
-    setSelectedAthleteIds([])
+    setTestId('')
+    setSelectedResultIds([])
+    setSearch('')
+    setError('')
+  }
+
+  const handleTestChange = (
+    event,
+  ) => {
+    setTestId(
+      event.target.value,
+    )
+
+    setSelectedResultIds([])
     setSearch('')
     setError('')
   }
@@ -346,51 +788,40 @@ export default function CreateResultPage() {
     mode,
   ) => {
     setSelectionMode(mode)
-    setSelectedAthleteIds([])
+    setSelectedResultIds([])
     setError('')
 
-    /*
-     * Tous les athlètes
-     */
     if (
       mode ===
       SELECTION_MODE.ALL
     ) {
-      setSelectedAthleteIds(
-        athletes.map(
-          (athlete) =>
-            String(
-              athlete.id,
-            ),
+      setSelectedResultIds(
+        testResults.map(
+          (result) =>
+            String(result.id),
         ),
       )
     }
   }
 
-  const toggleAthlete = (
-    athleteId,
+  const toggleResult = (
+    resultId,
   ) => {
     const normalizedId =
-      String(athleteId)
+      String(resultId)
 
-    /*
-     * Un seul athlète
-     */
     if (
       selectionMode ===
       SELECTION_MODE.ONE
     ) {
-      setSelectedAthleteIds([
+      setSelectedResultIds([
         normalizedId,
       ])
 
       return
     }
 
-    /*
-     * Plusieurs athlètes
-     */
-    setSelectedAthleteIds(
+    setSelectedResultIds(
       (currentIds) => {
         if (
           currentIds.includes(
@@ -411,15 +842,15 @@ export default function CreateResultPage() {
     )
   }
 
-  const removeAthlete = (
-    athleteId,
+  const removeResult = (
+    resultId,
   ) => {
-    setSelectedAthleteIds(
+    setSelectedResultIds(
       (currentIds) =>
         currentIds.filter(
           (id) =>
             id !==
-            String(athleteId),
+            String(resultId),
         ),
     )
   }
@@ -430,6 +861,14 @@ export default function CreateResultPage() {
 
   const handleContinue = () => {
     setError('')
+
+    if (!teamId) {
+      setError(
+        'Veuillez sélectionner une équipe.',
+      )
+
+      return
+    }
 
     if (!testId) {
       setError(
@@ -447,20 +886,14 @@ export default function CreateResultPage() {
       return
     }
 
-    if (!teamId) {
-      setError(
-        'Veuillez sélectionner une équipe.',
-      )
-
-      return
-    }
-
     if (
-      selectedAthleteIds.length ===
+      selectedResultIds.length ===
       0
     ) {
       setError(
-        'Veuillez sélectionner au moins un athlète.',
+        isAthlete
+          ? 'Aucun résultat disponible pour ce test.'
+          : 'Veuillez sélectionner au moins un athlète.',
       )
 
       return
@@ -473,36 +906,370 @@ export default function CreateResultPage() {
           String(testId),
       )
 
-    const selectedTeam =
-      teams.find(
-        (team) =>
-          String(team.id) ===
-          String(teamId),
+    if (!selectedTest) {
+      setError(
+        'Impossible de récupérer les détails du test sélectionné.',
       )
 
+      return
+    }
+
+    const selectedTeam =
+      isAthlete
+        ? currentAthleteTeam
+        : teams.find(
+            (team) =>
+              String(team.id) ===
+              String(teamId),
+          )
+
     const context = {
-    test: selectedTest,
-    team: selectedTeam,
-    testDate,
-    athletes: selectedAthletes,
+      test: selectedTest,
+      team: selectedTeam,
+      testDate,
+      athletes: selectedAthletes,
+      results: selectedResults,
+    }
+
+    /*
+     * Un athlète saisit toujours
+     * uniquement son propre résultat.
+     */
+    if (
+      isAthlete ||
+      selectionMode ===
+        SELECTION_MODE.ONE
+    ) {
+      navigate(
+        '/resultats/creer/single',
+        {
+          state: context,
+        },
+      )
+
+      return
+    }
+
+    navigate(
+      '/resultats/creer/multiple',
+      {
+        state: context,
+      },
+    )
   }
 
-  if (selectionMode === SELECTION_MODE.ONE) {
-    navigate('/resultats/creer/single', {
-      state: context,
-    })
+  const isLoadingContext =
+    isLoadingResults ||
+    isLoadingPhysicalTests ||
+    isLoadingCurrentAthlete
 
-    return
+  /*
+   * PAGE ATHLÈTE
+   */
+  if (isAthlete) {
+    return (
+      <div className="create-result-page">
+        <button
+          type="button"
+          className="create-result-page__back"
+          onClick={() =>
+            navigate('/resultats')
+          }
+        >
+          <span aria-hidden="true">
+            ←
+          </span>
+
+          Retour aux tests
+        </button>
+
+        <div className="create-result-page__heading">
+          <h1>
+            Saisir un résultat
+          </h1>
+
+          <div className="create-result-step-badge">
+            <span className="create-result-step-badge__dot" />
+
+            Étape 1 • Sélection du contexte
+          </div>
+        </div>
+
+        <section className="create-result-card">
+          <h2>1. Sélection</h2>
+
+          <div className="create-result-access-info">
+            <div className="create-result-access-info__title">
+              <span
+                className="create-result-access-info__info-icon"
+                aria-hidden="true"
+              >
+                i
+              </span>
+
+              <span>
+                En tant qu&apos;athlète,
+                vous avez accès uniquement
+                aux tests disponibles pour
+                votre équipe. Vous pouvez
+                saisir uniquement votre
+                propre résultat.
+              </span>
+            </div>
+          </div>
+
+          {currentAthleteError && (
+            <div className="create-result-error">
+              {currentAthleteError}
+            </div>
+          )}
+
+          {error && (
+            <div className="create-result-error">
+              {error}
+            </div>
+          )}
+
+          <div className="create-result-context-grid">
+            {/* Test */}
+            <div className="create-result-field">
+              <label htmlFor="result-test">
+                Test
+
+                <span className="required-marker">
+                  {' '}*
+                </span>
+              </label>
+
+              <select
+                id="result-test"
+                value={testId}
+                onChange={
+                  handleTestChange
+                }
+                disabled={
+                  !teamId ||
+                  isLoadingContext ||
+                  Boolean(
+                    resultsError,
+                  )
+                }
+              >
+                <option value="">
+                  {isLoadingContext
+                    ? 'Chargement des tests...'
+                    : 'Sélectionner un test'}
+                </option>
+
+                {tests.map(
+                  (test) => (
+                    <option
+                      key={
+                        test.id
+                      }
+                      value={
+                        test.id
+                      }
+                    >
+                      {
+                        test.name
+                      }
+                    </option>
+                  ),
+                )}
+              </select>
+
+              {resultsError && (
+                <p className="create-result-field__error">
+                  {resultsError}
+                </p>
+              )}
+
+              {physicalTestsError && (
+                <p className="create-result-field__error">
+                  {physicalTestsError}
+                </p>
+              )}
+
+              {teamId &&
+                !isLoadingContext &&
+                !resultsError &&
+                !physicalTestsError &&
+                tests.length === 0 && (
+                  <p className="create-result-field__error">
+                    Aucun test disponible
+                    pour votre compte.
+                  </p>
+                )}
+
+              <p className="create-result-field__help">
+                La liste contient
+                uniquement les tests
+                disponibles pour vous.
+              </p>
+            </div>
+
+            {/* Date */}
+            <div className="create-result-field">
+              <label htmlFor="result-date">
+                Date de saisie des résultats
+
+                <span className="required-marker">
+                  {' '}*
+                </span>
+              </label>
+
+              <input
+                id="result-date"
+                type="date"
+                value={testDate}
+                onChange={(event) =>
+                  setTestDate(
+                    event.target.value,
+                  )
+                }
+              />
+
+              <p className="create-result-field__help">
+                La date du jour est
+                affichée par défaut.
+              </p>
+            </div>
+
+            {/* Équipe */}
+            <div className="create-result-field">
+              <label htmlFor="result-team">
+                Équipe
+
+                <span className="required-marker">
+                  {' '}*
+                </span>
+              </label>
+
+              <input
+                id="result-team"
+                type="text"
+                value={
+                  isLoadingCurrentAthlete
+                    ? 'Chargement...'
+                    : currentAthleteTeam
+                        ?.name ?? ''
+                }
+                disabled
+              />
+
+              <p className="create-result-field__help">
+                Votre équipe est renseignée
+                automatiquement et ne peut
+                pas être modifiée.
+              </p>
+            </div>
+          </div>
+
+          <div className="create-result-divider" />
+
+          <div className="create-result-athletes">
+            <h2>
+              2. Athlète concerné
+            </h2>
+
+            <p className="create-result-athletes__description">
+              Le résultat est saisi pour
+              votre propre compte.
+            </p>
+
+            <div className="create-result-mode-grid">
+              <button
+                type="button"
+                className="create-result-mode create-result-mode--selected"
+                disabled
+              >
+                <span
+                  className="create-result-mode__radio"
+                  aria-hidden="true"
+                />
+
+                <span
+                  className="create-result-mode__icon"
+                  aria-hidden="true"
+                >
+                  ♙
+                </span>
+
+                <span>
+                  Un athlète
+                </span>
+              </button>
+            </div>
+
+            <div className="create-result-athlete-grid create-result-athlete-grid--single">
+              <div className="create-result-field">
+                <label htmlFor="current-athlete">
+                  Athlète
+
+                  <span className="required-marker">
+                    {' '}*
+                  </span>
+                </label>
+
+                <input
+                  id="current-athlete"
+                  type="text"
+                  value={
+                    isLoadingCurrentAthlete
+                      ? 'Chargement...'
+                      : currentAthleteName
+                  }
+                  disabled
+                />
+
+                <p className="create-result-field__help">
+                  Votre nom est renseigné
+                  automatiquement à partir
+                  de votre compte connecté
+                  et ne peut pas être
+                  modifié.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="create-result-actions">
+            <button
+              type="button"
+              className="create-result-button create-result-button--secondary"
+              onClick={
+                handleCancel
+              }
+            >
+              Annuler
+            </button>
+
+            <button
+              type="button"
+              className="create-result-button create-result-button--primary"
+              onClick={
+                handleContinue
+              }
+              disabled={
+                isLoadingContext ||
+                !testId ||
+                selectedResultIds.length === 0
+              }
+            >
+              Continuer
+            </button>
+          </div>
+        </section>
+      </div>
+    )
   }
 
-  navigate('/resultats/creer/multiple', {
-    state: context,
-  })
-  }
-
+  /*
+   * PAGE ADMIN / COACH / KINÉ
+   */
   return (
     <div className="create-result-page">
-      {/* Top bar */}
       <div className="create-result-page__topbar">
         <div className="create-result-step-badge">
           <span className="create-result-step-badge__dot" />
@@ -525,18 +1292,15 @@ export default function CreateResultPage() {
         </button>
       </div>
 
-      {/* Carte principale */}
       <section className="create-result-card">
         <h2>1. Sélection</h2>
 
-        {/* Erreur générale */}
         {error && (
           <div className="create-result-error">
             {error}
           </div>
         )}
 
-        {/* Information rôles */}
         <div className="create-result-access-info">
           <div className="create-result-access-info__title">
             <span
@@ -566,10 +1330,9 @@ export default function CreateResultPage() {
                 <strong>
                   Administrateur :
                 </strong>{' '}
-                accès à tous les tests
-                qui se trouvent dans des
-                batteries de tests actives,
-                et à toutes les équipes.
+                accès aux équipes et
+                aux tests assignés à
+                leurs athlètes.
               </p>
             </div>
 
@@ -585,9 +1348,9 @@ export default function CreateResultPage() {
                 <strong>
                   Coach :
                 </strong>{' '}
-                accès aux tests des
-                batteries de tests actives
-                associées à son équipe.
+                accès aux résultats
+                assignés aux athlètes
+                de son équipe.
               </p>
             </div>
 
@@ -603,93 +1366,15 @@ export default function CreateResultPage() {
                 <strong>
                   Kiné :
                 </strong>{' '}
-                accès aux tests des
-                batteries de tests actives
-                associées à ses équipes.
+                accès aux résultats
+                assignés aux athlètes
+                de ses équipes.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Contexte */}
         <div className="create-result-context-grid">
-          {/* Test */}
-          <div className="create-result-field">
-            <label htmlFor="result-test">
-              Test
-              <span className="required-marker">
-                {' '}*
-              </span>
-            </label>
-
-            <select
-              id="result-test"
-              value={testId}
-              onChange={(event) =>
-                setTestId(
-                  event.target.value,
-                )
-              }
-            >
-              <option value="">
-                Sélectionner un test
-              </option>
-
-              {tests.map(
-                (test) => (
-                  <option
-                    key={
-                      test.id
-                    }
-                    value={
-                      test.id
-                    }
-                  >
-                    {
-                      test.name
-                    }
-                  </option>
-                ),
-              )}
-            </select>
-
-            <p className="create-result-field__help">
-              La liste contient
-              uniquement les tests
-              présents dans des
-              batteries de tests
-              actives.
-            </p>
-          </div>
-
-          {/* Date */}
-          <div className="create-result-field">
-            <label htmlFor="result-date">
-              Date de saisie des
-              résultats
-
-              <span className="required-marker">
-                {' '}*
-              </span>
-            </label>
-
-            <input
-              id="result-date"
-              type="date"
-              value={testDate}
-              onChange={(event) =>
-                setTestDate(
-                  event.target.value,
-                )
-              }
-            />
-
-            <p className="create-result-field__help">
-              La date du jour est
-              affichée par défaut.
-            </p>
-          </div>
-
           {/* Équipe */}
           <div className="create-result-field">
             <label htmlFor="result-team">
@@ -741,27 +1426,123 @@ export default function CreateResultPage() {
             )}
 
             <p className="create-result-field__help">
-              Pour
-              l’administrateur :
-              choix parmi toutes les
-              équipes.
-              <br />
+              Sélectionnez d&apos;abord
+              l&apos;équipe concernée.
+            </p>
+          </div>
 
-              Pour le coach :
-              équipe associée
-              automatiquement.
-              <br />
+          {/* Test */}
+          <div className="create-result-field">
+            <label htmlFor="result-test">
+              Test
 
-              Pour le kiné :
-              choix parmi ses équipes
-              associées.
+              <span className="required-marker">
+                {' '}*
+              </span>
+            </label>
+
+            <select
+              id="result-test"
+              value={testId}
+              onChange={
+                handleTestChange
+              }
+              disabled={
+                !teamId ||
+                isLoadingContext ||
+                Boolean(
+                  resultsError,
+                )
+              }
+            >
+              <option value="">
+                {!teamId
+                  ? 'Sélectionner une équipe d’abord'
+                  : isLoadingContext
+                    ? 'Chargement des tests...'
+                    : 'Sélectionner un test'}
+              </option>
+
+              {tests.map(
+                (test) => (
+                  <option
+                    key={
+                      test.id
+                    }
+                    value={
+                      test.id
+                    }
+                  >
+                    {
+                      test.name
+                    }
+                  </option>
+                ),
+              )}
+            </select>
+
+            {resultsError && (
+              <p className="create-result-field__error">
+                {resultsError}
+              </p>
+            )}
+
+            {physicalTestsError && (
+              <p className="create-result-field__error">
+                {physicalTestsError}
+              </p>
+            )}
+
+            {teamId &&
+              !isLoadingContext &&
+              !resultsError &&
+              !physicalTestsError &&
+              tests.length === 0 && (
+                <p className="create-result-field__error">
+                  Aucun test assigné aux
+                  athlètes de cette équipe.
+                </p>
+              )}
+
+            <p className="create-result-field__help">
+              La liste contient les
+              tests ayant déjà été
+              assignés aux athlètes de
+              l&apos;équipe.
+            </p>
+          </div>
+
+          {/* Date */}
+          <div className="create-result-field">
+            <label htmlFor="result-date">
+              Date de saisie des
+              résultats
+
+              <span className="required-marker">
+                {' '}*
+              </span>
+            </label>
+
+            <input
+              id="result-date"
+              type="date"
+              value={testDate}
+              onChange={(event) =>
+                setTestDate(
+                  event.target.value,
+                )
+              }
+            />
+
+            <p className="create-result-field__help">
+              La date du jour est
+              affichée par défaut.
             </p>
           </div>
         </div>
 
         <div className="create-result-divider" />
 
-        {/* Athlètes */}
         <div className="create-result-athletes">
           <h2>
             2. Athlètes concernés
@@ -770,12 +1551,11 @@ export default function CreateResultPage() {
           <p className="create-result-athletes__description">
             Choisissez si le résultat
             est saisi pour un athlète,
-            pour plusieurs athlètes ou
-            pour tous les athlètes de
-            l&apos;équipe sélectionnée.
+            plusieurs athlètes ou tous
+            les athlètes ayant ce test
+            assigné.
           </p>
 
-          {/* Modes de sélection */}
           <div className="create-result-mode-grid">
             <button
               type="button"
@@ -791,8 +1571,8 @@ export default function CreateResultPage() {
                 )
               }
               disabled={
-                !teamId ||
-                isLoadingAthletes
+                !testId ||
+                isLoadingContext
               }
             >
               <span
@@ -826,8 +1606,8 @@ export default function CreateResultPage() {
                 )
               }
               disabled={
-                !teamId ||
-                isLoadingAthletes
+                !testId ||
+                isLoadingContext
               }
             >
               <span
@@ -861,9 +1641,9 @@ export default function CreateResultPage() {
                 )
               }
               disabled={
-                !teamId ||
-                isLoadingAthletes ||
-                athletes.length ===
+                !testId ||
+                isLoadingContext ||
+                testResults.length ===
                   0
               }
             >
@@ -886,7 +1666,6 @@ export default function CreateResultPage() {
           </div>
 
           <div className="create-result-athlete-grid">
-            {/* Liste */}
             <div>
               <div className="create-result-athlete-list">
                 <div className="create-result-athlete-search">
@@ -907,8 +1686,8 @@ export default function CreateResultPage() {
                       )
                     }
                     disabled={
-                      !teamId ||
-                      isLoadingAthletes
+                      !testId ||
+                      isLoadingContext
                     }
                   />
                 </div>
@@ -922,54 +1701,54 @@ export default function CreateResultPage() {
                 )}
 
                 {teamId &&
-                  isLoadingAthletes && (
+                  !testId &&
+                  !isLoadingContext && (
                     <div className="create-result-athlete-empty">
-                      Chargement des
-                      athlètes...
+                      Sélectionnez
+                      ensuite un test.
                     </div>
                   )}
 
-                {teamId &&
-                  !isLoadingAthletes &&
-                  athletesError && (
-                    <div className="create-result-athlete-empty">
-                      {
-                        athletesError
-                      }
-                    </div>
-                  )}
+                {isLoadingContext && (
+                  <div className="create-result-athlete-empty">
+                    Chargement des
+                    résultats...
+                  </div>
+                )}
 
-                {teamId &&
-                  !isLoadingAthletes &&
-                  !athletesError &&
-                  filteredAthletes
+                {testId &&
+                  !isLoadingContext &&
+                  filteredResults
                     .length ===
                     0 && (
                     <div className="create-result-athlete-empty">
                       Aucun athlète
-                      trouvé.
+                      trouvé pour ce
+                      test.
                     </div>
                   )}
 
-                {teamId &&
-                  !isLoadingAthletes &&
-                  !athletesError &&
-                  filteredAthletes.map(
-                    (athlete) => {
-                      const athleteId =
+                {testId &&
+                  !isLoadingContext &&
+                  filteredResults.map(
+                    (result) => {
+                      const resultId =
                         String(
-                          athlete.id,
+                          result.id,
                         )
 
                       const checked =
-                        selectedAthleteIds.includes(
-                          athleteId,
+                        selectedResultIds.includes(
+                          resultId,
                         )
+
+                      const athlete =
+                        result?.athlete
 
                       return (
                         <label
                           key={
-                            athlete.id
+                            result.id
                           }
                           className="create-result-athlete-row"
                         >
@@ -983,15 +1762,15 @@ export default function CreateResultPage() {
                             name={
                               selectionMode ===
                               SELECTION_MODE.ONE
-                                ? 'selectedAthlete'
+                                ? 'selectedResult'
                                 : undefined
                             }
                             checked={
                               checked
                             }
                             onChange={() =>
-                              toggleAthlete(
-                                athlete.id,
+                              toggleResult(
+                                result.id,
                               )
                             }
                             disabled={
@@ -1012,61 +1791,64 @@ export default function CreateResultPage() {
               </div>
 
               <p className="create-result-athlete-help">
-                Les athlètes affichés
-                appartiennent à
-                l&apos;équipe
-                sélectionnée.
+                Seuls les athlètes ayant
+                le test sélectionné
+                assigné sont affichés.
               </p>
             </div>
 
-            {/* Athlètes sélectionnés */}
             <div className="create-result-selected-card">
               <strong>
                 {
-                  selectedAthletes.length
+                  selectedResults.length
                 }{' '}
-                {selectedAthletes.length >
+                {selectedResults.length >
                 1
                   ? 'athlètes sélectionnés'
                   : 'athlète sélectionné'}
               </strong>
 
               <div className="create-result-selected-tags">
-                {selectedAthletes.map(
-                  (athlete) => (
-                    <div
-                      key={
-                        athlete.id
-                      }
-                      className="create-result-selected-tag"
-                    >
-                      <span>
-                        {getAthleteName(
-                          athlete,
-                        )}
-                      </span>
+                {selectedResults.map(
+                  (result) => {
+                    const athlete =
+                      result?.athlete
 
-                      {selectionMode !==
-                        SELECTION_MODE.ALL && (
-                        <button
-                          type="button"
-                          aria-label={`Retirer ${getAthleteName(
+                    return (
+                      <div
+                        key={
+                          result.id
+                        }
+                        className="create-result-selected-tag"
+                      >
+                        <span>
+                          {getAthleteName(
                             athlete,
-                          )}`}
-                          onClick={() =>
-                            removeAthlete(
-                              athlete.id,
-                            )
-                          }
-                        >
-                          ×
-                        </button>
-                      )}
-                    </div>
-                  ),
+                          )}
+                        </span>
+
+                        {selectionMode !==
+                          SELECTION_MODE.ALL && (
+                          <button
+                            type="button"
+                            aria-label={`Retirer ${getAthleteName(
+                              athlete,
+                            )}`}
+                            onClick={() =>
+                              removeResult(
+                                result.id,
+                              )
+                            }
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    )
+                  },
                 )}
 
-                {selectedAthletes.length ===
+                {selectedResults.length ===
                   0 && (
                   <span className="create-result-selected-empty">
                     Aucun athlète
@@ -1078,7 +1860,6 @@ export default function CreateResultPage() {
           </div>
         </div>
 
-        {/* Actions */}
         <div className="create-result-actions">
           <button
             type="button"
@@ -1098,7 +1879,7 @@ export default function CreateResultPage() {
             }
             disabled={
               isLoadingTeams ||
-              isLoadingAthletes
+              isLoadingContext
             }
           >
             Continuer

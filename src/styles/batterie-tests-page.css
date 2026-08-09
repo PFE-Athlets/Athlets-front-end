@@ -375,8 +375,8 @@
 }
 
 .batterie-tests-status--inactive {
-  color: #475569;
-  background: #f1f5f9;
+  color: #dc2626;
+  background: #fee2e2;
 }
 
 .batterie-tests-status--unknown {

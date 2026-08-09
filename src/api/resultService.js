@@ -338,6 +338,49 @@ export const resultService = {
     }
   },
 
+  getTeamResults: async (teamId) => {
+    try {
+      const response = await api.get(
+        `/api/result/team/${teamId}`,
+      )
+
+      return {
+        success: true,
+        data: response.data ?? [],
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: extractError(
+          error,
+          'Impossible de charger les résultats de cette équipe.',
+        ),
+      }
+    }
+  },
+
+  submit: async (payload) => {
+    try {
+      await api.put(
+        '/api/result/submit',
+        payload,
+      )
+
+      return {
+        success: true,
+      }
+    } catch (error) {
+      return {
+        success: false,
+        status: error.response?.status,
+        error: extractError(
+          error,
+          'Impossible d’enregistrer le résultat.',
+        ),
+      }
+    }
+  },
+
   exportResults: async (filters = {}) => {
     try {
       const params = {}

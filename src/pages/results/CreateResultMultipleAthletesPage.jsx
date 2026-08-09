@@ -8,37 +8,26 @@ import {
   useNavigate,
 } from 'react-router-dom'
 
+import { resultService } from '../../api/resultService'
+
 import '../../styles/create-result-multiple-athletes.css'
 
-const RESULT_STATUS = {
-  APPROVED: 'APPROVED',
-  PENDING: 'PENDING',
-  REJECTED: 'REJECTED',
-}
-
-const STATUS_OPTIONS = [
-  {
-    value: RESULT_STATUS.APPROVED,
-    label: 'Approuvé',
-  },
-  {
-    value: RESULT_STATUS.PENDING,
-    label: 'En attente',
-  },
-  {
-    value: RESULT_STATUS.REJECTED,
-    label: 'Refusé',
-  },
-]
-
 const getAthleteName = (athlete) => {
-  if (athlete?.fullName) {
+  if (!athlete) {
+    return 'Athlète'
+  }
+
+  if (athlete.fullName) {
     return athlete.fullName
   }
 
+  if (athlete.displayName) {
+    return athlete.displayName
+  }
+
   return [
-    athlete?.firstName,
-    athlete?.lastName,
+    athlete.firstName,
+    athlete.lastName,
   ]
     .filter(Boolean)
     .join(' ') || 'Athlète'
@@ -51,6 +40,11 @@ const getAthleteInitials = (athlete) => {
   const lastName =
     athlete?.lastName ?? ''
 
+  const displayName =
+    athlete?.displayName ??
+    athlete?.fullName ??
+    ''
+
   const initials = [
     firstName.charAt(0),
     lastName.charAt(0),
@@ -59,7 +53,27 @@ const getAthleteInitials = (athlete) => {
     .join('')
     .toUpperCase()
 
-  return initials || 'A'
+  if (initials) {
+    return initials
+  }
+
+  const words =
+    displayName
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+
+  if (words.length > 0) {
+    return words
+      .slice(0, 2)
+      .map((word) =>
+        word.charAt(0),
+      )
+      .join('')
+      .toUpperCase()
+  }
+
+  return 'A'
 }
 
 const getTestName = (test) =>
@@ -67,33 +81,91 @@ const getTestName = (test) =>
   test?.testName ??
   'Test'
 
-const getTestUnit = (test) =>
-  test?.unit ??
-  test?.measurementUnit ??
-  test?.unite ??
-  '—'
+const getTestCategory = (test) => {
+  const quality =
+    test?.physicalQuality
 
-const getTestCategory = (test) =>
-  test?.category ??
-  test?.quality ??
-  test?.physicalQuality ??
-  test?.sport ??
-  ''
+  if (typeof quality === 'string') {
+    return quality
+  }
+
+  if (quality?.name) {
+    return quality.name
+  }
+
+  return (
+    test?.category ??
+    test?.quality ??
+    test?.sport ??
+    ''
+  )
+}
+
+const getResultTypeId = (
+  resultValue,
+) =>
+  resultValue?.resultType?.id ??
+  resultValue?.resultTypeId ??
+  null
+
+const getExistingResultValue = (
+  result,
+  resultTypeId,
+) =>
+  result?.resultValues?.find(
+    (value) =>
+      String(
+        getResultTypeId(value),
+      ) ===
+      String(resultTypeId),
+  )
 
 const buildInitialResults = (
-  athletes,
+  assignedResults,
+  resultTypes,
 ) =>
-  athletes.reduce(
-    (accumulator, athlete) => {
-      const id = String(
-        athlete.id,
-      )
+  assignedResults.reduce(
+    (accumulator, assignedResult) => {
+      const resultId =
+        String(
+          assignedResult.id,
+        )
 
-      accumulator[id] = {
-        value: '',
-        status:
-          RESULT_STATUS.APPROVED,
-        comment: '',
+      accumulator[resultId] = {
+        resultId:
+          assignedResult.id,
+
+        athlete:
+          assignedResult.athlete,
+
+        values:
+          resultTypes.map(
+            (resultType) => {
+              const existingValue =
+                getExistingResultValue(
+                  assignedResult,
+                  resultType.id,
+                )
+
+              return {
+                resultTypeId:
+                  resultType.id,
+
+                value:
+                  existingValue?.value ??
+                  '',
+              }
+            },
+          ),
+
+        proof:
+          assignedResult.proof ??
+          '',
+
+        comment:
+          assignedResult.comment ??
+          assignedResult.commentText ??
+          '',
       }
 
       return accumulator
@@ -117,19 +189,41 @@ export default function CreateResultMultipleAthletesPage() {
   const testDate =
     context?.testDate ?? ''
 
-  const athletes =
+  /*
+   * Les vrais Result créés lors de
+   * l'assignation de la batterie.
+   */
+  const assignedResults =
     Array.isArray(
-      context?.athletes,
+      context?.results,
     )
-      ? context.athletes
+      ? context.results
       : []
 
+  /*
+   * Les vrais ResultType du test.
+   */
+  const resultTypes =
+    useMemo(
+      () =>
+        Array.isArray(
+          test?.resultTypes,
+        )
+          ? test.resultTypes
+          : [],
+      [test],
+    )
+
+  /*
+   * État de saisie indexé par Result.id.
+   */
   const [
     athleteResults,
     setAthleteResults,
   ] = useState(() =>
     buildInitialResults(
-      athletes,
+      assignedResults,
+      resultTypes,
     ),
   )
 
@@ -144,9 +238,6 @@ export default function CreateResultMultipleAthletesPage() {
   const testName =
     getTestName(test)
 
-  const testUnit =
-    getTestUnit(test)
-
   const testCategory =
     getTestCategory(test)
 
@@ -154,32 +245,47 @@ export default function CreateResultMultipleAthletesPage() {
     team?.name ?? '—'
 
   const athleteCount =
-    athletes.length
+    assignedResults.length
 
+  /*
+   * Nombre d'athlètes dont toutes les
+   * valeurs requises sont remplies.
+   */
   const completedCount =
     useMemo(
       () =>
-        athletes.filter(
-          (athlete) => {
-            const id =
-              String(
-                athlete.id,
-              )
+        assignedResults.filter(
+          (assignedResult) => {
+            const currentResult =
+              athleteResults[
+                String(
+                  assignedResult.id,
+                )
+              ]
 
-            const value =
-              athleteResults[id]
-                ?.value
+            if (
+              !currentResult ||
+              currentResult.values
+                .length === 0
+            ) {
+              return false
+            }
 
-            return (
-              value !== '' &&
-              Number.isFinite(
-                Number(value),
-              )
+            return currentResult.values.every(
+              (resultValue) =>
+                resultValue.value !== '' &&
+                resultValue.value !== null &&
+                resultValue.value !== undefined &&
+                Number.isFinite(
+                  Number(
+                    resultValue.value,
+                  ),
+                ),
             )
           },
         ).length,
       [
-        athletes,
+        assignedResults,
         athleteResults,
       ],
     )
@@ -188,7 +294,7 @@ export default function CreateResultMultipleAthletesPage() {
     !context ||
     !test ||
     !team ||
-    athletes.length === 0
+    assignedResults.length === 0
   ) {
     return (
       <Navigate
@@ -198,20 +304,72 @@ export default function CreateResultMultipleAthletesPage() {
     )
   }
 
-  const updateAthleteResult = (
-    athleteId,
-    field,
+  /*
+   * Modification d'une valeur spécifique
+   * pour un ResultType spécifique.
+   */
+  const updateResultValue = (
+    resultId,
+    resultTypeId,
     value,
   ) => {
-    const id =
-      String(athleteId)
+    const normalizedResultId =
+      String(resultId)
 
     setAthleteResults(
       (currentResults) => ({
         ...currentResults,
 
-        [id]: {
-          ...currentResults[id],
+        [normalizedResultId]: {
+          ...currentResults[
+            normalizedResultId
+          ],
+
+          values:
+            currentResults[
+              normalizedResultId
+            ].values.map(
+              (resultValue) =>
+                String(
+                  resultValue
+                    .resultTypeId,
+                ) ===
+                String(
+                  resultTypeId,
+                )
+                  ? {
+                      ...resultValue,
+                      value,
+                    }
+                  : resultValue,
+            ),
+        },
+      }),
+    )
+
+    setError('')
+  }
+
+  /*
+   * Modification preuve/commentaire.
+   */
+  const updateResultField = (
+    resultId,
+    field,
+    value,
+  ) => {
+    const normalizedResultId =
+      String(resultId)
+
+    setAthleteResults(
+      (currentResults) => ({
+        ...currentResults,
+
+        [normalizedResultId]: {
+          ...currentResults[
+            normalizedResultId
+          ],
+
           [field]: value,
         },
       }),
@@ -230,65 +388,83 @@ export default function CreateResultMultipleAthletesPage() {
   }
 
   const validateForm = () => {
-    const missingResults =
-      athletes.filter(
-        (athlete) => {
-          const result =
-            athleteResults[
-              String(
-                athlete.id,
-              )
-            ]
-
-          return (
-            !result ||
-            result.value === ''
-          )
-        },
-      )
-
     if (
-      missingResults.length > 0
+      resultTypes.length === 0
     ) {
-      return 'Veuillez saisir un résultat pour chaque athlète.'
+      return 'Aucun type de résultat n’est configuré pour ce test.'
     }
 
-    const invalidResults =
-      athletes.filter(
-        (athlete) => {
-          const value =
-            athleteResults[
-              String(
-                athlete.id,
-              )
-            ]?.value
-
-          return !Number.isFinite(
-            Number(value),
-          )
-        },
-      )
-
-    if (
-      invalidResults.length > 0
+    for (
+      const assignedResult
+      of assignedResults
     ) {
-      return 'Tous les résultats doivent être des valeurs numériques.'
-    }
+      const currentResult =
+        athleteResults[
+          String(
+            assignedResult.id,
+          )
+        ]
 
-    const invalidComments =
-      athletes.some(
-        (athlete) =>
-          (
-            athleteResults[
-              String(
-                athlete.id,
-              )
-            ]?.comment ?? ''
-          ).length > 500,
-      )
+      const athleteName =
+        getAthleteName(
+          assignedResult.athlete,
+        )
 
-    if (invalidComments) {
-      return 'Les commentaires ne peuvent pas dépasser 500 caractères.'
+      if (!currentResult) {
+        return `Impossible de trouver le résultat de ${athleteName}.`
+      }
+
+      const hasMissingValue =
+        currentResult.values.some(
+          (resultValue) =>
+            resultValue.value === '' ||
+            resultValue.value === null ||
+            resultValue.value === undefined,
+        )
+
+      if (hasMissingValue) {
+        return `Veuillez saisir toutes les valeurs pour ${athleteName}.`
+      }
+
+      const hasInvalidValue =
+        currentResult.values.some(
+          (resultValue) =>
+            !Number.isFinite(
+              Number(
+                resultValue.value,
+              ),
+            ),
+        )
+
+      if (hasInvalidValue) {
+        return `Les valeurs saisies pour ${athleteName} doivent être numériques.`
+      }
+
+      if (
+        (
+          currentResult.comment ??
+          ''
+        ).length > 500
+      ) {
+        return `Le commentaire de ${athleteName} ne peut pas dépasser 500 caractères.`
+      }
+
+      if (
+        currentResult.proof?.trim() &&
+        !/^https?:\/\/.+/i.test(
+          currentResult.proof.trim(),
+        )
+      ) {
+        return `Le lien de preuve de ${athleteName} doit commencer par http:// ou https://.`
+      }
+
+      if (
+        test?.proofRequired &&
+        !currentResult.proof
+          ?.trim()
+      ) {
+        return `Une preuve est requise pour ${athleteName}.`
+      }
     }
 
     return ''
@@ -310,73 +486,77 @@ export default function CreateResultMultipleAthletesPage() {
 
     setIsSubmitting(true)
 
-    const payload = {
-      testId: test.id,
-      teamId: team.id,
-      resultDate: testDate,
-
-      results:
-        athletes.map(
-          (athlete) => {
-            const athleteId =
-              String(
-                athlete.id,
-              )
-
-            const result =
-              athleteResults[
-                athleteId
-              ]
-
-            return {
-              athleteId:
-                athlete.id,
-
-              username:
-                athlete.username,
-
-              value:
-                Number(
-                  result.value,
-                ),
-
-              unit:
-                testUnit,
-
-              status:
-                result.status,
-
-              comment:
-                result.comment
-                  ?.trim() ||
-                null,
-            }
-          },
-        ),
-    }
-
     try {
       /*
-       * À brancher plus tard sur resultService.
+       * Un appel /submit par Result.
        *
-       * Exemple :
-       *
-       * const response =
-       *   await resultService
-       *     .createMultiple(payload)
-       *
-       * if (!response.success) {
-       *   setError(response.error)
-       *   return
-       * }
-       *
-       * navigate('/resultats')
+       * Le backend décide automatiquement
+       * du statut selon l'utilisateur
+       * authentifié.
        */
+      for (
+        const assignedResult
+        of assignedResults
+      ) {
+        const currentResult =
+          athleteResults[
+            String(
+              assignedResult.id,
+            )
+          ]
 
-      console.log(
-        'Résultats multiples à enregistrer :',
-        payload,
-      )
+        const payload = {
+          id:
+            assignedResult.id,
+
+          testDate,
+
+          proof:
+            currentResult.proof
+              ?.trim() ||
+            null,
+
+          comment:
+            currentResult.comment
+              ?.trim() ||
+            null,
+
+          resultValues:
+            currentResult.values.map(
+              (resultValue) => ({
+                resultTypeId:
+                  Number(
+                    resultValue
+                      .resultTypeId,
+                  ),
+
+                value:
+                  Number(
+                    resultValue
+                      .value,
+                  ),
+              }),
+            ),
+        }
+
+        const response =
+          await resultService.submit(
+            payload,
+          )
+
+        if (!response.success) {
+          setError(
+            response.error ??
+              `Impossible d’enregistrer le résultat de ${getAthleteName(
+                assignedResult.athlete,
+              )}.`,
+          )
+
+          return
+        }
+      }
+
+      navigate('/resultats')
     } finally {
       setIsSubmitting(false)
     }
@@ -416,9 +596,7 @@ export default function CreateResultMultipleAthletesPage() {
           type="button"
           className="create-multiple-result-page__back"
           onClick={() =>
-            navigate(
-              '/resultats',
-            )
+            navigate('/resultats')
           }
         >
           <span aria-hidden="true">
@@ -483,6 +661,7 @@ export default function CreateResultMultipleAthletesPage() {
 
               <strong className="create-multiple-result-summary__value">
                 {athleteCount}{' '}
+
                 {athleteCount > 1
                   ? 'athlètes sélectionnés'
                   : 'athlète sélectionné'}
@@ -500,7 +679,8 @@ export default function CreateResultMultipleAthletesPage() {
           </h2>
 
           <p className="create-multiple-result-section__description">
-            Entrez les résultats pour chaque athlète ayant effectué ce test.
+            Entrez les résultats pour chaque
+            athlète ayant effectué ce test.
           </p>
 
           <div className="create-multiple-result-table-wrapper">
@@ -520,7 +700,7 @@ export default function CreateResultMultipleAthletesPage() {
                 </div>
 
                 <div>
-                  Statut
+                  Preuve
                 </div>
 
                 <div>
@@ -529,22 +709,25 @@ export default function CreateResultMultipleAthletesPage() {
               </div>
 
               {/* Rows */}
-              {athletes.map(
-                (athlete) => {
-                  const athleteId =
+              {assignedResults.map(
+                (assignedResult) => {
+                  const resultId =
                     String(
-                      athlete.id,
+                      assignedResult.id,
                     )
+
+                  const athlete =
+                    assignedResult.athlete
 
                   const result =
                     athleteResults[
-                      athleteId
+                      resultId
                     ]
 
                   return (
                     <div
                       key={
-                        athleteId
+                        resultId
                       }
                       className="create-multiple-result-table__row"
                     >
@@ -563,7 +746,7 @@ export default function CreateResultMultipleAthletesPage() {
                             )}
                           </strong>
 
-                          {athlete.username && (
+                          {athlete?.username && (
                             <span>
                               {
                                 athlete.username
@@ -573,84 +756,133 @@ export default function CreateResultMultipleAthletesPage() {
                         </div>
                       </div>
 
-                      {/* Résultat */}
+                      {/* Valeurs */}
+                      <div>
+                        {resultTypes.map(
+                          (resultType) => {
+                            const resultValue =
+                              result?.values
+                                ?.find(
+                                  (value) =>
+                                    String(
+                                      value
+                                        .resultTypeId,
+                                    ) ===
+                                    String(
+                                      resultType.id,
+                                    ),
+                                )
+
+                            return (
+                              <div
+                                key={
+                                  resultType.id
+                                }
+                                style={{
+                                  marginBottom:
+                                    resultTypes.length >
+                                    1
+                                      ? '8px'
+                                      : '0',
+                                }}
+                              >
+                                {resultTypes.length >
+                                  1 && (
+                                  <div
+                                    style={{
+                                      fontSize:
+                                        '12px',
+                                      marginBottom:
+                                        '4px',
+                                    }}
+                                  >
+                                    {
+                                      resultType.name
+                                    }
+                                  </div>
+                                )}
+
+                                <input
+                                  type="number"
+                                  step="any"
+                                  className="create-multiple-result-value-input"
+                                  value={
+                                    resultValue
+                                      ?.value ??
+                                    ''
+                                  }
+                                  placeholder="0"
+                                  onChange={(
+                                    event,
+                                  ) =>
+                                    updateResultValue(
+                                      assignedResult.id,
+                                      resultType.id,
+                                      event
+                                        .target
+                                        .value,
+                                    )
+                                  }
+                                />
+                              </div>
+                            )
+                          },
+                        )}
+                      </div>
+
+                      {/* Unités */}
+                      <div>
+                        {resultTypes.map(
+                          (resultType) => (
+                            <div
+                              key={
+                                resultType.id
+                              }
+                              className="create-multiple-result-unit"
+                              style={{
+                                marginBottom:
+                                  resultTypes.length >
+                                  1
+                                    ? '8px'
+                                    : '0',
+                              }}
+                            >
+                              {resultType
+                                .unitSymbol ??
+                                resultType
+                                  .unitName ??
+                                '—'}
+                            </div>
+                          ),
+                        )}
+                      </div>
+
+                      {/* Preuve */}
                       <div>
                         <input
-                          type="number"
-                          step="any"
-                          className="create-multiple-result-value-input"
+                          type="url"
+                          className="create-multiple-result-comment"
                           value={
-                            result?.value ??
+                            result?.proof ??
                             ''
                           }
-                          placeholder="0"
+                          placeholder={
+                            test?.proofRequired
+                              ? 'Preuve requise'
+                              : 'Lien de preuve...'
+                          }
                           onChange={(
                             event,
                           ) =>
-                            updateAthleteResult(
-                              athleteId,
-                              'value',
+                            updateResultField(
+                              assignedResult.id,
+                              'proof',
                               event
                                 .target
                                 .value,
                             )
                           }
                         />
-                      </div>
-
-                      {/* Unité */}
-                      <div>
-                        <div className="create-multiple-result-unit">
-                          {
-                            testUnit
-                          }
-                        </div>
-                      </div>
-
-                      {/* Statut */}
-                      <div>
-                        <select
-                          className={`create-multiple-result-status create-multiple-result-status--${
-                            (
-                              result?.status ??
-                              RESULT_STATUS.APPROVED
-                            ).toLowerCase()
-                          }`}
-                          value={
-                            result?.status ??
-                            RESULT_STATUS.APPROVED
-                          }
-                          onChange={(
-                            event,
-                          ) =>
-                            updateAthleteResult(
-                              athleteId,
-                              'status',
-                              event
-                                .target
-                                .value,
-                            )
-                          }
-                        >
-                          {STATUS_OPTIONS.map(
-                            (
-                              option,
-                            ) => (
-                              <option
-                                key={
-                                  option.value
-                                }
-                                value={
-                                  option.value
-                                }
-                              >
-                                {
-                                  option.label
-                                }
-                              </option>
-                            ),
-                          )}
-                        </select>
                       </div>
 
                       {/* Commentaire */}
@@ -667,8 +899,8 @@ export default function CreateResultMultipleAthletesPage() {
                           onChange={(
                             event,
                           ) =>
-                            updateAthleteResult(
-                              athleteId,
+                            updateResultField(
+                              assignedResult.id,
                               'comment',
                               event
                                 .target

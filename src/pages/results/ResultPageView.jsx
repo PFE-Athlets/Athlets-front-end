@@ -10,9 +10,9 @@ import {
   EyeIcon,
   FilterIcon,
   MoreVerticalIcon,
-  PlusIcon,
   ResetIcon,
   SettingsIcon,
+  PlusIcon
 } from '../../components/Icons'
 
 import '../../styles/results-page.css'
@@ -39,7 +39,7 @@ const STATUS_LABELS = {
   APPROVED: 'Approuvé',
   PENDING: 'En attente d’approbation',
   REJECTED: 'Refusé',
-  ASSIGNED: 'Brouillon',
+  ASSIGNED: 'Assigné',
 }
 
 const ROLE_LABELS = {
@@ -48,7 +48,6 @@ const ROLE_LABELS = {
   ATHLETE: 'Athlète',
   KINE: 'Kinésiologue',
 }
-
 
 const formatDateLine = (value) => {
   if (!value) {
@@ -140,6 +139,7 @@ const toOptions = (items, defaultLabel) => [
 
 export default function ResultPageView() {
   const [results, setResults] = useState([])
+
   const [filterData, setFilterData] = useState({
     minDate: '',
     maxDate: '',
@@ -149,15 +149,24 @@ export default function ResultPageView() {
     batteries: [],
     statuses: [],
   })
-  const [draftFilters, setDraftFilters] = useState(INITIAL_FILTERS)
-  const [appliedFilters, setAppliedFilters] = useState(INITIAL_FILTERS)
+
+  const [draftFilters, setDraftFilters] =
+    useState(INITIAL_FILTERS)
+
+  const [appliedFilters, setAppliedFilters] =
+    useState(INITIAL_FILTERS)
+
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [exportError, setExportError] = useState('')
   const [exporting, setExporting] = useState(false)
+
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
-  const [filtersExpanded, setFiltersExpanded] = useState(true)
+
+  const [filtersExpanded, setFiltersExpanded] =
+    useState(true)
+
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -181,15 +190,18 @@ export default function ResultPageView() {
         )
 
         setResults([])
+
         setError(
           result.error ??
             'Impossible de charger les résultats.',
         )
+
         setLoading(false)
         return
       }
 
       const nextFilterData = result.data.filters
+
       const initialFilters = {
         ...INITIAL_FILTERS,
         startDate:
@@ -278,12 +290,12 @@ export default function ResultPageView() {
 
       const matchesAthlete =
         appliedFilters.athlete === 'all' ||
-        result.athlete.id ===
+        String(result.athlete.id) ===
           appliedFilters.athlete
 
       const matchesTest =
         appliedFilters.test === 'all' ||
-        result.test.id ===
+        String(result.test.id) ===
           appliedFilters.test
 
       const matchesTeam =
@@ -317,12 +329,17 @@ export default function ResultPageView() {
     1,
     Math.ceil(filteredResults.length / pageSize),
   )
+
   const currentPage = Math.min(page, totalPages)
-  const startIndex = (currentPage - 1) * pageSize
+
+  const startIndex =
+    (currentPage - 1) * pageSize
+
   const visibleResults = filteredResults.slice(
     startIndex,
     startIndex + pageSize,
   )
+
   const visiblePages = buildVisiblePages(
     currentPage,
     totalPages,
@@ -336,7 +353,10 @@ export default function ResultPageView() {
   }
 
   const applyFilters = () => {
-    setAppliedFilters({ ...draftFilters })
+    setAppliedFilters({
+      ...draftFilters,
+    })
+
     setPage(1)
   }
 
@@ -368,6 +388,7 @@ export default function ResultPageView() {
         result.error ??
           'Impossible d’exporter les résultats.',
       )
+
       setExporting(false)
       return
     }
@@ -379,24 +400,41 @@ export default function ResultPageView() {
     })
 
     const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
+
+    const link =
+      document.createElement('a')
+
     link.href = url
     link.download =
       result.filename || 'resultats.xlsx'
+
     document.body.appendChild(link)
     link.click()
     link.remove()
+
     URL.revokeObjectURL(url)
+
     setExporting(false)
   }
 
   return (
     <section className="results-page">
       <div className="results-page__intro">
-        <h1>Résultats</h1>
+        <div className="results-page__title-row">
+          <h1>Résultats</h1>
+
+          <button
+            type="button"
+            className="results-add-btn"
+            onClick={() => navigate('/resultats/creer')}
+          >
+            <PlusIcon />
+            <span>Ajouter un résultat</span>
+          </button>
+        </div>
+
         <p>
-          Consultez et gérez les résultats des
-          tests de vos athlètes.
+          Consultez et gérez les résultats des tests de vos athlètes.
         </p>
       </div>
 
@@ -406,7 +444,7 @@ export default function ResultPageView() {
 
           <button
             type="button"
-            className="results-icon-btn"
+            className="results-icon-btn results-icon-btn--collapse"
             onClick={() =>
               setFiltersExpanded(
                 (expanded) => !expanded,
@@ -426,67 +464,76 @@ export default function ResultPageView() {
           </button>
         </div>
 
-        {filtersExpanded ? (
+        {filtersExpanded && (
           <div className="results-filters-card__body">
             <div className="results-filters-grid results-filters-grid--top">
               <label className="results-field results-field--period">
                 <span>Période</span>
 
                 <div className="results-period-inputs">
-                  <div className="results-input-shell">
-                    <input
-                      type="date"
-                      min={
-                        filterData.minDate || undefined
-                      }
-                      max={
-                        draftFilters.endDate ||
-                        filterData.maxDate ||
-                        undefined
-                      }
-                      value={draftFilters.startDate}
-                      onChange={(event) =>
-                        updateDraftFilter(
-                          'startDate',
-                          event.target.value,
-                        )
-                      }
-                    />
-                    <CalendarIcon />
-                  </div>
+                  <input
+                    type="date"
+                    min={
+                      filterData.minDate ||
+                      undefined
+                    }
+                    max={
+                      draftFilters.endDate ||
+                      filterData.maxDate ||
+                      undefined
+                    }
+                    value={
+                      draftFilters.startDate
+                    }
+                    onChange={(event) =>
+                      updateDraftFilter(
+                        'startDate',
+                        event.target.value,
+                      )
+                    }
+                    aria-label="Date de début"
+                  />
 
                   <span className="results-period-separator">
                     —
                   </span>
 
-                  <div className="results-input-shell">
-                    <input
-                      type="date"
-                      min={
-                        draftFilters.startDate ||
-                        filterData.minDate ||
-                        undefined
-                      }
-                      max={
-                        filterData.maxDate || undefined
-                      }
-                      value={draftFilters.endDate}
-                      onChange={(event) =>
-                        updateDraftFilter(
-                          'endDate',
-                          event.target.value,
-                        )
-                      }
-                    />
+                  <input
+                    type="date"
+                    min={
+                      draftFilters.startDate ||
+                      filterData.minDate ||
+                      undefined
+                    }
+                    max={
+                      filterData.maxDate ||
+                      undefined
+                    }
+                    value={
+                      draftFilters.endDate
+                    }
+                    onChange={(event) =>
+                      updateDraftFilter(
+                        'endDate',
+                        event.target.value,
+                      )
+                    }
+                    aria-label="Date de fin"
+                  />
+
+                  <span className="results-period-icon">
                     <CalendarIcon />
-                  </div>
+                  </span>
                 </div>
               </label>
 
               <label className="results-field">
                 <span>Athlète</span>
+
                 <select
-                  value={draftFilters.athlete}
+                  value={
+                    draftFilters.athlete
+                  }
                   onChange={(event) =>
                     updateDraftFilter(
                       'athlete',
@@ -494,19 +541,22 @@ export default function ResultPageView() {
                     )
                   }
                 >
-                  {athleteOptions.map((option) => (
-                    <option
-                      key={option.value}
-                      value={option.value}
-                    >
-                      {option.label}
-                    </option>
-                  ))}
+                  {athleteOptions.map(
+                    (option) => (
+                      <option
+                        key={option.value}
+                        value={option.value}
+                      >
+                        {option.label}
+                      </option>
+                    ),
+                  )}
                 </select>
               </label>
 
               <label className="results-field">
                 <span>Test</span>
+
                 <select
                   value={draftFilters.test}
                   onChange={(event) =>
@@ -516,19 +566,22 @@ export default function ResultPageView() {
                     )
                   }
                 >
-                  {testOptions.map((option) => (
-                    <option
-                      key={option.value}
-                      value={option.value}
-                    >
-                      {option.label}
-                    </option>
-                  ))}
+                  {testOptions.map(
+                    (option) => (
+                      <option
+                        key={option.value}
+                        value={option.value}
+                      >
+                        {option.label}
+                      </option>
+                    ),
+                  )}
                 </select>
               </label>
 
               <label className="results-field">
                 <span>Équipe</span>
+
                 <select
                   value={draftFilters.team}
                   onChange={(event) =>
@@ -538,21 +591,26 @@ export default function ResultPageView() {
                     )
                   }
                 >
-                  {teamOptions.map((option) => (
-                    <option
-                      key={option.value}
-                      value={option.value}
-                    >
-                      {option.label}
-                    </option>
-                  ))}
+                  {teamOptions.map(
+                    (option) => (
+                      <option
+                        key={option.value}
+                        value={option.value}
+                      >
+                        {option.label}
+                      </option>
+                    ),
+                  )}
                 </select>
               </label>
 
               <label className="results-field">
                 <span>Statut</span>
+
                 <select
-                  value={draftFilters.status}
+                  value={
+                    draftFilters.status
+                  }
                   onChange={(event) =>
                     updateDraftFilter(
                       'status',
@@ -560,14 +618,16 @@ export default function ResultPageView() {
                     )
                   }
                 >
-                  {statusOptions.map((option) => (
-                    <option
-                      key={option.value}
-                      value={option.value}
-                    >
-                      {option.label}
-                    </option>
-                  ))}
+                  {statusOptions.map(
+                    (option) => (
+                      <option
+                        key={option.value}
+                        value={option.value}
+                      >
+                        {option.label}
+                      </option>
+                    ),
+                  )}
                 </select>
               </label>
             </div>
@@ -575,8 +635,11 @@ export default function ResultPageView() {
             <div className="results-filters-grid results-filters-grid--bottom">
               <label className="results-field results-field--battery">
                 <span>Batterie de tests</span>
+
                 <select
-                  value={draftFilters.battery}
+                  value={
+                    draftFilters.battery
+                  }
                   onChange={(event) =>
                     updateDraftFilter(
                       'battery',
@@ -584,14 +647,16 @@ export default function ResultPageView() {
                     )
                   }
                 >
-                  {batteryOptions.map((option) => (
-                    <option
-                      key={option.value}
-                      value={option.value}
-                    >
-                      {option.label}
-                    </option>
-                  ))}
+                  {batteryOptions.map(
+                    (option) => (
+                      <option
+                        key={option.value}
+                        value={option.value}
+                      >
+                        {option.label}
+                      </option>
+                    ),
+                  )}
                 </select>
               </label>
 
@@ -602,7 +667,10 @@ export default function ResultPageView() {
                   onClick={resetFilters}
                 >
                   <ResetIcon />
-                  <span>Réinitialiser les filtres</span>
+
+                  <span>
+                    Réinitialiser les filtres
+                  </span>
                 </button>
 
                 <button
@@ -611,39 +679,41 @@ export default function ResultPageView() {
                   onClick={applyFilters}
                 >
                   <FilterIcon />
-                  <span>Appliquer les filtres</span>
+
+                  <span>
+                    Appliquer les filtres
+                  </span>
                 </button>
               </div>
             </div>
           </div>
-        ) : null}
+        )}
       </section>
 
       <div className="results-toolbar">
         <p className="results-toolbar__count">
           {filteredResults.length} résultat
-          {filteredResults.length > 1 ? 's' : ''}{' '}
+          {filteredResults.length !== 1
+            ? 's'
+            : ''}{' '}
           trouvé
-          {filteredResults.length > 1 ? 's' : ''}
+          {filteredResults.length !== 1
+            ? 's'
+            : ''}
         </p>
 
         <div className="results-toolbar__actions">
           <button
             type="button"
             className="results-toolbar-btn"
-            onClick={() => navigate('/resultats/creer')}
-          >
-            <PlusIcon />
-            <span>Ajouter</span>
-          </button>
-
-          <button
-            type="button"
-            className="results-toolbar-btn"
             onClick={handleExport}
-            disabled={filteredResults.length === 0 || exporting}
+            disabled={
+              filteredResults.length === 0 ||
+              exporting
+            }
           >
             <DownloadIcon />
+
             <span>
               {exporting
                 ? 'Export en cours...'
@@ -661,11 +731,11 @@ export default function ResultPageView() {
         </div>
       </div>
 
-      {exportError ? (
+      {exportError && (
         <div className="results-state-card results-state-card--error">
           {exportError}
         </div>
-      ) : null}
+      )}
 
       {loading ? (
         <div className="results-state-card">
@@ -681,7 +751,21 @@ export default function ResultPageView() {
             <table className="results-table">
               <thead>
                 <tr>
-                  <th>Date de saisie</th>
+                  <th>
+                    <div className="results-table-sort">
+                      <span>
+                        Date de saisie
+                      </span>
+
+                      <span
+                        className="results-sort-arrow"
+                        aria-hidden="true"
+                      >
+                        ↑
+                      </span>
+                    </div>
+                  </th>
+
                   <th>Athlète</th>
                   <th>Test</th>
                   <th>Batterie de tests</th>
@@ -693,103 +777,126 @@ export default function ResultPageView() {
               </thead>
 
               <tbody>
-                {visibleResults.map((result) => (
-                  <tr key={result.id}>
-                    <td data-label="Date de saisie">
-                      <div className="results-date-cell">
-                        <strong>
-                          {formatDateLine(
-                            result.testDate,
-                          )}
-                        </strong>
-                        <span>—</span>
-                      </div>
-                    </td>
-
-                    <td data-label="Athlète">
-                      <div className="results-athlete-cell">
-                        <span className="results-athlete-avatar">
-                          {getInitials(
-                            result.athlete.displayName,
-                          )}
-                        </span>
-
-                        <div>
+                {visibleResults.map(
+                  (result) => (
+                    <tr key={result.id}>
+                      <td data-label="Date de saisie">
+                        <div className="results-date-cell">
                           <strong>
-                            {
-                              result.athlete
-                                .displayName
-                            }
+                            {formatDateLine(
+                              result.testDate,
+                            )}
                           </strong>
+
                           <span>
-                            #{result.athlete.id}
+                            {result.testTime ||
+                              '—'}
                           </span>
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    <td data-label="Test">
-                      {result.test.name}
-                    </td>
+                      <td data-label="Athlète">
+                        <div className="results-athlete-cell">
+                          <span className="results-athlete-avatar">
+                            {getInitials(
+                              result.athlete
+                                .displayName,
+                            )}
+                          </span>
 
-                    <td data-label="Batterie de tests">
-                      {result.battery?.name || '—'}
-                    </td>
+                          <div className="results-athlete-info">
+                            <strong>
+                              {
+                                result.athlete
+                                  .displayName
+                              }
+                            </strong>
 
-                    <td data-label="Équipe">
-                      {result.team?.name || '—'}
-                    </td>
+                            <span>
+                              #
+                              {
+                                result.athlete
+                                  .id
+                              }
+                            </span>
+                          </div>
+                        </div>
+                      </td>
 
-                    <td data-label="Intervenant">
-                      <div className="results-intervenant-cell">
-                        <strong>
-                          {
-                            result.intervenant
-                              ?.displayName || '—'
-                          }
-                        </strong>
-                        <span>
-                          {getRoleLabel(
-                            result.intervenant?.role,
+                      <td data-label="Test">
+                        {result.test.name}
+                      </td>
+
+                      <td data-label="Batterie de tests">
+                        {result.battery
+                          ?.name || '—'}
+                      </td>
+
+                      <td data-label="Équipe">
+                        {result.team?.name ||
+                          '—'}
+                      </td>
+
+                      <td data-label="Intervenant">
+                        <div className="results-intervenant-cell">
+                          <strong>
+                            {result.intervenant
+                              ?.displayName ||
+                              '—'}
+                          </strong>
+
+                          <span>
+                            {getRoleLabel(
+                              result.intervenant
+                                ?.role,
+                            )}
+                          </span>
+                        </div>
+                      </td>
+
+                      <td data-label="Statut">
+                        <span
+                          className={`results-status-badge ${getStatusClassName(
+                            result.statusCode,
+                          )}`}
+                        >
+                          {getStatusLabel(
+                            result.statusCode,
+                            result.statusLabel,
                           )}
                         </span>
-                      </div>
-                    </td>
+                      </td>
 
-                    <td data-label="Statut">
-                      <span
-                        className={`results-status-badge ${getStatusClassName(result.statusCode)}`}
-                      >
-                        {getStatusLabel(
-                          result.statusCode,
-                          result.statusLabel,
-                        )}
-                      </span>
-                    </td>
+                      <td data-label="Actions">
+                        <div className="results-actions-cell">
+                          <button
+                            type="button"
+                            className="results-action-btn"
+                            aria-label={`Consulter le résultat ${result.id}`}
+                            onClick={() =>
+                              navigate(
+                                `/resultats/${result.id}`,
+                              )
+                            }
+                          >
+                            <EyeIcon />
+                          </button>
 
-                    <td data-label="Actions">
-                      <div className="results-actions-cell">
-                        <button
-                          type="button"
-                          className="results-action-btn"
-                          aria-label={`Consulter le résultat ${result.id}`}
-                        >
-                          <EyeIcon />
-                        </button>
+                          <button
+                            type="button"
+                            className="results-action-btn"
+                            aria-label={`Plus d’actions pour le résultat ${result.id}`}
+                          >
+                            <MoreVerticalIcon />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ),
+                )}
 
-                        <button
-                          type="button"
-                          className="results-action-btn"
-                          aria-label={`Plus d’actions pour le résultat ${result.id}`}
-                        >
-                          <MoreVerticalIcon />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-
-                {visibleResults.length === 0 ? (
+                {visibleResults.length ===
+                  0 && (
                   <tr>
                     <td
                       colSpan="8"
@@ -798,7 +905,7 @@ export default function ResultPageView() {
                       Aucun résultat trouvé
                     </td>
                   </tr>
-                ) : null}
+                )}
               </tbody>
             </table>
           </div>
@@ -809,71 +916,106 @@ export default function ResultPageView() {
                 value={pageSize}
                 onChange={(event) => {
                   setPageSize(
-                    Number(event.target.value),
+                    Number(
+                      event.target.value,
+                    ),
                   )
+
                   setPage(1)
                 }}
               >
-                {PAGE_SIZE_OPTIONS.map((size) => (
-                  <option key={size} value={size}>
-                    {size}
-                  </option>
-                ))}
+                {PAGE_SIZE_OPTIONS.map(
+                  (size) => (
+                    <option
+                      key={size}
+                      value={size}
+                    >
+                      {size}
+                    </option>
+                  ),
+                )}
               </select>
+
               <span>par page</span>
             </div>
 
             <div className="results-pagination">
               <button
                 type="button"
-                disabled={currentPage === 1}
+                disabled={
+                  currentPage === 1
+                }
                 onClick={() =>
-                  setPage(currentPage - 1)
+                  setPage(
+                    currentPage - 1,
+                  )
                 }
                 aria-label="Page précédente"
               >
                 ‹
               </button>
 
-              {visiblePages.map((pageNumber, index) => {
-                const previousPage =
-                  visiblePages[index - 1]
-                const showDots =
-                  previousPage &&
-                  pageNumber - previousPage > 1
+              {visiblePages.map(
+                (
+                  pageNumber,
+                  index,
+                ) => {
+                  const previousPage =
+                    visiblePages[
+                      index - 1
+                    ]
 
-                return (
-                  <span key={pageNumber}>
-                    {showDots ? (
-                      <span className="results-pagination__dots">
-                        …
-                      </span>
-                    ) : null}
+                  const showDots =
+                    previousPage &&
+                    pageNumber -
+                      previousPage >
+                      1
 
-                    <button
-                      type="button"
-                      className={
-                        pageNumber === currentPage
-                          ? 'is-active'
-                          : ''
-                      }
-                      onClick={() =>
-                        setPage(pageNumber)
+                  return (
+                    <span
+                      key={
+                        pageNumber
                       }
                     >
-                      {pageNumber}
-                    </button>
-                  </span>
-                )
-              })}
+                      {showDots && (
+                        <span className="results-pagination__dots">
+                          …
+                        </span>
+                      )}
+
+                      <button
+                        type="button"
+                        className={
+                          pageNumber ===
+                          currentPage
+                            ? 'is-active'
+                            : ''
+                        }
+                        onClick={() =>
+                          setPage(
+                            pageNumber,
+                          )
+                        }
+                      >
+                        {
+                          pageNumber
+                        }
+                      </button>
+                    </span>
+                  )
+                },
+              )}
 
               <button
                 type="button"
                 disabled={
-                  currentPage === totalPages
+                  currentPage ===
+                  totalPages
                 }
                 onClick={() =>
-                  setPage(currentPage + 1)
+                  setPage(
+                    currentPage + 1,
+                  )
                 }
                 aria-label="Page suivante"
               >
@@ -882,9 +1024,16 @@ export default function ResultPageView() {
             </div>
 
             <p className="results-pagination-bar__right">
-              {filteredResults.length === 0
+              {filteredResults.length ===
+              0
                 ? '0 résultat'
-                : `${startIndex + 1} à ${Math.min(startIndex + pageSize, filteredResults.length)} de ${filteredResults.length} résultats`}
+                : `${startIndex + 1} à ${Math.min(
+                    startIndex +
+                      pageSize,
+                    filteredResults.length,
+                  )} de ${
+                    filteredResults.length
+                  } résultats`}
             </p>
           </div>
         </div>

@@ -9,41 +9,9 @@ import {
 } from 'react-router-dom'
 
 import { TrashIcon } from '../../components/Icons.jsx'
+import { resultService } from '../../api/resultService'
+
 import '../../styles/create-result-single-athlete.css'
-
-const RESULT_TYPES = [
-  {
-    value: 'TIME',
-    label: 'Temps',
-    unit: 's',
-  },
-  {
-    value: 'POWER',
-    label: 'Puissance',
-    unit: 'W/kg',
-  },
-  {
-    value: 'WEIGHT',
-    label: 'Poids',
-    unit: 'kg',
-  },
-  {
-    value: 'DISTANCE',
-    label: 'Distance',
-    unit: 'm',
-  },
-  {
-    value: 'REPETITIONS',
-    label: 'Répétitions',
-    unit: 'reps',
-  },
-]
-
-const createEmptyResult = () => ({
-  id: crypto.randomUUID(),
-  type: '',
-  value: '',
-})
 
 const getAthleteName = (athlete) => {
   if (!athlete) {
@@ -54,15 +22,25 @@ const getAthleteName = (athlete) => {
     return athlete.fullName
   }
 
+  if (athlete.displayName) {
+    return athlete.displayName
+  }
+
+  const user =
+    athlete.authUser ?? athlete
+
   return [
-    athlete.firstName,
-    athlete.lastName,
+    user?.firstName,
+    user?.lastName,
   ]
     .filter(Boolean)
     .join(' ') || '—'
 }
 
-const formatDate = (value) => {
+const formatDate = (
+  value,
+  longFormat = false,
+) => {
   if (!value) {
     return '—'
   }
@@ -77,6 +55,17 @@ const formatDate = (value) => {
     return value
   }
 
+  if (longFormat) {
+    return new Intl.DateTimeFormat(
+      'fr-CA',
+      {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      },
+    ).format(date)
+  }
+
   return new Intl.DateTimeFormat(
     'fr-CA',
     {
@@ -87,9 +76,53 @@ const formatDate = (value) => {
   ).format(date)
 }
 
+const getResultTypeId = (
+  resultValue,
+) =>
+  resultValue?.resultType?.id ??
+  resultValue?.resultTypeId ??
+  null
+
+const getResultValue = (
+  resultValue,
+) =>
+  resultValue?.value ?? ''
+
+const getUnitForType = (
+  resultType,
+) =>
+  resultType?.unitSymbol ??
+  resultType?.unitName ??
+  resultType?.unit ??
+  '—'
+
 export default function CreateResultSingleAthletePage() {
   const navigate = useNavigate()
   const location = useLocation()
+
+  const currentUser = useMemo(() => {
+    const storedUser =
+      sessionStorage.getItem(
+        'currentUser',
+      )
+
+    if (!storedUser) {
+      return null
+    }
+
+    try {
+      return JSON.parse(
+        storedUser,
+      )
+    } catch {
+      return null
+    }
+  }, [])
+
+  const isAthlete =
+    Number(
+      currentUser?.accessLevel,
+    ) === 3
 
   const context =
     location.state ?? null
@@ -103,27 +136,117 @@ export default function CreateResultSingleAthletePage() {
   const testDate =
     context?.testDate ?? ''
 
+  /*
+   * Le Result sélectionné
+   * à l'étape 1.
+   */
+  const assignedResult =
+    context?.results?.[0] ??
+    context?.result ??
+    null
+
   const athlete =
+    assignedResult?.athlete ??
     context?.athletes?.[0] ??
     context?.athlete ??
     null
 
-  const [results, setResults] =
-    useState([
-      createEmptyResult(),
-    ])
+  /*
+   * Les ResultType viennent directement
+   * du PhysicalTest réel sélectionné.
+   */
+  const resultTypes =
+    useMemo(
+      () =>
+        Array.isArray(
+          test?.resultTypes,
+        )
+          ? test.resultTypes
+          : [],
+      [test],
+    )
 
-  const [proofLink, setProofLink] =
-    useState('')
+  /*
+   * Préremplissage des valeurs déjà
+   * enregistrées dans le Result.
+   *
+   * Une entrée est créée pour chaque
+   * ResultType défini dans le PhysicalTest.
+   */
+  const initialResults =
+    useMemo(
+      () =>
+        resultTypes.map(
+          (resultType) => {
+            const existingValue =
+              assignedResult
+                ?.resultValues
+                ?.find(
+                  (value) =>
+                    String(
+                      getResultTypeId(
+                        value,
+                      ),
+                    ) ===
+                    String(
+                      resultType.id,
+                    ),
+                )
 
-  const [comment, setComment] =
-    useState('')
+            return {
+              resultTypeId:
+                resultType.id,
 
-  const [error, setError] =
-    useState('')
+              value:
+                getResultValue(
+                  existingValue,
+                ),
+            }
+          },
+        ),
+      [
+        resultTypes,
+        assignedResult,
+      ],
+    )
 
-  const [isSubmitting, setIsSubmitting] =
-    useState(false)
+  const [
+    results,
+    setResults,
+  ] = useState(
+    initialResults,
+  )
+
+  const [
+    proofLink,
+    setProofLink,
+  ] = useState(
+    assignedResult?.proof ?? '',
+  )
+
+  const [
+    comment,
+    setComment,
+  ] = useState(
+    assignedResult?.comment ??
+      assignedResult?.commentText ??
+      '',
+  )
+
+  const [
+    showProofHelp,
+    setShowProofHelp,
+  ] = useState(false)
+
+  const [
+    error,
+    setError,
+  ] = useState('')
+
+  const [
+    isSubmitting,
+    setIsSubmitting,
+  ] = useState(false)
 
   const testName =
     test?.name ??
@@ -134,28 +257,25 @@ export default function CreateResultSingleAthletePage() {
     team?.name ?? '—'
 
   const athleteName =
-    getAthleteName(athlete)
-
-  const canAddResult =
-    results.length <
-    RESULT_TYPES.length
-
-  const usedResultTypes =
-    useMemo(
-      () =>
-        results
-          .map(
-            (result) =>
-              result.type,
-          )
-          .filter(Boolean),
-      [results],
+    getAthleteName(
+      athlete,
     )
+
+  const athleteNumber =
+    athlete?.number ??
+    athlete?.athleteNumber ??
+    athlete?.jerseyNumber ??
+    null
+
+  const protocol =
+    test?.protocol ??
+    ''
 
   if (
     !context ||
     !test ||
     !team ||
+    !assignedResult ||
     !athlete
   ) {
     return (
@@ -166,67 +286,31 @@ export default function CreateResultSingleAthletePage() {
     )
   }
 
-  const getUnitForType = (
-    type,
-  ) =>
-    RESULT_TYPES.find(
-      (option) =>
-        option.value === type,
-    )?.unit ?? '—'
-
   const updateResult = (
-    resultId,
-    field,
+    resultTypeId,
     value,
   ) => {
     setResults(
-      (currentResults) =>
+      (
+        currentResults,
+      ) =>
         currentResults.map(
           (result) =>
-            result.id === resultId
+            String(
+              result.resultTypeId,
+            ) ===
+            String(
+              resultTypeId,
+            )
               ? {
                   ...result,
-                  [field]: value,
+                  value,
                 }
               : result,
         ),
     )
 
     setError('')
-  }
-
-  const handleAddResult = () => {
-    if (!canAddResult) {
-      return
-    }
-
-    setResults(
-      (currentResults) => [
-        ...currentResults,
-        createEmptyResult(),
-      ],
-    )
-  }
-
-  const handleRemoveResult = (
-    resultId,
-  ) => {
-    if (results.length === 1) {
-      setResults([
-        createEmptyResult(),
-      ])
-
-      return
-    }
-
-    setResults(
-      (currentResults) =>
-        currentResults.filter(
-          (result) =>
-            result.id !==
-            resultId,
-        ),
-    )
   }
 
   const handleBack = () => {
@@ -240,25 +324,23 @@ export default function CreateResultSingleAthletePage() {
 
   const validateForm = () => {
     if (
-      results.length === 0
+      resultTypes.length === 0
     ) {
-      return 'Ajoutez au moins une valeur de résultat.'
+      return 'Aucun type de résultat n’est configuré pour ce test.'
     }
 
-    const hasMissingType =
-      results.some(
-        (result) =>
-          !result.type,
-      )
-
-    if (hasMissingType) {
-      return 'Veuillez sélectionner un type pour chaque résultat.'
+    if (
+      results.length === 0
+    ) {
+      return 'Aucune valeur de résultat à enregistrer.'
     }
 
     const hasMissingValue =
       results.some(
         (result) =>
-          result.value === '',
+          result.value === '' ||
+          result.value === null ||
+          result.value === undefined,
       )
 
     if (hasMissingValue) {
@@ -279,21 +361,6 @@ export default function CreateResultSingleAthletePage() {
       return 'Les valeurs des résultats doivent être numériques.'
     }
 
-    const uniqueTypes =
-      new Set(
-        results.map(
-          (result) =>
-            result.type,
-        ),
-      )
-
-    if (
-      uniqueTypes.size !==
-      results.length
-    ) {
-      return 'Un même type de résultat ne peut pas être ajouté plusieurs fois.'
-    }
-
     if (
       comment.length > 500
     ) {
@@ -307,6 +374,13 @@ export default function CreateResultSingleAthletePage() {
       )
     ) {
       return 'Le lien de preuve doit être une URL valide commençant par http:// ou https://.'
+    }
+
+    if (
+      test?.proofRequired &&
+      !proofLink.trim()
+    ) {
+      return 'Une preuve est requise pour ce test.'
     }
 
     return ''
@@ -329,100 +403,620 @@ export default function CreateResultSingleAthletePage() {
     setIsSubmitting(true)
 
     const payload = {
-      testId: test.id,
-      teamId: team.id,
-      athleteId: athlete.id,
-      username:
-        athlete.username,
-      resultDate:
-        testDate,
+      id:
+        assignedResult.id,
 
-      values: results.map(
-        (result) => ({
-          type:
-            result.type,
-          value: Number(
-            result.value,
-          ),
-          unit:
-            getUnitForType(
-              result.type,
-            ),
-        }),
-      ),
+      testDate,
 
-      proofLink:
+      proof:
         proofLink.trim() ||
         null,
 
       comment:
         comment.trim() ||
         null,
+
+      resultValues:
+        results.map(
+          (result) => ({
+            resultTypeId:
+              Number(
+                result.resultTypeId,
+              ),
+
+            value:
+              Number(
+                result.value,
+              ),
+          }),
+        ),
     }
 
     try {
-      /*
-       * À remplacer par le vrai appel API :
-       *
-       * const response =
-       *   await resultService.create(payload)
-       *
-       * if (!response.success) {
-       *   setError(response.error)
-       *   return
-       * }
-       */
+      const response =
+        await resultService.submit(
+          payload,
+        )
 
-      console.log(
-        'Résultat à enregistrer :',
-        payload,
+      if (
+        !response.success
+      ) {
+        setError(
+          response.error ??
+            'Impossible d’enregistrer le résultat.',
+        )
+
+        return
+      }
+
+      navigate(
+        '/resultats',
       )
-
-      /*
-       * Quand l'API sera branchée :
-       *
-       * navigate('/resultats')
-       */
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(
+        false,
+      )
     }
   }
 
-  return (
-    <div className="create-single-result-page">
-        {/* Barre du haut */}
-        <div className="create-single-result-page__topbar">
-            <div className="create-single-result-steps">
-                <div className="create-single-result-step">
-                <span className="create-single-result-step__number">
-                    1
+  /*
+   * =====================================
+   * UI ATHLÈTE
+   * =====================================
+   */
+  if (isAthlete) {
+    return (
+      <div className="create-single-result-page create-single-result-page--athlete">
+        <button
+          type="button"
+          className="create-single-result-page__back"
+          onClick={
+            handleBack
+          }
+        >
+          <span aria-hidden="true">
+            ←
+          </span>
+
+          Retour à la sélection
+        </button>
+
+        <div className="create-single-result-page__heading">
+          <h1>
+            Saisir un résultat
+          </h1>
+        </div>
+
+        <div className="create-single-result-steps">
+          <div className="create-single-result-step create-single-result-step--completed">
+            <span className="create-single-result-step__number">
+              ✓
+            </span>
+
+            <span>
+              Étape 1 – Sélection du contexte
+            </span>
+          </div>
+
+          <div className="create-single-result-step__line" />
+
+          <div className="create-single-result-step create-single-result-step--active">
+            <span className="create-single-result-step__number">
+              2
+            </span>
+
+            <span>
+              Étape 2 – Saisie du résultat
+            </span>
+          </div>
+        </div>
+
+        {error && (
+          <div className="create-result-error">
+            {error}
+          </div>
+        )}
+
+        {/* Contexte */}
+        <section className="create-single-result-context">
+          <h2>
+            Contexte sélectionné
+          </h2>
+
+          <div className="create-single-result-summary">
+            <div className="create-single-result-summary__item">
+              <div
+                className="create-single-result-summary__icon"
+                aria-hidden="true"
+              >
+                ◷
+              </div>
+
+              <div>
+                <span className="create-single-result-summary__label">
+                  Test
                 </span>
 
-                <span>Sélection</span>
-                </div>
-
-                <div className="create-single-result-step__line" />
-
-                <div className="create-single-result-step create-single-result-step--active">
-                <span className="create-single-result-step__number">
-                    2
-                </span>
-
-                <span>
-                    Résultat – 1 athlète
-                </span>
-                </div>
+                <strong>
+                  {
+                    testName
+                  }
+                </strong>
+              </div>
             </div>
 
-            <button
-                type="button"
-                className="create-single-result-page__back"
-                onClick={() => navigate('/resultats')}
-            >
-                <span aria-hidden="true">←</span>
-                Retour aux tests
-            </button>
+            <div className="create-single-result-summary__item">
+              <div
+                className="create-single-result-summary__icon"
+                aria-hidden="true"
+              >
+                □
+              </div>
+
+              <div>
+                <span className="create-single-result-summary__label">
+                  Date de saisie
+                </span>
+
+                <strong>
+                  {formatDate(
+                    testDate,
+                    true,
+                  )}
+                </strong>
+              </div>
+            </div>
+
+            <div className="create-single-result-summary__item">
+              <div
+                className="create-single-result-summary__icon"
+                aria-hidden="true"
+              >
+                ♙♙
+              </div>
+
+              <div>
+                <span className="create-single-result-summary__label">
+                  Équipe
+                </span>
+
+                <strong>
+                  {
+                    teamName
+                  }
+                </strong>
+              </div>
+            </div>
+
+            <div className="create-single-result-summary__item">
+              <div
+                className="create-single-result-summary__icon"
+                aria-hidden="true"
+              >
+                ♙
+              </div>
+
+              <div className="create-single-result-summary__athlete">
+                <div>
+                  <span className="create-single-result-summary__label">
+                    Athlète
+                  </span>
+
+                  <strong>
+                    {
+                      athleteName
+                    }
+
+                    {athleteNumber && (
+                      <>
+                        {' '}
+                        (#
+                        {
+                          athleteNumber
+                        }
+                        )
+                      </>
+                    )}
+                  </strong>
+                </div>
+
+                <span className="create-single-result-you-badge">
+                  Vous
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Statut automatique */}
+        <div className="create-single-result-pending-info">
+          <span
+            className="create-single-result-pending-info__icon"
+            aria-hidden="true"
+          >
+            i
+          </span>
+
+          <span>
+            Le statut de votre résultat sera automatiquement défini à
+          </span>
+
+          <strong>
+            En attente d’approbation.
+          </strong>
         </div>
+
+        {/* Protocole */}
+        {protocol && (
+          <section className="create-single-result-protocol">
+            <div className="create-single-result-protocol__header">
+              <span
+                className="create-single-result-protocol__icon"
+                aria-hidden="true"
+              >
+                ▣
+              </span>
+
+              <h2>
+                Protocole du test
+              </h2>
+            </div>
+
+            <div className="create-single-result-protocol__content">
+              {
+                protocol
+              }
+            </div>
+          </section>
+        )}
+
+        {/* Saisie */}
+        <section className="create-single-result-entry">
+          <div className="create-single-result-entry__header">
+            <h2>
+              Saisir les résultats
+            </h2>
+
+            <p>
+              Entrez vos valeurs pour chacun des types de résultats requis.
+            </p>
+          </div>
+
+          {/*
+           * IMPORTANT :
+           * les lignes sont générées
+           * dynamiquement depuis
+           * test.resultTypes.
+           */}
+          <div className="create-single-result-values">
+            <div className="create-single-result-values__header">
+              <span>
+                Type de résultat
+              </span>
+
+              <span>
+                Valeur
+              </span>
+
+              <span>
+                Unité
+              </span>
+            </div>
+
+            {resultTypes.map(
+              (
+                resultType,
+              ) => {
+                const result =
+                  results.find(
+                    (
+                      item,
+                    ) =>
+                      String(
+                        item.resultTypeId,
+                      ) ===
+                      String(
+                        resultType.id,
+                      ),
+                  )
+
+                return (
+                  <div
+                    key={
+                      resultType.id
+                    }
+                    className="create-single-result-values__row"
+                  >
+                    <div>
+                      {
+                        resultType.name
+                      }
+                    </div>
+
+                    <input
+                      type="number"
+                      step="any"
+                      value={
+                        result?.value ??
+                        ''
+                      }
+                      placeholder="Saisir une valeur"
+                      onChange={(
+                        event,
+                      ) =>
+                        updateResult(
+                          resultType.id,
+                          event.target
+                            .value,
+                        )
+                      }
+                    />
+
+                    <div className="create-single-result-unit">
+                      {getUnitForType(
+                        resultType,
+                      )}
+                    </div>
+                  </div>
+                )
+              },
+            )}
+          </div>
+
+          <div className="create-single-result-values__footer">
+            <p>
+              Les types de résultats et leurs unités sont définis automatiquement par le test physique.
+            </p>
+          </div>
+
+          {/* Preuve */}
+          <div className="create-single-result-form-extra">
+            <div className="create-single-result-proof-section">
+              <div className="create-single-result-proof-section__title">
+                <strong>
+                  {test?.proofRequired
+                    ? 'Preuve requise'
+                    : 'Preuve'}
+                </strong>
+
+                <div className="create-single-result-proof-help">
+                  <button
+                    type="button"
+                    className="create-single-result-proof-info"
+                    aria-label="Afficher les instructions pour ajouter une preuve"
+                    aria-expanded={
+                      showProofHelp
+                    }
+                    onClick={() =>
+                      setShowProofHelp(
+                        (
+                          current,
+                        ) =>
+                          !current,
+                      )
+                    }
+                  >
+                    i
+                  </button>
+
+                  {showProofHelp && (
+                    <div
+                      className="create-single-result-proof-popover"
+                      role="dialog"
+                      aria-label="Instructions pour ajouter une preuve"
+                    >
+                      <ul>
+                        <li>
+                          Prendre une photo ou une vidéo du test réalisé.
+                        </li>
+
+                        <li>
+                          Enregistrer la photo ou la vidéo dans OneDrive.
+                        </li>
+
+                        <li>
+                          Dans OneDrive, repérer le fichier à partager.
+                        </li>
+
+                        <li>
+                          Cliquer sur les trois petits points à droite du nom du fichier.
+                        </li>
+
+                        <li>
+                          Sélectionner l&apos;option Partager.
+                        </li>
+
+                        <li>
+                          À côté du bouton Copier le lien, cliquer sur l&apos;icône d&apos;engrenage pour ouvrir les paramètres du lien.
+                        </li>
+
+                        <li>
+                          Sélectionner l&apos;option Toute personne ayant le lien peut consulter.
+                        </li>
+
+                        <li>
+                          Cliquer sur Appliquer.
+                        </li>
+
+                        <li>
+                          Cliquer sur Copier le lien.
+                        </li>
+
+                        <li>
+                          Coller le lien dans le champ prévu à cet effet dans AthlETS.
+                        </li>
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <p>
+                {test?.proofRequired
+                  ? 'Ce test nécessite une preuve vidéo ou photo.'
+                  : 'Vous pouvez ajouter une preuve vidéo ou photo si nécessaire.'}
+              </p>
+
+              <label htmlFor="result-proof-athlete">
+                Lien de la preuve (URL)
+
+                {test?.proofRequired && (
+                  <span className="required-marker">
+                    {' '}*
+                  </span>
+                )}
+              </label>
+
+              <div className="create-single-result-proof">
+                <span aria-hidden="true">
+                  🔗
+                </span>
+
+                <input
+                  id="result-proof-athlete"
+                  type="url"
+                  value={
+                    proofLink
+                  }
+                  placeholder="Coller le lien de la preuve"
+                  onChange={(
+                    event,
+                  ) =>
+                    setProofLink(
+                      event.target
+                        .value,
+                    )
+                  }
+                />
+              </div>
+
+              <p className="create-single-result-help">
+                Entrez un lien public ou partageable menant à votre vidéo ou photo.
+              </p>
+            </div>
+
+            {/* Commentaire */}
+            <div className="create-single-result-comment-field">
+              <label htmlFor="result-comment-athlete">
+                Commentaire (optionnel)
+              </label>
+
+              <div className="create-single-result-comment">
+                <textarea
+                  id="result-comment-athlete"
+                  value={
+                    comment
+                  }
+                  maxLength={
+                    500
+                  }
+                  placeholder="Ajouter un commentaire (optionnel)..."
+                  onChange={(
+                    event,
+                  ) =>
+                    setComment(
+                      event.target
+                        .value,
+                    )
+                  }
+                />
+
+                <span>
+                  {
+                    comment.length
+                  }
+                  /500
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Actions Athlète */}
+        <div className="create-single-result-actions">
+          <button
+            type="button"
+            className="create-result-button create-result-button--secondary"
+            onClick={
+              handleBack
+            }
+            disabled={
+              isSubmitting
+            }
+          >
+            Retour
+          </button>
+
+          <button
+            type="button"
+            className="create-result-button create-result-button--primary create-single-result-submit"
+            onClick={
+              handleSubmit
+            }
+            disabled={
+              isSubmitting
+            }
+          >
+            {isSubmitting
+              ? 'Enregistrement...'
+              : 'Enregistrer le résultat'}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  /*
+   * =====================================
+   * UI ADMIN / COACH / KINÉ
+   * =====================================
+   *
+   * Ton ancien UI reste inchangé.
+   */
+  return (
+    <div className="create-single-result-page">
+      {/* Barre du haut */}
+      <div className="create-single-result-page__topbar">
+        <div className="create-single-result-steps">
+          <div className="create-single-result-step">
+            <span className="create-single-result-step__number">
+              1
+            </span>
+
+            <span>
+              Sélection
+            </span>
+          </div>
+
+          <div className="create-single-result-step__line" />
+
+          <div className="create-single-result-step create-single-result-step--active">
+            <span className="create-single-result-step__number">
+              2
+            </span>
+
+            <span>
+              Résultat – 1 athlète
+            </span>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          className="create-single-result-page__back"
+          onClick={() =>
+            navigate(
+              '/resultats',
+            )
+          }
+        >
+          <span aria-hidden="true">
+            ←
+          </span>
+
+          Retour aux tests
+        </button>
+      </div>
 
       <section className="create-single-result-card">
         {error && (
@@ -449,7 +1043,9 @@ export default function CreateResultSingleAthletePage() {
                 </span>
 
                 <strong>
-                  {testName}
+                  {
+                    testName
+                  }
                 </strong>
               </div>
             </div>
@@ -483,7 +1079,9 @@ export default function CreateResultSingleAthletePage() {
                 </span>
 
                 <strong>
-                  {teamName}
+                  {
+                    teamName
+                  }
                 </strong>
               </div>
             </div>
@@ -499,7 +1097,9 @@ export default function CreateResultSingleAthletePage() {
                 </span>
 
                 <strong>
-                  {athleteName}
+                  {
+                    athleteName
+                  }
                 </strong>
               </div>
             </div>
@@ -513,9 +1113,7 @@ export default function CreateResultSingleAthletePage() {
           </h2>
 
           <p className="create-single-result-section__description">
-            Saisissez une ou plusieurs
-            valeurs selon le test
-            sélectionné.
+            Saisissez les valeurs attendues pour le test sélectionné.
           </p>
 
           <div className="create-single-result-values">
@@ -532,134 +1130,77 @@ export default function CreateResultSingleAthletePage() {
                 Unité
               </span>
 
-              <span>
-                Action
-              </span>
+              <span />
             </div>
 
-            {results.map(
-              (result) => (
-                <div
-                  key={
-                    result.id
-                  }
-                  className="create-single-result-values__row"
-                >
-                  <select
-                    value={
-                      result.type
-                    }
-                    onChange={(
-                      event,
+            {resultTypes.map(
+              (
+                resultType,
+              ) => {
+                const result =
+                  results.find(
+                    (
+                      item,
                     ) =>
-                      updateResult(
-                        result.id,
-                        'type',
-                        event
-                          .target
-                          .value,
-                      )
+                      String(
+                        item.resultTypeId,
+                      ) ===
+                      String(
+                        resultType.id,
+                      ),
+                  )
+
+                return (
+                  <div
+                    key={
+                      resultType.id
                     }
+                    className="create-single-result-values__row"
                   >
-                    <option value="">
-                      Sélectionner
-                    </option>
+                    <div>
+                      {
+                        resultType.name
+                      }
+                    </div>
 
-                    {RESULT_TYPES.map(
-                      (option) => {
-                        const alreadyUsed =
-                          usedResultTypes.includes(
-                            option.value,
-                          )
-
-                        const disabled =
-                          alreadyUsed &&
-                          option.value !==
-                            result.type
-
-                        return (
-                          <option
-                            key={
-                              option.value
-                            }
-                            value={
-                              option.value
-                            }
-                            disabled={
-                              disabled
-                            }
-                          >
-                            {
-                              option.label
-                            }
-                          </option>
+                    <input
+                      type="number"
+                      step="any"
+                      value={
+                        result?.value ??
+                        ''
+                      }
+                      placeholder="Saisir une valeur"
+                      onChange={(
+                        event,
+                      ) =>
+                        updateResult(
+                          resultType.id,
+                          event.target
+                            .value,
                         )
-                      },
-                    )}
-                  </select>
+                      }
+                    />
 
-                  <input
-                    type="number"
-                    step="any"
-                    value={
-                      result.value
-                    }
-                    placeholder="Saisir une valeur"
-                    onChange={(
-                      event,
-                    ) =>
-                      updateResult(
-                        result.id,
-                        'value',
-                        event
-                          .target
-                          .value,
-                      )
-                    }
-                  />
+                    <div className="create-single-result-unit">
+                      {getUnitForType(
+                        resultType,
+                      )}
+                    </div>
 
-                  <div className="create-single-result-unit">
-                    {getUnitForType(
-                      result.type,
-                    )}
+                    <div className="create-single-result-delete-container">
+                      <TrashIcon />
+                    </div>
                   </div>
-
-                  <div className="create-single-result-delete-container">
-                    <button
-                        type="button"
-                        className="create-single-result-delete"
-                        aria-label="Supprimer cette valeur"
-                        onClick={() =>
-                            handleRemoveResult(result.id)
-                        }
-                        >
-                        <TrashIcon />
-                    </button>
-                  </div>
-                </div>
-              ),
+                )
+              },
             )}
           </div>
 
           <div className="create-single-result-values__footer">
             <p>
-              L&apos;unité est affichée
-              automatiquement selon le
-              type de résultat
-              sélectionné.
+              Les types de résultats et leurs unités sont définis automatiquement par le test physique.
             </p>
-
-            {canAddResult && (
-              <button
-                type="button"
-                className="create-single-result-add-value"
-                onClick={
-                  handleAddResult
-                }
-              >
-                + Ajouter une valeur
-              </button>
-            )}
           </div>
         </div>
 
@@ -670,7 +1211,6 @@ export default function CreateResultSingleAthletePage() {
           </h2>
 
           <div className="create-single-result-extra-grid">
-            {/* Statut */}
             <div className="create-single-result-extra-field">
               <label>
                 Statut
@@ -687,10 +1227,15 @@ export default function CreateResultSingleAthletePage() {
               </div>
             </div>
 
-            {/* Preuve */}
             <div className="create-single-result-extra-field">
               <label htmlFor="result-proof">
                 Lien de preuve
+
+                {test?.proofRequired && (
+                  <span className="required-marker">
+                    {' '}*
+                  </span>
+                )}
               </label>
 
               <div className="create-single-result-proof">
@@ -709,8 +1254,7 @@ export default function CreateResultSingleAthletePage() {
                     event,
                   ) =>
                     setProofLink(
-                      event
-                        .target
+                      event.target
                         .value,
                     )
                   }
@@ -718,13 +1262,12 @@ export default function CreateResultSingleAthletePage() {
               </div>
 
               <p>
-                Ajoutez un lien web
-                (URL) vers une preuve
-                du résultat.
+                {test?.proofRequired
+                  ? 'Une preuve est requise pour ce test.'
+                  : 'Ajoutez un lien web vers une preuve du résultat si nécessaire.'}
               </p>
             </div>
 
-            {/* Commentaire */}
             <div className="create-single-result-extra-field">
               <label htmlFor="result-comment">
                 Commentaire
@@ -736,21 +1279,24 @@ export default function CreateResultSingleAthletePage() {
                   value={
                     comment
                   }
-                  maxLength={500}
+                  maxLength={
+                    500
+                  }
                   placeholder="Ajouter un commentaire (optionnel)..."
                   onChange={(
                     event,
                   ) =>
                     setComment(
-                      event
-                        .target
+                      event.target
                         .value,
                     )
                   }
                 />
 
                 <span>
-                  {comment.length}
+                  {
+                    comment.length
+                  }
                   /500
                 </span>
               </div>

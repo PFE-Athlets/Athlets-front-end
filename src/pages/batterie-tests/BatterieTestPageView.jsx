@@ -107,10 +107,19 @@ const getStatus = (battery) => {
     battery?.status ??
     battery?.batteryStatus ??
     battery?.batterieStatus ??
-    battery?.accountStatus ??
-    ''
+    battery?.accountStatus
 
-  return String(status).trim().toUpperCase()
+  if (status === true || status === 'true') {
+    return 'ACTIVE'
+  }
+
+  if (status === false || status === 'false') {
+    return 'INACTIVE'
+  }
+
+  return String(status ?? '')
+    .trim()
+    .toUpperCase()
 }
 
 const getPhysicalTests = (battery) => {
@@ -150,10 +159,10 @@ const getPhysicalTestsCount = (battery) => {
 const getStatusLabel = (status) => {
   switch (status) {
     case 'ACTIVE':
-      return 'Active'
+      return 'Actif'
 
     case 'INACTIVE':
-      return 'Inactive'
+      return 'Inactif'
 
     default:
       return status || 'Non spécifié'

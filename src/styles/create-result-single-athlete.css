@@ -601,3 +601,354 @@
     width: 100%;
   }
 }
+
+/* =========================
+   UI spécifique Athlète
+   ========================= */
+
+.create-single-result-page--athlete
+  .create-single-result-page__heading {
+  margin: 12px 0 20px;
+}
+
+.create-single-result-page--athlete
+  .create-single-result-page__heading h1 {
+  margin: 0;
+  color: #111b45;
+  font-size: 30px;
+  font-weight: 700;
+}
+
+/* =========================
+   Étapes Athlète
+   ========================= */
+
+.create-single-result-page--athlete
+  .create-single-result-steps {
+  margin-bottom: 24px;
+}
+
+.create-single-result-page--athlete
+  .create-single-result-step--completed
+  .create-single-result-step__number {
+  background: #ffffff;
+  color: #1266e8;
+}
+
+/* =========================
+   Contexte sélectionné
+   ========================= */
+
+.create-single-result-context {
+  width: 100%;
+  padding: 20px;
+  border: 1px solid #dce2ec;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.create-single-result-context h2 {
+  margin: 0 0 14px;
+  color: #111b45;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.create-single-result-page--athlete
+  .create-single-result-summary__athlete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.create-single-result-you-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 9px;
+  border: 1px solid #1266e8;
+  border-radius: 5px;
+  background: #ffffff;
+  color: #1266e8;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* =========================
+   Statut en attente
+   ========================= */
+
+.create-single-result-pending-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 11px 14px;
+  border: 1px solid #f1d8ad;
+  border-radius: 7px;
+  background: #fffaf2;
+  color: #6c5b42;
+  font-size: 12px;
+}
+
+.create-single-result-pending-info__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 19px;
+  height: 19px;
+  flex: 0 0 19px;
+  border: 1px solid #d98a25;
+  border-radius: 50%;
+  color: #d06d13;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.create-single-result-pending-info strong {
+  color: #d06d13;
+}
+
+/* =========================
+   Protocole
+   ========================= */
+
+.create-single-result-protocol {
+  width: 100%;
+  max-height: 180px;
+  margin-top: 12px;
+  padding: 18px 20px;
+  overflow-y: auto;
+  border: 1px solid #cfe0ff;
+  border-radius: 10px;
+  background: #f3f7ff;
+}
+
+.create-single-result-protocol__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.create-single-result-protocol__header h2 {
+  margin: 0;
+  color: #111b45;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.create-single-result-protocol__icon {
+  color: #1266e8;
+}
+
+.create-single-result-protocol__content {
+  color: #334267;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+/* =========================
+   Carte saisie Athlète
+   ========================= */
+
+.create-single-result-entry {
+  width: 100%;
+  margin-top: 12px;
+  padding: 20px;
+  border: 1px solid #dce2ec;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.create-single-result-entry__header h2 {
+  margin: 0 0 6px;
+  color: #111b45;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.create-single-result-entry__header p {
+  margin: 0 0 16px;
+  color: #566584;
+  font-size: 12px;
+}
+
+/* Athlète :
+   Type | Description | Valeur | Unité
+ */
+.create-single-result-page--athlete
+  .create-single-result-values__header,
+.create-single-result-page--athlete
+  .create-single-result-values__row {
+  grid-template-columns:
+    minmax(130px, 0.8fr)
+    minmax(220px, 1.4fr)
+    minmax(130px, 0.7fr)
+    90px;
+}
+
+.create-single-result-type-description {
+  color: #566584;
+  font-size: 12px;
+}
+
+/* =========================
+   Preuve
+   ========================= */
+
+.create-single-result-form-extra {
+  margin-top: 18px;
+}
+
+.create-single-result-proof-section {
+  position: relative;
+}
+
+.create-single-result-proof-section__title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.create-single-result-proof-section__title strong {
+  color: #111b45;
+  font-size: 12px;
+}
+
+.create-single-result-proof-section > p {
+  margin: 5px 0 12px;
+  color: #72809d;
+  font-size: 11px;
+}
+
+.create-single-result-proof-section label,
+.create-single-result-comment-field label {
+  display: block;
+  margin-bottom: 7px;
+  color: #111b45;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* =========================
+   Bouton information
+   ========================= */
+
+.create-single-result-proof-help {
+  position: relative;
+  display: inline-flex;
+}
+
+.create-single-result-proof-info {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1.5px solid #1266e8;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #1266e8;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.create-single-result-proof-info:hover {
+  background: #f3f7ff;
+}
+
+/* =========================
+   Popover instructions
+   ========================= */
+
+.create-single-result-proof-popover {
+  position: absolute;
+  z-index: 30;
+  left: 28px;
+  bottom: -45px;
+  width: 340px;
+  padding: 14px 16px;
+  border: 1px solid #d6deeb;
+  border-radius: 9px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14);
+}
+
+.create-single-result-proof-popover::before {
+  content: '';
+  position: absolute;
+  left: -7px;
+  bottom: 43px;
+  width: 12px;
+  height: 12px;
+  border-left: 1px solid #d6deeb;
+  border-bottom: 1px solid #d6deeb;
+  background: #ffffff;
+  transform: rotate(45deg);
+}
+
+.create-single-result-proof-popover ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.create-single-result-proof-popover li {
+  margin-bottom: 6px;
+  color: #334267;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.create-single-result-proof-popover li:last-child {
+  margin-bottom: 0;
+}
+
+.create-single-result-proof-popover li::marker {
+  color: #1266e8;
+}
+
+/* =========================
+   Commentaire
+   ========================= */
+
+.create-single-result-comment-field {
+  margin-top: 16px;
+}
+
+/* =========================
+   Responsive Athlète
+   ========================= */
+
+@media (max-width: 900px) {
+  .create-single-result-page--athlete
+    .create-single-result-values__header {
+    display: none;
+  }
+
+  .create-single-result-page--athlete
+    .create-single-result-values__row {
+    grid-template-columns: 1fr;
+  }
+
+  .create-single-result-proof-popover {
+    left: 0;
+    bottom: auto;
+    top: 26px;
+    width: min(
+      340px,
+      calc(100vw - 70px)
+    );
+  }
+
+  .create-single-result-proof-popover::before {
+    display: none;
+  }
+}
